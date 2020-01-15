@@ -3,3 +3,6 @@ examples/bin
 examples/input/graph
 utilities/bin
 documentation
+
+server/bin
+server/client/node_modules

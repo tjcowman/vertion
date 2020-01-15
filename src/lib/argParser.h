@@ -109,4 +109,4 @@ while(op < argc) \
             std::cerr<<token<<" not used"<<std::endl;\
     }\
     ++op;\
-}\
+}

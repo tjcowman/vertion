@@ -143,6 +143,7 @@ class VGraph
         void addVersion(const VersionChanges<T> & versionChanges, typename T::VersionIndex fromVersion);
         
         //Access row bounds for a given node
+
         auto getOutgoingNodes(Index node, typename T::VersionIndex version)const;
         
         //Low level access for more optimized querying
@@ -852,7 +853,6 @@ std::vector<std::pair<typename T::Index, typename T::Index> > VGraph<T>::getSort
     
     std::sort(JA.begin(), JA.end(), [](const auto& lhs, const auto& rhs){return lhs.first < rhs.first;});
     return JA;
-    //for(const auto& e : getOutgoingNodes)
 }
 
 template<class T>
@@ -889,7 +889,7 @@ constexpr std::vector<std::pair<typename T::Index, typename T::Value> > VGraph<T
             JAtmp.insert(JAtmp.end(), JA_.begin()+range.s3(), JA_.begin()+range.s3()+range.s4());
         
         for(Index i=0; i< unsorted.size(); ++i)
-            ext.push_back(std::pair(JAtmp[i], unsorted[i]));
+            ext.push_back(std::make_pair(JAtmp[i], unsorted[i]));
 
         std::sort(ext.begin(), ext.end());
         return ext;
@@ -914,7 +914,7 @@ constexpr std::vector<std::pair<typename T::Index, EdgeLabel<T>> > VGraph<T>::ge
             JAtmp.insert(JAtmp.end(), JA_.begin()+range.s3(), JA_.begin()+range.s3()+range.s4());
         
         for(Index i=0; i< unsorted.size(); ++i)
-            ext.push_back(std::pair(JAtmp[i], unsorted[i]));
+            ext.push_back(std::make_pair(JAtmp[i], unsorted[i]));
 
         std::sort(ext.begin(), ext.end());
         return ext;

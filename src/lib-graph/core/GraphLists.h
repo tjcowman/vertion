@@ -61,7 +61,7 @@ EdgeList mapVertexListToEdgeList(const VGraph<GT>& graph, int version, const Gra
         auto AJA = graph.template getRowVersion<Row::AJA>(e.index_, version);
         auto L = graph.template getRowVersion<Row::L>(e.index_, version);
         
-        auto itPair = std::pair{AJA.second.begin(), AJA.second.end()}; //graph.getOutgoingNodes(e.index_, version);
+        auto itPair = std::make_pair(AJA.second.begin(), AJA.second.end()); //graph.getOutgoingNodes(e.index_, version);
         auto itPairVal =  AJA.first.begin(); //graph.getOutgoingValues(e.index_, version).first;
         auto itPairLabel = L.begin();
         
@@ -95,7 +95,7 @@ EdgeList mapVertexListToEdgeList(const VGraph<GT> & graph, const std::vector<int
         auto AJA =  graph.template getRowVersion<Row::AJA>(e, versions[0]);
         
 
-        auto itPair = std::pair{AJA.second.begin(), AJA.second.end()}; //graph.getOutgoingNodes(e.index_, version);
+        auto itPair = std::make_pair(AJA.second.begin(), AJA.second.end()); //graph.getOutgoingNodes(e.index_, version);
         auto itPairVal =  AJA.first.begin(); //graph.getOutgoingValues(e.index_, version).first;
         
         
@@ -116,7 +116,7 @@ EdgeList mapVertexListToEdgeList(const VGraph<GT> & graph, const std::vector<int
         {
             auto AJA = graph.template  getRowVersion<Row::AJA>(e, version);
             
-            auto itPair = std::pair{AJA.second.begin(), AJA.second.end()}; //graph.getOutgoingNodes(e.index_, version);
+            auto itPair = std::make_pair(AJA.second.begin(), AJA.second.end()); //graph.getOutgoingNodes(e.index_, version);
             auto itPairVal =  AJA.first.begin(); //graph.getOutgoingValues(e.index_, version).first;
         
             
