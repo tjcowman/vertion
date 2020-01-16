@@ -1,3 +1,16 @@
-.responseArea:after{
-    
+.rwr{
+    background: #aff;
+    width: 100px;
+}
+
+.responseArea{
+     background: #fff;
+}
+
+.test{
+ color: red;   
+}
+
+h1.r{
+ color: red;   
 }

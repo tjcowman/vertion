@@ -26,11 +26,14 @@ class HelloHandler : public Http::Handler
             
             std::cout<<"Request: " + request.body()<<std::endl;
             
+            json queryString = json::parse(request.body());
+            json queryResponse = CR.run(queryString);
             
-            std::cout<<graph_->size()<<std::endl;
+            //std::cout<<graph_->size()<<std::endl;
             
             response.headers().add<Http::Header::AccessControlAllowOrigin>("*");
-            response.send(Http::Code::Ok, "Hello, World");
+            response.headers().add<Http::Header::ContentType>("application/json");
+            response.send(Http::Code::Ok, queryResponse.dump());
         }
 };
 const Graph* HelloHandler::graph_;
