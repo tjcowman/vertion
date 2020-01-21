@@ -87,6 +87,10 @@ class VGraph
         int  addVertexLabel(std::string s);
         int  addEdgeLabel(std::string s);
         
+//         std::pair<std::vector<std::string>, std::vector<std::string>> getLabels()const;
+        std::vector<std::string> getVertexLabels()const;
+        std::vector<std::string> getEdgeLabels()const;
+        
         std::pair< VGraph<T>, std::map<Index,Index> > rebase(const  GraphList<VertexS<T>>& vertexlist)const;  
         
         void writeChildrenVersions(typename T::VersionIndex depth, typename T::VersionIndex versionIndex, const std::vector<std::vector<typename T::VersionIndex> >& childLists)const;
@@ -264,13 +268,31 @@ void VGraph<T>::addNode(const std::string& id, const VertexLabel<T>& labels)
 template <class T>
 int  VGraph<T>::addVertexLabel(std::string s)
 {
-    return vertexData_.addVertexLabel(s);
+    return vertexData_.addLabel(s);
 }
 
 template <class T>
 int  VGraph<T>::addEdgeLabel(std::string s)
 {
     return LMap_.addLabel(s);
+}
+
+// template<class T>
+// std::pair<std::vector<std::string>, std::vector<std::string>> getLabels()const
+// {
+//     std::vec
+// }
+
+template<class T>
+std::vector<std::string> VGraph<T>::getVertexLabels()const
+{
+    return vertexData_.getLabels();
+}
+
+template<class T>
+std::vector<std::string> VGraph<T>::getEdgeLabels()const
+{
+    return LMap_.getLabels();
 }
 
 template<class T>

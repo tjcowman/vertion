@@ -2,6 +2,8 @@
 #include "vertion.h"
 
 #include <nlohmann/json.hpp>
+
+#include<algorithm>
 using json = nlohmann::json;
 
 namespace Commands
@@ -14,13 +16,7 @@ namespace Commands
         
         auto jsArr = json::array();
 
-//         for(typename GT::VersionIndex i=0; i< graph.size().versions_; ++i)
-//         {
-//             ret["tags"]["V"+std::to_string(i) ] = (graph.getTags().lookup(i));
-//             ret["names"]["V"+std::to_string(i)] = graph.getTags().getName(i);
-// //             std::cout<<retVal<<std::endl;
-//         }
-        
+        //Version data
         for(typename GT::VersionIndex i=0; i< graph.size().versions_; ++i)
         {
             json js;
@@ -31,13 +27,20 @@ namespace Commands
             jsArr.push_back(js);
         }
         
-        
+        //Version tree
         auto versionTree = graph.getVersionChildLists();
         json jsArr2 = json(versionTree); 
         
+        //labels
+        json labels;
+        labels["vertex"] = graph.getVertexLabels();
+        labels["edge"] = graph.getEdgeLabels();
+        
+        //Consolidating
         ret["versions"] = jsArr ;
         ret["tree"] = jsArr2;
-        std::cout<<ret<<std::endl;
+        ret["labels"] = labels;
+// //         std::cout<<ret<<std::endl;
         return ret;
     }
 
@@ -52,15 +55,28 @@ namespace Commands
         
         auto res = RW.walk(GraphList<VertexS<GT>>(), args["version"], args_walk);
         
-//         return res.getElements()
+        res.sort(Sort::valueDec);
         
-        for(const auto& e : res.getElements())
+        for(size_t i=0; i<std::min(size_t(args["topk"]), res.size()); ++i)
         {
-            retVal["weights"] +=  {{"id", e.index_}, {"value", e.value_}};
+            retVal["weights"] +=  {{"id", res[i].index_}, {"value", res[i].value_}};
         }
         
         
         std::cout<<"Query Finished"<<std::endl;
+        return retVal;
+    }
+    
+    template<class GT>
+    json lsv(const VGraph<GT>& graph, const json& args)
+    {
+        json retVal;
+        
+        //Get nodes and edges
+        retVal["nodes"] = graph.size().nodes_;
+        retVal["edges"] = graph.size().edges_;
+        //Get the existing node and edge labels, maybe counts?
+        
         return retVal;
     }
 

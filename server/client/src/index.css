@@ -16,7 +16,8 @@
 
 .rwrPanel
 {
-    float: left;   
+    float: left;  
+    width: 67%;
 }
 
 select.versionNames{
@@ -29,18 +30,14 @@ ul.versionNames{
 /*         background-color: #4CAF50; */
 }
 
-.tagSelected
-{
-    background-color: #4CAF50;
+
+
+.btn-smaller{
+    margin: 1px;
+    padding: 1px 4px;
+    font-size: x-small;
 }
 
-.tagUnSelected
-{
-    background-color: #FFFFFF;
-}
-
-.tagButtons
-{
-
-    flex-wrap: wrap;
+.card-body{
+    
 }

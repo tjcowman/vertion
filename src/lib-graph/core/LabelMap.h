@@ -10,6 +10,8 @@ class LabelMap
     public:
         
         int addLabel(const std::string& s);
+        
+        std::vector<std::string> getLabels()const;
        
         size_t size()const;
        
@@ -18,6 +20,8 @@ class LabelMap
         
         template<class K>
         auto lookup(const K& key)const;
+        
+        
     
         void read_serial(std::istream& is);
         void write_serial(std::ostream& os)const;
@@ -42,6 +46,15 @@ int LabelMap<GT>::addLabel(const std::string& s)
         return 1;
     }
     return 0;
+}
+
+template<class GT>
+std::vector<std::string> LabelMap<GT>::getLabels()const
+{
+    std::vector<std::string> retVal(size());
+    for(const auto& e : poss_)
+        retVal[e.first] = e.second;
+    return retVal;
 }
 
 template<class GT>

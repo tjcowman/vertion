@@ -15,6 +15,8 @@ class VersionList extends React.Component {
         super(props);
         this.state = {
             raw: [],
+            vertexLabels: [],
+            edgeLabels: [],
             tags: [],
             tree: [],
             names: [],
@@ -22,7 +24,11 @@ class VersionList extends React.Component {
             selectedVersions: [],
         };
         Axios.post('http://localhost:9060', JSON.stringify(cmd_get_version_list)).then((response)=>{
-            this.setState({raw: response.data})
+            this.setState({
+                raw: response.data,
+                vertexLabels:response.data.labels.vertex, 
+                edgeLabels:response.data.labels.edge
+            })
             
         }).then(()=>{          
             let tags = {};
@@ -46,7 +52,7 @@ class VersionList extends React.Component {
             let newData= []; this.convertToTree(this.state.raw.tree, 0, 0, newData);
 //             console.log(namesArr);
             
-//             console.log(tags);
+             console.log(this.state.raw.labels);
             
             this.setState({
                 tags: tagsArr,
@@ -54,29 +60,21 @@ class VersionList extends React.Component {
                 names: namesArr,
                 tree: newData,
             });
-            console.log(this.state.tree)          
+//             console.log(this.state.tree)          
         });
         
     }
     
     convertToTree(data, depth, index, newData)
     {
-//           console.log(data)
-//          console.log("dep", depth, "ind", index);
         newData.push([depth, index]);
         
         if(data[index].length === 0)
            return;
-        else
-        {
-            for(let i=0; i<data[index].length; ++i)
-            {
+        else{
+            for(let i=0; i<data[index].length; ++i){
                 this.convertToTree(data, depth+1,  data[index][i], newData);
             }
-//             console.log(data[index]);
-//                 data[index].forEach(e => (
-//                   this.convertToTree(data, depth+1,  e, newData))
-//                 );
         }
     }
     
@@ -118,14 +116,35 @@ class VersionList extends React.Component {
             <div className="card">
             
                 <div className="card-body">
-                    <h3>Version Tags</h3>
-                    <div className="card" >
-                        <div className=" card-body row">
-                        {this.state.tags.map((e,i) => (
-                            <Button variant="primary" key={i} value={e[0]} size="sm" name={i} className={this.state.selectedTags[i] ? "active m-1 " : "m-1"} onClick={(event) =>this.handleClick(event)}>{e[0]}</Button>
-                        ))}
+                
+                    <h3>VGraph</h3>
+                    <div className="card">
+                        <div className=" card-body">
+                            <div>Versions: {this.state.names.length}</div>
+                            <div>Nodes: </div>
+                            
+                            <div>
+                                Vertex Labels: 
+                            </div>
+                            
+                            Edge Labels: 
+                            <div className="card-body pb-0 pt-0">
+                                {this.state.edgeLabels.map((e,i) =>(
+                                    <button key={i} className="btn btn-outline-secondary m-1 btn-smaller" >{e}</button>
+                                ))}
+                            </div>
+                            
+                            Version Tags:
+                            <div  className="card-body pb-0 pt-0">
+                                {this.state.tags.map((e,i) => (
+                                    <Button variant="outline-secondary" key={i} value={e[0]} name={i} className={this.state.selectedTags[i] ? "active m-1 btn-smaller" : "m-1 btn-smaller"} onClick={(event) =>this.handleClick(event)}>{e[0]}</Button>
+                                ))}
+                            </div>
+                            
                         </div>
                     </div>
+                
+            
 
                     
                     <h3>Versions Selected</h3>
@@ -164,9 +183,10 @@ class QueryForm extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-        version: undefined,
-        alpha: undefined,
-        epsilon: undefined,
+        version: 0,
+        alpha: .15,
+        epsilon: 1e-5,
+        topk: 10,
         result: "",
     };
 
@@ -187,7 +207,7 @@ class QueryForm extends React.Component {
 
   handleSubmit(event) {
 
-    let command = {cmd:"rwr", version:Number(this.state.version), alpha:Number(this.state.alpha), epsilon:Number(this.state.epsilon)}; 
+    let command = {cmd:"rwr", version:Number(this.state.version), alpha:Number(this.state.alpha), epsilon:Number(this.state.epsilon), topk:Number(this.state.topk)}; 
 //     alert(JSON.stringify(command))
     
      Axios.post('http://localhost:9060', JSON.stringify(command)).then((response)=>{this.setState({result: response.data})});
@@ -196,19 +216,39 @@ class QueryForm extends React.Component {
 
   render() {
     return(
-        <Form>
-        <Row>
-            <Col><Form.Control placeholder="Version" name="version" size="20" value={this.state.version} onChange={(e) =>this.handleChange(e)} /></Col>
-            <Col> <Form.Control placeholder="Alpha" name="alpha"  value={this.state.alpha} onChange={(e) =>this.handleChange(e)} /> </Col>
-            <Col><Form.Control  placeholder="Epsilon" name="epsilon"  value={this.state.epsilon} onChange={(e) =>this.handleChange(e)} /></Col>
-            <Col> <Button variant="primary" onClick={(e) =>this.handleSubmit(e)} >Enter</Button></Col>
-        </Row> 
-            <textarea className="responseArea" rows="4" cols="50" readOnly value={JSON.stringify(this.state.result)} /> 
+        <Form className="card-body">
+        <div className="card">
+            <div className="card-body"> 
+                <Row>
+                    <Col>Version<Form.Control placeholder="0" name="version" value={this.state.version} onChange={(e) =>this.handleChange(e)} /></Col>
+                    <Col>Alpha <Form.Control placeholder=".15" name="alpha"  value={this.state.alpha} onChange={(e) =>this.handleChange(e)} /> </Col>
+                    <Col>Epsilon<Form.Control  placeholder="1e-5" name="epsilon"  value={this.state.epsilon} onChange={(e) =>this.handleChange(e)} /></Col>
+                    <Col>Top k<Form.Control  placeholder="10" name="topk"  value={this.state.topk} onChange={(e) =>this.handleChange(e)} /></Col>
+                </Row>
+
+               
+            </div>
+        </div>
+                <textarea className="form-control" rows="4" value={JSON.stringify(this.state.result)} readOnly/>
+        <Button className="form-control" variant="primary" onClick={(e) =>this.handleSubmit(e)} >Submit</Button>
 
         </Form>
 
     );
   }
+}
+
+class DescriptionPanel extends React.Component {
+  constructor(props) {
+    super(props);
+  }
+  
+  render(){
+    return(
+        <></>
+    );
+  }
+  
 }
 
 class App extends React.Component {
@@ -223,13 +263,16 @@ class App extends React.Component {
         return(
         <div>
      
-        <div className="card rwrPanel">
-            <QueryForm />
-        </div>
-     
-        <div className="card versionPanel">
-            <VersionList/>
-        </div>
+            <div className="card rwrPanel">
+                <QueryForm />
+            </div>
+        
+            <div className="card versionPanel">
+                <VersionList/>
+            </div>
+            <div className="card descriptionPanel">
+                <DescriptionPanel/>
+            </div>
         </div>
         );
     }

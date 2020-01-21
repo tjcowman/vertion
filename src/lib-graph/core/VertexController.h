@@ -27,7 +27,8 @@ class VertexController
         
         bool contains(const std::string& id)const;
         
-        int  addVertexLabel(std::string s);
+        int  addLabel(std::string s);
+        std::vector<std::string> getLabels()const;
         
         auto lookup(const std::string& id)const;
         auto lookup(Index index)const;
@@ -76,9 +77,15 @@ size_t VertexController<GT>::size()const
 }
 
 template<class GT>
-int  VertexController<GT>::addVertexLabel(std::string s)
+int  VertexController<GT>::addLabel(std::string s)
 {
     return labelNames_.addLabel(s);
+}
+
+template<class GT>
+std::vector<std::string> VertexController<GT>::getLabels()const
+{
+    return labelNames_.getLabels();
 }
 
 template<class GT>
