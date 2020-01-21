@@ -7,10 +7,40 @@
      background: #fff;
 }
 
-.test{
- color: red;   
+.versionPanel
+{
+    align: right;
+    float: right;
+    width: 33%;
 }
 
-h1.r{
- color: red;   
+.rwrPanel
+{
+    float: left;   
+}
+
+select.versionNames{
+    background-color: #4CAF50;
+}
+
+ul.versionNames{
+    max-height: 200px;
+    overflow-y:scroll;
+/*         background-color: #4CAF50; */
+}
+
+.tagSelected
+{
+    background-color: #4CAF50;
+}
+
+.tagUnSelected
+{
+    background-color: #FFFFFF;
+}
+
+.tagButtons
+{
+
+    flex-wrap: wrap;
 }

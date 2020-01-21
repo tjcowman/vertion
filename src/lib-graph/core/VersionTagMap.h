@@ -8,6 +8,8 @@ using Tag = std::string;
 //WARNING: DO NOT USE SPACES IN TAGS, TODO: EITHER CHECK FOR SPACES OR REFACTOR TO ALLOW
 //TODO: Allow getversion/tag etc to take funtion based intersection or union for consistancy
 
+
+
 template<class T>
 struct MatchSet 
 {
@@ -45,6 +47,9 @@ class VersionTagMap
         void addTag(typename T::VersionIndex version, Tag tag);
         void addTags(typename T::VersionIndex version, std::vector<Tag> tags);
         
+        void setName(typename T::VersionIndex version, const std::string& name);
+        const std::string& getName(typename T::VersionIndex version)const;
+        
         //Removes the tagging data related to a version
         void eraseVersion(typename T::VersionIndex version);
         
@@ -66,6 +71,9 @@ class VersionTagMap
         
     private:
         
+        
+        std::map<typename T::VersionIndex, std::string> displayNames_; //Stores a plaintext name for each version
+        
         std::map<Tag, std::set<typename T::VersionIndex>> tagVersionMap_;
     
         std::map<typename T::VersionIndex, std::set<Tag>> versionTagMap_;
@@ -85,6 +93,23 @@ void VersionTagMap<T>::addTags(typename T::VersionIndex version, std::vector<Tag
 {
     for (const auto& e : tags)
         addTag(version, e);
+}
+
+template<class T>
+void VersionTagMap<T>::setName(typename T::VersionIndex version, const std::string& name)
+{
+    displayNames_[version] = name; 
+}
+
+template<class T>
+const std::string& VersionTagMap<T>::getName(typename T::VersionIndex version)const
+{
+    static const std::string empty ="";
+    auto res =  displayNames_.find(version);
+    if(res==displayNames_.end())
+        return empty;
+    else
+        return res->second;
 }
 
 template<class T>
@@ -247,7 +272,14 @@ std::ostream& operator<< (std::ostream & out, const VersionTagMap<Tp>& m)
         out<<e.first<<" "<<e.second.size()<<std::endl;
         for(const auto& ee : e.second)
             out<<ee<<" ";
-        out<<std::endl;
+        out<<"\n";
+    }
+        
+    //write the name map
+    out<<m.displayNames_.size()<<"\n";
+    for(size_t i=0; i<m.displayNames_.size(); ++i)
+    {
+        out<<i<<"\t"<<m.displayNames_[i]<<"\n";
     }
         
     
@@ -272,6 +304,16 @@ std::istream& operator>> (std::istream & in,  VersionTagMap<Tp>& m)
             m.addTag(version,tagName);
         }
     }
-
+    
+    //read the name map
+    size_t numNames;
+    in>>numNames;
+    for(size_t i=0; i<numNames; ++i)
+    {
+        std::string name;
+        typename Tp::VersionIndex version;
+        in>>version>>name;
+        m.displayNames_.insert(std::make_pair(version,name));
+    }
     return in;
 }

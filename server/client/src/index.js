@@ -1,28 +1,161 @@
+import 'bootstrap/dist/css/bootstrap.min.css';
+import { Button, ButtonToolbar, Form,Col,Row} from 'react-bootstrap';
+
 import React from 'react';
 import ReactDOM from 'react-dom'; 
 import Axios from 'axios';
 
 import './index.css';
 
-var cmd_get_version_list = {cmd: "ls"};
-
-// function makeRequest(input) {
-//      return Axios.post('http://localhost:9060',input).then((response)=> {return response.data});
-// }
+let cmd_get_version_list = {cmd: "ls"};
 
 
 class VersionList extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
+            raw: [],
+            tags: [],
+            tree: [],
             names: [],
+            selectedTags: [],
+            selectedVersions: [],
         };
-        Axios.post('http://localhost:9060', JSON.stringify(cmd_get_version_list)).then((response)=>{this.setState({names: response.data})});
+        Axios.post('http://localhost:9060', JSON.stringify(cmd_get_version_list)).then((response)=>{
+            this.setState({raw: response.data})
+            
+        }).then(()=>{          
+            let tags = {};
+//              console.log(this.state.raw);
+            
+            for(let i in this.state.raw.versions){
+                let ar =  this.state.raw.versions[i].tags;
+                for(let j in ar){
+                    if(!isNaN(tags[ar[j]])){
+                        tags[ar[j]]++;
+                    }
+                    else{
+                        tags[ar[j]] = 1;
+                    }
+                }
+            }
+            
+            
+            let tagsArr = Object.keys(tags).map((e,i) => ([e,i]));
+            let namesArr =this.state.raw.versions.map( (e,i) => ([e.name])   );
+            let newData= []; this.convertToTree(this.state.raw.tree, 0, 0, newData);
+//             console.log(namesArr);
+            
+//             console.log(tags);
+            
+            this.setState({
+                tags: tagsArr,
+                selectedTags: Array(tagsArr.length).fill(false),
+                names: namesArr,
+                tree: newData,
+            });
+            console.log(this.state.tree)          
+        });
+        
     }
+    
+    convertToTree(data, depth, index, newData)
+    {
+//           console.log(data)
+//          console.log("dep", depth, "ind", index);
+        newData.push([depth, index]);
+        
+        if(data[index].length === 0)
+           return;
+        else
+        {
+            for(let i=0; i<data[index].length; ++i)
+            {
+                this.convertToTree(data, depth+1,  data[index][i], newData);
+            }
+//             console.log(data[index]);
+//                 data[index].forEach(e => (
+//                   this.convertToTree(data, depth+1,  e, newData))
+//                 );
+        }
+    }
+    
+    handleClick(event)
+    {
+//         console.log(event)
+//         console.log(this.state.selectedTags, event.target.name)
+        event.target.checked=false;
+        
+        const selectedTags = this.state.selectedTags.slice();
+        selectedTags[Number(event.target.name)] = !selectedTags[Number(event.target.name)];
+//         
+        this.setState({
+            selectedTags: selectedTags,
+        })
+        
+        
+        //
+    }
+    
+    
+    renderTree(index, depth){
+        return(
+
+            <p>
+//      
+            </p>
+  
+            
+
+ 
+        );
+    }
+    
     
     render(){
         return(
-             <div><textarea className="responseArea" value={JSON.stringify(this.state.names)} rows="4" cols="50" readOnly />  </div>
+
+            <div className="card">
+            
+                <div className="card-body">
+                    <h3>Version Tags</h3>
+                    <div className="card" >
+                        <div className=" card-body row">
+                        {this.state.tags.map((e,i) => (
+                            <Button variant="primary" key={i} value={e[0]} size="sm" name={i} className={this.state.selectedTags[i] ? "active m-1 " : "m-1"} onClick={(event) =>this.handleClick(event)}>{e[0]}</Button>
+                        ))}
+                        </div>
+                    </div>
+
+                    
+                    <h3>Versions Selected</h3>
+                    <div className="card" >
+                    <ul className="card-body versionNames">
+                        {this.state.names.map((e,i) => (
+                            <li key={i}>{e}</li>
+                        ))}
+                    </ul>
+                    </div>
+                    
+                    <h3>Version Tree</h3>
+                    <div className="card" >
+                        <ul className="card-body versionNames">
+                            {this.state.tree.map((e,i)=>(
+                                <li key={i}>{'...'.repeat(e[0])} [{e[1]}] : [{this.state.names[e[1]]}]</li>
+                            ))}
+                        </ul>
+                    </div>
+                    
+                </div>
+                
+            </div>
+             
+                   
+        
+                
+          
+
+//             <div><textarea className="responseArea" value={JSON.stringify(this.state.tags)} rows="4" cols="50" readOnly />  </div>
         );
     }
 }
@@ -31,9 +164,9 @@ class QueryForm extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-        version: 0,
-        alpha: .15,
-        epsilon: .1,
+        version: undefined,
+        alpha: undefined,
+        epsilon: undefined,
         result: "",
     };
 
@@ -63,13 +196,16 @@ class QueryForm extends React.Component {
 
   render() {
     return(
-        <form>
-            Version <input  className="rwr" name="version" size="20" value={this.state.version} onChange={(e) =>this.handleChange(e)} />
-            Alpha <input  className="rwr" name="alpha"  value={this.state.alpha} onChange={(e) =>this.handleChange(e)} />
-            Epsilon <input  className="rwr" name="epsilon"  value={this.state.epsilon} onChange={(e) =>this.handleChange(e)} />
-            <button onClick={(e) =>this.handleSubmit(e)} >Enter</button>
-            <div><textarea className="responseArea" rows="4" cols="50" readOnly value={JSON.stringify(this.state.result)} /> </div>
-        </form>
+        <Form>
+        <Row>
+            <Col><Form.Control placeholder="Version" name="version" size="20" value={this.state.version} onChange={(e) =>this.handleChange(e)} /></Col>
+            <Col> <Form.Control placeholder="Alpha" name="alpha"  value={this.state.alpha} onChange={(e) =>this.handleChange(e)} /> </Col>
+            <Col><Form.Control  placeholder="Epsilon" name="epsilon"  value={this.state.epsilon} onChange={(e) =>this.handleChange(e)} /></Col>
+            <Col> <Button variant="primary" onClick={(e) =>this.handleSubmit(e)} >Enter</Button></Col>
+        </Row> 
+            <textarea className="responseArea" rows="4" cols="50" readOnly value={JSON.stringify(this.state.result)} /> 
+
+        </Form>
 
     );
   }
@@ -85,11 +221,16 @@ class App extends React.Component {
     
     render(){
         return(
-        <>
+        <div>
      
-        <QueryForm />
-        <VersionList/>
-        </>
+        <div className="card rwrPanel">
+            <QueryForm />
+        </div>
+     
+        <div className="card versionPanel">
+            <VersionList/>
+        </div>
+        </div>
         );
     }
     

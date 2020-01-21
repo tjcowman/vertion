@@ -10,13 +10,35 @@ namespace Commands
     template<class GT>
     json ls(const VGraph<GT>& graph, const json& args)
     {
-        json retVal;
+        json ret;
+        
+        auto jsArr = json::array();
+
+//         for(typename GT::VersionIndex i=0; i< graph.size().versions_; ++i)
+//         {
+//             ret["tags"]["V"+std::to_string(i) ] = (graph.getTags().lookup(i));
+//             ret["names"]["V"+std::to_string(i)] = graph.getTags().getName(i);
+// //             std::cout<<retVal<<std::endl;
+//         }
+        
         for(typename GT::VersionIndex i=0; i< graph.size().versions_; ++i)
         {
-            retVal["Version "+std::to_string(i) ] += (graph.getTags().lookup(i));
-//             std::cout<<retVal<<std::endl;
+            json js;
+            js["index"] = i;
+            js["tags"] = (graph.getTags().lookup(i));
+            js["name"] = graph.getTags().getName(i);
+            
+            jsArr.push_back(js);
         }
-        return retVal;
+        
+        
+        auto versionTree = graph.getVersionChildLists();
+        json jsArr2 = json(versionTree); 
+        
+        ret["versions"] = jsArr ;
+        ret["tree"] = jsArr2;
+        std::cout<<ret<<std::endl;
+        return ret;
     }
 
     template<class GT>

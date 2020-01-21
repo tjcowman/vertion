@@ -157,10 +157,7 @@ std::vector<std::vector<typename T::VersionIndex> > VersionDataVector<T>::comput
 {
     std::vector<std::vector<typename T::VersionIndex>> retVal(size(),std::vector<typename T::VersionIndex>());
     //NOTE: uses *this and size() to handle the sentry node correctly
-//     std::cout<<"SI "<<size()<<std::endl;
-//     std::cout<<"RVS "<<retVal.size()<<std::endl;
-//    
-//     
+
     for(typename T::VersionIndex i=1; i<(typename T::VersionIndex)size(); ++i)//0 has parent -1 which noes not exist so start at i=1
     {
 //          std::cout<<(*this)[i].parentVersion_<<std::endl;
