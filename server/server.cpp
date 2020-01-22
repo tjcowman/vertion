@@ -12,6 +12,9 @@ using namespace Pistache;
 using json = nlohmann::json;
 
 
+
+
+
 class HelloHandler : public Http::Handler
 {
     public:
@@ -19,21 +22,31 @@ class HelloHandler : public Http::Handler
         HTTP_PROTOTYPE(HelloHandler)
         static const Graph* graph_;
         
+        //NOTE: set modified ot server start, since filecant be modified while running
 
         void onRequest(const Http::Request& request, Http::ResponseWriter response) override
         {
-            CommandRunner<GraphType::GD> CR(*graph_);
-            
             std::cout<<"Request: " + request.body()<<std::endl;
-            
-            json queryString = json::parse(request.body());
-            json queryResponse = CR.run(queryString);
-            
-            //std::cout<<graph_->size()<<std::endl;
-            
-            response.headers().add<Http::Header::AccessControlAllowOrigin>("*");
-            response.headers().add<Http::Header::ContentType>("application/json");
-            response.send(Http::Code::Ok, queryResponse.dump());
+            CommandRunner<GraphType::GD> CR(*graph_);
+            if (request.resource() == "/ls") 
+            {
+                json queryString = {{"cmd" ,"ls"}};
+                json queryResponse = CR.run(queryString);
+                
+                response.headers().add<Http::Header::AccessControlAllowOrigin>("*");
+                response.headers().add<Http::Header::ContentType>("application/json");
+                response.send(Http::Code::304, queryResponse.dump());
+            }  
+            else    
+            {
+                
+                json queryString = json::parse(request.body());
+                json queryResponse = CR.run(queryString);
+                
+                response.headers().add<Http::Header::AccessControlAllowOrigin>("*");
+                response.headers().add<Http::Header::ContentType>("application/json");
+                response.send(Http::Code::Ok, queryResponse.dump());
+            }
         }
 };
 const Graph* HelloHandler::graph_;

@@ -23,7 +23,8 @@ class VersionList extends React.Component {
             selectedTags: [],
             selectedVersions: [],
         };
-        Axios.post('http://localhost:9060', JSON.stringify(cmd_get_version_list)).then((response)=>{
+        //Axios.post('http://localhost:9060', JSON.stringify(cmd_get_version_list)).then((response)=>
+        Axios.post('http://localhost:9060/ls').then((response)=>{
             this.setState({
                 raw: response.data,
                 vertexLabels:response.data.labels.vertex, 
@@ -90,23 +91,7 @@ class VersionList extends React.Component {
         this.setState({
             selectedTags: selectedTags,
         })
-        
-        
-        //
-    }
-    
-    
-    renderTree(index, depth){
-        return(
 
-            <p>
-//      
-            </p>
-  
-            
-
- 
-        );
     }
     
     
@@ -118,13 +103,17 @@ class VersionList extends React.Component {
                 <div className="card-body">
                 
                     <h3>VGraph</h3>
-                    <div className="card">
+                    <div className="card mb-3">
                         <div className=" card-body">
                             <div>Versions: {this.state.names.length}</div>
-                            <div>Nodes: </div>
+                            <div>Nodes: {this.state.raw.nodes}</div>
                             
-                            <div>
-                                Vertex Labels: 
+                            
+                            Vertex Labels: 
+                            <div className="card-body pb-0 pt-0">
+                                {this.state.vertexLabels.map((e,i) =>(
+                                    <button key={i} className="btn btn-outline-secondary m-1 btn-smaller" >{e}</button>
+                                ))}
                             </div>
                             
                             Edge Labels: 
@@ -146,7 +135,7 @@ class VersionList extends React.Component {
                 
             
 
-                    
+                    {/*
                     <h3>Versions Selected</h3>
                     <div className="card" >
                     <ul className="card-body versionNames">
@@ -154,10 +143,10 @@ class VersionList extends React.Component {
                             <li key={i}>{e}</li>
                         ))}
                     </ul>
-                    </div>
+                    </div>*/}
                     
                     <h3>Version Tree</h3>
-                    <div className="card" >
+                    <div className="card mb-3" >
                         <ul className="card-body versionNames">
                             {this.state.tree.map((e,i)=>(
                                 <li key={i}>{'...'.repeat(e[0])} [{e[1]}] : [{this.state.names[e[1]]}]</li>
@@ -184,6 +173,7 @@ class QueryForm extends React.Component {
     super(props);
     this.state = {
         version: 0,
+        source: "[ ]",
         alpha: .15,
         epsilon: 1e-5,
         topk: 10,
@@ -207,10 +197,18 @@ class QueryForm extends React.Component {
 
   handleSubmit(event) {
 
-    let command = {cmd:"rwr", version:Number(this.state.version), alpha:Number(this.state.alpha), epsilon:Number(this.state.epsilon), topk:Number(this.state.topk)}; 
+    try{
+     let command = {cmd:"rwr", version:Number(this.state.version), alpha:Number(this.state.alpha), epsilon:Number(this.state.epsilon), topk:Number(this.state.topk), source:JSON.parse(this.state.source)}; 
 //     alert(JSON.stringify(command))
+        console.log(JSON.parse(this.state.source))
     
-     Axios.post('http://localhost:9060', JSON.stringify(command)).then((response)=>{this.setState({result: response.data})});
+      Axios.post('http://localhost:9060', JSON.stringify(command)).then((response)=>{this.setState({result: response.data})});
+    }
+    catch(err){
+    
+        
+    }
+ 
     event.preventDefault();
   }
 
@@ -220,16 +218,17 @@ class QueryForm extends React.Component {
         <div className="card">
             <div className="card-body"> 
                 <Row>
-                    <Col>Version<Form.Control placeholder="0" name="version" value={this.state.version} onChange={(e) =>this.handleChange(e)} /></Col>
-                    <Col>Alpha <Form.Control placeholder=".15" name="alpha"  value={this.state.alpha} onChange={(e) =>this.handleChange(e)} /> </Col>
-                    <Col>Epsilon<Form.Control  placeholder="1e-5" name="epsilon"  value={this.state.epsilon} onChange={(e) =>this.handleChange(e)} /></Col>
-                    <Col>Top k<Form.Control  placeholder="10" name="topk"  value={this.state.topk} onChange={(e) =>this.handleChange(e)} /></Col>
+                    <Col>Version<Form.Control name="version" value={this.state.version} onChange={(e) =>this.handleChange(e)} /></Col>
+                    <Col>Source<Form.Control name="source" value={this.state.source} onChange={(e) =>this.handleChange(e)} /></Col>
+                    <Col>Alpha <Form.Control  name="alpha"  value={this.state.alpha} onChange={(e) =>this.handleChange(e)} /> </Col>
+                    <Col>Epsilon<Form.Control   name="epsilon"  value={this.state.epsilon} onChange={(e) =>this.handleChange(e)} /></Col>
+                    <Col>Top k<Form.Control   name="topk"  value={this.state.topk} onChange={(e) =>this.handleChange(e)} /></Col>
                 </Row>
 
                
             </div>
         </div>
-                <textarea className="form-control" rows="4" value={JSON.stringify(this.state.result)} readOnly/>
+        <textarea className="form-control" rows="4" value={JSON.stringify(this.state.result)} readOnly/>
         <Button className="form-control" variant="primary" onClick={(e) =>this.handleSubmit(e)} >Submit</Button>
 
         </Form>

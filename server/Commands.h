@@ -37,6 +37,7 @@ namespace Commands
         labels["edge"] = graph.getEdgeLabels();
         
         //Consolidating
+        ret["nodes"] = graph.size(0).nodes_;
         ret["versions"] = jsArr ;
         ret["tree"] = jsArr2;
         ret["labels"] = labels;
@@ -51,9 +52,22 @@ namespace Commands
         
         RandomWalker<GT> RW(graph);
 
+        //specifiy arguments
         typename RandomWalker<GT>::Args_Walk args_walk{args["alpha"], args["epsilon"], GraphList<VertexS<GT>>()};
         
-        auto res = RW.walk(GraphList<VertexS<GT>>(), args["version"], args_walk);
+        //GraphList<VertexS<GT>> source( (args["source"])); //[[0,.2] ]
+        std::cout<<args["source"]<<std::endl;
+        std::vector<VertexS<GT>> source  = (args["source"]);
+        
+        
+        std::cout<<GraphList<VertexS<GT>>(source);
+        std::cout<<source.size()<<std::endl;
+//         for(const auto& e : args["source"])
+//         {
+//             source.push_back(std::make_pair(e[0], e[1]));
+//         }
+        
+        auto res = RW.walk(GraphList<VertexS<GT>>(source), args["version"], args_walk);
         
         res.sort(Sort::valueDec);
         
