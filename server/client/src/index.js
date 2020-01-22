@@ -5,10 +5,10 @@ import React from 'react';
 import ReactDOM from 'react-dom'; 
 import Axios from 'axios';
 
+
 import './index.css';
 
 let cmd_get_version_list = {cmd: "ls"};
-
 
 class VersionList extends React.Component {
     constructor(props) {
@@ -23,8 +23,10 @@ class VersionList extends React.Component {
             selectedTags: [],
             selectedVersions: [],
         };
-        //Axios.post('http://localhost:9060', JSON.stringify(cmd_get_version_list)).then((response)=>
-        Axios.post('http://localhost:9060/ls').then((response)=>{
+
+        
+        var date = new Date();
+        Axios.get('http://localhost:9060/ls', date.getTime()).then((response)=>{
             this.setState({
                 raw: response.data,
                 vertexLabels:response.data.labels.vertex, 

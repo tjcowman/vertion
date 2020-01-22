@@ -11,31 +11,107 @@
 using namespace Pistache;
 using json = nlohmann::json;
 
+namespace Pistache::Http::Header
+{
+    class ETag : public Header 
+    {
+        public:
+            NAME("ETag")
 
+            ETag(std::string value="") : value_(value) {}
+
+
+
+            void parse(const std::string& value)override{
+                value_=value;
+            }
+
+            void write(std::ostream& os)const override {
+                os<<value_;
+            }
+
+
+        private:
+            std::string value_;
+    };
+    
+    class IfNoneMatch : public Header 
+    {
+        public:
+            NAME("If-None-Match")
+
+            IfNoneMatch(std::string value="") : value_(value) {}
+
+            const std::string& value()const{return value_;}
+
+            void parse(const std::string& value)override{
+                value_=value;
+            }
+
+            void write(std::ostream& os)const override {
+                os<<value_;
+            }
+
+
+        private:
+            std::string value_;
+    };
+    
+
+
+}
+  
 
 
 
 class HelloHandler : public Http::Handler
 {
     public:
-
+        
+        static  std::string eTag;
+        
         HTTP_PROTOTYPE(HelloHandler)
         static const Graph* graph_;
         
-        //NOTE: set modified ot server start, since filecant be modified while running
-
         void onRequest(const Http::Request& request, Http::ResponseWriter response) override
         {
             std::cout<<"Request: " + request.body()<<std::endl;
+            std::cout<<eTag<<std::endl;
             CommandRunner<GraphType::GD> CR(*graph_);
             if (request.resource() == "/ls") 
             {
-                json queryString = {{"cmd" ,"ls"}};
-                json queryResponse = CR.run(queryString);
+
                 
                 response.headers().add<Http::Header::AccessControlAllowOrigin>("*");
                 response.headers().add<Http::Header::ContentType>("application/json");
-                response.send(Http::Code::304, queryResponse.dump());
+                response.headers().add<Http::Header::ETag>(eTag);
+                response.headers().add<Http::Header::CacheControl>(
+                    Http::CacheDirective(Http::CacheDirective::Directive::MaxAge, std::chrono::seconds(10) )
+                        
+                );
+                    
+                if( !request.headers().has<Http::Header::IfNoneMatch>() ||
+                    !(request.headers().get<Http::Header::IfNoneMatch>()->value() == eTag)
+                )
+                {
+                    std::cout<<"has "<<request.headers().has<Http::Header::IfNoneMatch>()<<std::endl;
+                    if(request.headers().has<Http::Header::IfNoneMatch>())
+                        std::cout<<request.headers().get<Http::Header::IfNoneMatch>()->value()<<std::endl;
+                    
+                    json queryString = {{"cmd" ,"ls"}};
+                    json queryResponse = CR.run(queryString);
+                    response.send(Http::Code::Ok, queryResponse.dump());
+                }
+                else
+                {
+                    response.send(Http::Code::Not_Modified, ""/*queryResponse.dump()*/);
+                }
+                
+//                 if( request.headers().get<Http::Header::IfNoneMatch>()->value() == eTag)
+           
+           
+                
+                 
             }  
             else    
             {
@@ -49,6 +125,8 @@ class HelloHandler : public Http::Handler
             }
         }
 };
+
+std::string HelloHandler::eTag;
 const Graph* HelloHandler::graph_;
 
 
@@ -62,7 +140,7 @@ struct Args
 
 int main(int argc, char* argv[] )
 {
-    
+    srand (time(NULL));
     
      ARGLOOP(,
         ARG(port,stoi)
@@ -71,7 +149,11 @@ int main(int argc, char* argv[] )
         ARG(mode,)
 
     );
-
+     
+    Http::Header::Registry::instance().registerHeader<Http::Header::ETag>();
+    Http::Header::Registry::instance().registerHeader<Http::Header::IfNoneMatch>();
+    
+    HelloHandler::eTag = std::to_string(rand() % 1000000);
 
     Graph G(Context::undirected);
     GraphIO IO(G);
