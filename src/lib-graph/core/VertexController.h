@@ -33,7 +33,9 @@ class VertexController
         auto lookup(const std::string& id)const;
         auto lookup(Index index)const;
         
+        //Calls insert with VertexId through parseFromStream
         void insert(const std::string& filename, const VertexLabel<GT>& labels);
+        
         void insert(const VertexId& vertex, const VertexLabel<GT>& labels);
        
 

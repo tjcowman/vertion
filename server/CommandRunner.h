@@ -2,6 +2,7 @@
 
 #include "vertion.h"
 #include "query/RandomWalker.h"
+#include "query/IntegratedViewer.h"
 //#include "CommandParser.h"
 #include "Commands.h"
 
@@ -13,7 +14,7 @@ using json = nlohmann::json;
 template<class GT>
 void from_json(const json& j, VertexS<GT>& v)
 {
-    std::cout<<"HI"<<std::endl;
+//     std::cout<<"HI"<<std::endl;
     std::cout<<j<<std::endl;
     std::cout<<j["i"]<<" "<<j["v"]<<std::endl;
     

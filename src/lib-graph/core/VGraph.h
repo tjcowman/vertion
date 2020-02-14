@@ -171,7 +171,7 @@ class VGraph
          */
         std::vector<std::pair<Index, Index> > getSortedRowOrder(Index index, typename T::VersionIndex version)const;
         std::tuple<std::vector<Index>, std::vector<Value>, std::vector<EdgeLabel<T>>> getRowData(Index index, typename T::VersionIndex version)const;
-        
+        std::vector<std::tuple<typename T::Index, typename T::Value, EdgeLabel<T>>> getRowDataZipped(Index index, typename T::VersionIndex version)const;
 
         
         //Error Checking
@@ -183,8 +183,8 @@ class VGraph
         Context context_;
 
         
-        LabelMap<T> LMap_;
-        std::vector<EdgeLabel<T>> L_;
+        LabelMap<T> LMap_; //String value of edge labels 
+        std::vector<EdgeLabel<T>> L_; //Edge labels
         
         std::vector<Value> A_; /**< The values of non-zero edges in the graph.*/
         std::vector<Index> JA_; /**< The outgoing node/column index of the edges.*/
@@ -890,6 +890,17 @@ std::tuple<std::vector<typename T::Index>, std::vector<typename T::Value>, std::
     std::transform(JA_o.begin(), JA_o.end(), std::inserter(JA, JA.end()), [](const auto& e){return e.first;});
     //ext.begin(), ext.end(), std::insert_iterator<std::vector<EdgeLabel<T>> >(retVal, retVal.end()), [](const auto&e){return e.second;}
     return std::make_tuple(JA, A, L);
+}
+
+template<class T>
+std::vector<std::tuple<typename T::Index, typename T::Value, EdgeLabel<T>>> VGraph<T>::getRowDataZipped(Index index, typename T::VersionIndex version)const
+{
+     auto JA_o = getSortedRowOrder(index, version);
+     std::vector<std::tuple<typename T::Index, typename T::Value, EdgeLabel<T>>> ret;
+     
+     std::transform(JA_o.begin(), JA_o.end(), std::inserter(ret, ret.end()), [&,this](const auto& e){return std::make_tuple(e.first, A_[e.second], L_[e.second]);});
+     return ret;
+     
 }
 
 //Gets the sorted IA and JA vectors for a row based on whether they come from a split or regular row

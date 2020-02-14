@@ -11,31 +11,38 @@
 {
     align: right;
     float: right;
-    width: 33%;
+    width: 30%;
 }
 
 .rwrPanel
 {
     float: left;  
-    width: 67%;
+    width: 70%;
 }
 
 select.versionNames{
     background-color: #4CAF50;
 }
 
-ul.versionNames{
-    max-height: 200px;
+.versionNames{
+    max-height: 300px;
+
     overflow-y:scroll;
+    overflow-x:scroll;
 /*         background-color: #4CAF50; */
 }
 
+.vName{
+    
+    
+}
 
 
 .btn-smaller{
     margin: 1px;
     padding: 1px 4px;
     font-size: x-small;
+  
 }
 
 .card-body{

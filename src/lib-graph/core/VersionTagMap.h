@@ -279,7 +279,7 @@ std::ostream& operator<< (std::ostream & out, const VersionTagMap<Tp>& m)
     out<<m.displayNames_.size()<<"\n";
     for(size_t i=0; i<m.displayNames_.size(); ++i)
     {
-        out<<i<<"\t"<<m.displayNames_[i]<<"\n";
+        out<<i<<"\t"<<m.displayNames_.at(i)<<"\n";
     }
         
     
