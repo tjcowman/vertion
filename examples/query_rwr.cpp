@@ -10,9 +10,15 @@ int main()
     IO.read_serial("input/graph/ex0.vgraph");
     std::cout<<G.size()<<"\n";
     
-    RandomWalker RWR(G);
+    IntegratedViewer IV(G);
+    
+    RandomWalker RWR(IV);
+    IV.viewUnion({1});
     std::cout<<RWR.walk(VertexListCalc(), 0)<<"\n";
-    std::cout<<RWR.walk(VertexListCalc(), 1)<<"\n";
-    std::cout<<RWR.walk(VertexListCalc(), 2)<<"\n";
+//     IV.viewUnion({1});
+//     std::cout<<RWR.walk(VertexListCalc(), 0)<<"\n";
+//     IV.viewUnion({2});
+//     std::cout<<RWR.walk(VertexListCalc(), 0)<<"\n";
+ 
     
 }

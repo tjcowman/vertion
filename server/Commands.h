@@ -50,8 +50,13 @@ namespace Commands
     {
         json retVal;
         
-        RandomWalker<GT> RW(graph);
+        IntegratedViewer<GT> IV(graph);
+        IV.viewUnion({args["version"]});
+        
+        RandomWalker<GT> RW(IV);
 
+        
+        
         //specifiy arguments
         typename RandomWalker<GT>::Args_Walk args_walk{args["alpha"], args["epsilon"], GraphList<VertexS<GT>>()};
         
@@ -67,7 +72,8 @@ namespace Commands
 //             source.push_back(std::make_pair(e[0], e[1]));
 //         }
         
-        auto res = RW.walk(GraphList<VertexS<GT>>(source), args["version"], args_walk);
+        //auto res = RW.walk(GraphList<VertexS<GT>>(source), args["version"], args_walk);
+        auto res = RW.walk(GraphList<VertexS<GT>>(source), 0, args_walk);
         
         res.sort(Sort::valueDec);
         

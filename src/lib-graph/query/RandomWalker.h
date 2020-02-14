@@ -4,7 +4,7 @@
  */
 
 #include "vertion.h"
-
+#include "query/IntegratedViewer.h"
 
 template<class Value>
 using it = typename std::vector<Value>::const_iterator ;
@@ -165,7 +165,7 @@ class RandomWalker
             GraphList<VertexS<GT>> initialRanks = GraphList<VertexS<GT>>();
         };
             
-        RandomWalker(const VGraph<GT>& graph);
+        RandomWalker(const IntegratedViewer<GT>& viewer);
         
         
         Walk<GT> walk(const GraphList<VertexS<GT>>&  restartWeights, int version, Args_Walk args=Args_Walk());
@@ -173,20 +173,21 @@ class RandomWalker
         Walk<GT> walk(typename GT::Calc alpha, typename GT::Calc epsilon,  GraphList<VertexHP<GT>> restartWeights, int version, GraphList<VertexHP<GT>> initialRanks, Solver solver);
         
     private:
-        const VGraph<GT>* graph_;
-    
+        //const VGraph<GT>* graph_;
+        const IntegratedViewer<GT>* viewer_;
 };
 
 template<class GT>
-RandomWalker<GT>::RandomWalker(const VGraph<GT>& graph)
+RandomWalker<GT>::RandomWalker(const IntegratedViewer<GT>& viewer)
 {
-    graph_ = &graph;
+//     graph_ = &graph;
+    viewer_ = &viewer;
 }
 
 template<class GT>
 Walk<GT> RandomWalker<GT>::walk(const GraphList<VertexS<GT>>&  restartWeights, int version, Args_Walk args)
 {
-    switch(graph_->getContext())
+    switch(viewer_->graph_->getContext())
     {      
         case Context::undirected :
             return walk(args.alpha, args.epsilon, restartWeights, version, args.initialRanks, ChebySolver<GT>);
@@ -200,12 +201,12 @@ template<class GT>
 template<typename Solver>
 Walk<GT> RandomWalker<GT>::walk(typename  GT::Calc alpha, typename  GT::Calc epsilon, GraphList<VertexHP<GT>> restartWeights, int version, GraphList<VertexHP<GT>> initialRanks, Solver solver)
 {
-    const VGraph<GT> * G = graph_;
+//     const VGraph<GT> * G = graph_;
 
-    typename GT::Index nodes = G->size(version).nodes_;
-    const std::vector<AugIA<GT>>& IAU = G->getIA(version);
-    const std::vector<typename GT::Value>& A = G->getA();
-    const std::vector<typename GT::Index>& JA = G->getJA();
+    typename GT::Index nodes = viewer_->IA_.size(); //G->size(version).nodes_;
+    const std::vector<AugIA<GT>>& IAU = viewer_->IA_;// = G->getIA(version);
+    const std::vector<typename GT::Value>& A = viewer_->A_; //G->getA();
+    const std::vector<typename GT::Index>& JA = viewer_->JA_;//G->getJA();
 
     //Calculate the row totals for use in row normalization during the dot product loop
     std::vector<typename GT::Value> rowTotalWeight(nodes,0);
@@ -220,7 +221,7 @@ Walk<GT> RandomWalker<GT>::walk(typename  GT::Calc alpha, typename  GT::Calc eps
 
     //Takes the input restart vector, expands it to the correct number of GraphIndexes, and normalizes to sum to 1.0
 
-    restartWeights = restartWeights.expand(G->size(version).nodes_);
+    restartWeights = restartWeights.expand(nodes);//(G->size(version).nodes_);
 
     restartWeights = restartWeights.normalize();
 

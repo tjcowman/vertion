@@ -17,6 +17,10 @@ class VectorIA
         VectorIA(const VectorIA& cpy);
         VectorIA(typename T::Index nodes);
         
+        void clear();
+        
+        size_t size()const;
+        
         VectorIA<T>& operator=(const VectorIA<T>& cpy);
         
         //Getters
@@ -85,6 +89,22 @@ VectorIA<T>::VectorIA(typename T::Index nodes)
     versionBounds_ = std::vector<std::pair<typename T::Index,typename T::Index>>{std::make_pair(0, nodes)};
     
     nextInsert=0; //nodes;
+}
+
+// template<class T>
+// void VectorIA<T>::clear()
+// {
+//     IA_.clear();
+//     cacheIA_.clear();
+//     cacheReplacementOrder = std::vector<typename T::VersionIndex>(INITIAL_CACHE_SIZE, -1);
+//     versionBounds_.clear();
+//     nextInsert=0;
+// }
+
+template<class T>
+size_t VectorIA<T>::size()const
+{
+    return IA_.size();
 }
 
 template<class T>

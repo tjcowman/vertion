@@ -8,29 +8,43 @@ template<class GT>
 using ZippedRowIT = typename std::vector<std::tuple<typename GT::Index, typename GT::Value, EdgeLabel<GT>>>::iterator;
 
 template<class GT>
-class IngtegratedViewer
+class IntegratedViewer
 {
     public:
-        IngtegratedViewer(const VGraph<GT>& graph);
+        IntegratedViewer(const VGraph<GT>& graph);
         
-
+        void clear();
+        
         void viewUnion(std::vector<typename GT::VersionIndex> versions);
         
-    private:
+//     private:
         
         std::vector<EdgeLabel<GT>> L_; //Edge labels
         std::vector<typename GT::Value> A_; /**< The values of non-zero edges in the graph.*/
         std::vector<typename GT::Index> JA_; /**< The outgoing node/column index of the edges.*/
-        VectorIA<GT> IA_; /**< The index bounds in A_ and JA_ for outgoing edges in IA_[index].*/
+        std::vector<AugIA<GT>>IA_; /**< The index bounds in A_ and JA_ for outgoing edges in IA_[index].*/
         
         const VGraph<GT>* graph_;
 
 };
 
 template<class GT>
-IngtegratedViewer<GT>::IngtegratedViewer(const VGraph<GT>& graph)
+void IntegratedViewer<GT>::clear()
+{
+    L_.clear();
+    A_.clear();
+    JA_.clear();
+    IA_.clear();
+}
+
+template<class GT>
+IntegratedViewer<GT>::IntegratedViewer(const VGraph<GT>& graph)
 {
     graph_ = &graph;
+    IA_ =  std::vector<AugIA<GT>>();
+    JA_ =  std::vector<typename GT::Index>();
+    A_ = std::vector<typename GT::Value>();
+    L_ = std::vector<EdgeLabel<GT>>();
 }
 
 template<class GT>
@@ -66,9 +80,11 @@ auto setUnionReduced(ZippedRowIT<GT> first1, ZippedRowIT<GT> last1, ZippedRowIT<
 }
     
 template<class GT>
-void IngtegratedViewer<GT>::viewUnion(std::vector<typename GT::VersionIndex> versions)
+void IntegratedViewer<GT>::viewUnion(std::vector<typename GT::VersionIndex> versions)
 {
-    for(typename GT::Vertex i=0; i<graph_->size(0).nodes_; ++i)
+    clear();
+    
+    for(typename GT::Index i=0; i<graph_->size(0).nodes_; ++i)
     {
         //Iterate over the versions for that row
         //auto [JA, A, L] = graph_->getRowData(i, versions[0]);
@@ -77,32 +93,41 @@ void IngtegratedViewer<GT>::viewUnion(std::vector<typename GT::VersionIndex> ver
         //Perform the union
         for(size_t v=1; v<versions.size(); ++v)
         {
-            auto next = getRowDataZipped(i, versions[i]);
+            auto next = graph_->getRowDataZipped(i, versions[v]);
             ZippedRow<GT> tmp;
-            setUnionReduced(row.begin(), row.end(), next.begin(), next.end(), tmp);
+            setUnionReduced<GT>(row.begin(), row.end(), next.begin(), next.end(), tmp.begin());
             row=tmp;
 //             row.insert.push_back(getRowDataZipped(i, versions[i]));
         }
         
         for(const auto& e : row)
         {
+//             std::cout<<std::get<0>(e)<<"\t"<<std::get<1>(e)<<"\t"<<std::get<2>(e)<<std::endl;
+            
             JA_.push_back(std::get<0>(e));
             A_.push_back(std::get<1>(e));
             L_.push_back(std::get<2>(e));
         }
-        IA_.push_back(AugIA<GT>(IA_.size(), row.size()));
-        
-//         std::sort(row.begin(), row.end(), [](const auto& lhs, const auto& rhs){return std::get<0>(lhs)<std::get<0>(rhs);});
-// 
-//         ZippedRowIT it1 = row.begin();
-//         ZippedRowIT it2 = row.begin();
-//         
-//         while(true)
-//         {
-//             auto eq = std::equal_range()
-//         }
+        IA_.push_back(AugIA<GT>(JA_.size()-1, row.size()));
+//         std::cout<<IA_.back()<<std::endl;
+
 //         
     }   
-    
+//     for(const auto& e : JA_)
+//         std::cout<<e<<" ";
+//     std::cout<<std::endl;
+//     
+//     for(const auto& e : A_)
+//         std::cout<<e<<" ";
+//     std::cout<<std::endl;
+//     
+//     for(const auto& e : L_)
+//         std::cout<<e<<" ";
+//     std::cout<<std::endl;
+//     
+//     for(const auto& e : IA_)
+//         std::cout<<e<<" ";
+//     std::cout<<std::endl;
+//     
     
 }
