@@ -51,6 +51,7 @@ std::pair<long, std::vector<typename GT::Calc> > LinearAlgebraSolver(
             typename GT::Index lb = IA[n].s1();
             typename GT::Index rb = IA[n].s1() + IA[n].s2();
             
+//std::cout<<"rb "<<rb<<" lb "<<lb<<std::endl;
             
             if(lb==rb)
                 ranksNext[n] += ranks[n];
@@ -73,6 +74,7 @@ std::pair<long, std::vector<typename GT::Calc> > LinearAlgebraSolver(
         totaldiff = computeNormL1<typename GT::Index,typename GT::Calc>(ranksNext.begin(), ranksNext.end(), ranks.begin());
         ranks = ranksNext;
         iterationsToConvergence++;
+// std::cout<<iterationsToConvergence<<" "<<totaldiff<<std::endl;
     }
     return std::make_pair(iterationsToConvergence, ranks);
 }

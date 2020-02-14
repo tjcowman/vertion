@@ -84,6 +84,8 @@ void IntegratedViewer<GT>::viewUnion(std::vector<typename GT::VersionIndex> vers
 {
     clear();
     
+    IA_ = std::vector<AugIA<GT>>( graph_->size(0).nodes_);
+    
     for(typename GT::Index i=0; i<graph_->size(0).nodes_; ++i)
     {
         //Iterate over the versions for that row
@@ -108,11 +110,13 @@ void IntegratedViewer<GT>::viewUnion(std::vector<typename GT::VersionIndex> vers
             A_.push_back(std::get<1>(e));
             L_.push_back(std::get<2>(e));
         }
-        IA_.push_back(AugIA<GT>(JA_.size()-1, row.size()));
+       // IA_.push_back(AugIA<GT>(JA_.size()-1, row.size()));
+        IA_[i] =  AugIA<GT>(JA_.size()-row.size(), row.size());
 //         std::cout<<IA_.back()<<std::endl;
 
 //         
     }   
+    std::cout<<"FINISHED VIEW"<<std::endl;
 //     for(const auto& e : JA_)
 //         std::cout<<e<<" ";
 //     std::cout<<std::endl;
