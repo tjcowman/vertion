@@ -6,6 +6,7 @@ template<class GT>
 using ZippedRow = std::vector<std::tuple<typename GT::Index, typename GT::Value, EdgeLabel<GT>>>;
 template<class GT>
 using ZippedRowIT = typename std::vector<std::tuple<typename GT::Index, typename GT::Value, EdgeLabel<GT>>>::iterator;
+//using ZippedRowIT = typename std::vector<std::tuple<typename GT::Index, typename GT::Value, EdgeLabel<GT>>>::iterator;
 
 template<class GT>
 class IntegratedViewer
@@ -48,7 +49,7 @@ IntegratedViewer<GT>::IntegratedViewer(const VGraph<GT>& graph)
 }
 
 template<class GT>
-auto setUnionReduced(ZippedRowIT<GT> first1, ZippedRowIT<GT> last1, ZippedRowIT<GT> first2, ZippedRowIT<GT> last2, ZippedRowIT<GT> result )
+auto setUnionReduced(ZippedRowIT<GT> first1, ZippedRowIT<GT> last1, ZippedRowIT<GT> first2, ZippedRowIT<GT> last2, std::back_insert_iterator<ZippedRow<GT>> result )
 {
     while (true)
     {
@@ -70,8 +71,8 @@ auto setUnionReduced(ZippedRowIT<GT> first1, ZippedRowIT<GT> last1, ZippedRowIT<
         else 
         {
             *result = *first1;
-            std::get<1>(*result) += std::get<1>(*first2);
-            std::get<2>(*result) = std::get<2>(*result).makeUnion(std::get<2>(*first2));
+//             std::get<1>(*result) += std::get<1>(*first2);
+//             std::get<2>(*result) = std::get<2>(*result).makeUnion(std::get<2>(*first2));
             ++first1; 
             ++first2; 
         }
@@ -97,7 +98,7 @@ void IntegratedViewer<GT>::viewUnion(std::vector<typename GT::VersionIndex> vers
         {
             auto next = graph_->getRowDataZipped(i, versions[v]);
             ZippedRow<GT> tmp;
-            setUnionReduced<GT>(row.begin(), row.end(), next.begin(), next.end(), tmp.begin());
+            setUnionReduced<GT>(row.begin(), row.end(), next.begin(), next.end(), std::back_inserter(tmp));
             row=tmp;
 //             row.insert.push_back(getRowDataZipped(i, versions[i]));
         }

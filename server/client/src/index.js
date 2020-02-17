@@ -63,7 +63,7 @@ class App extends React.Component {
             let ret = [];
             for(let i in this.state.versions_s)
                 if(this.state.versions_s[i])
-                    ret.push(i);
+                    ret.push(Number(i));
 
             return(ret);
     }

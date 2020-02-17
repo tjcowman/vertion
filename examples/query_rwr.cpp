@@ -15,10 +15,10 @@ int main()
     RandomWalker RWR(IV);
     IV.viewUnion({1});
     std::cout<<RWR.walk(VertexListCalc(), 0)<<"\n";
-//     IV.viewUnion({1});
-//     std::cout<<RWR.walk(VertexListCalc(), 0)<<"\n";
-//     IV.viewUnion({2});
-//     std::cout<<RWR.walk(VertexListCalc(), 0)<<"\n";
+    IV.viewUnion({2});
+    std::cout<<RWR.walk(VertexListCalc(), 0)<<"\n";
+    IV.viewUnion({1,2});
+    std::cout<<RWR.walk(VertexListCalc(), 0)<<"\n";
  
     
 }

@@ -170,9 +170,9 @@ class RandomWalker
         RandomWalker(const IntegratedViewer<GT>& viewer);
         
         
-        Walk<GT> walk(const GraphList<VertexS<GT>>&  restartWeights, int version, Args_Walk args=Args_Walk());
+        Walk<GT> walk(const GraphList<VertexS<GT>>&  restartWeights, Args_Walk args=Args_Walk());
         template<typename Solver>
-        Walk<GT> walk(typename GT::Calc alpha, typename GT::Calc epsilon,  GraphList<VertexHP<GT>> restartWeights, int version, GraphList<VertexHP<GT>> initialRanks, Solver solver);
+        Walk<GT> walk(typename GT::Calc alpha, typename GT::Calc epsilon,  GraphList<VertexHP<GT>> restartWeights, GraphList<VertexHP<GT>> initialRanks, Solver solver);
         
     private:
         //const VGraph<GT>* graph_;
@@ -187,21 +187,21 @@ RandomWalker<GT>::RandomWalker(const IntegratedViewer<GT>& viewer)
 }
 
 template<class GT>
-Walk<GT> RandomWalker<GT>::walk(const GraphList<VertexS<GT>>&  restartWeights, int version, Args_Walk args)
+Walk<GT> RandomWalker<GT>::walk(const GraphList<VertexS<GT>>&  restartWeights, Args_Walk args)
 {
     switch(viewer_->graph_->getContext())
     {      
         case Context::undirected :
-            return walk(args.alpha, args.epsilon, restartWeights, version, args.initialRanks, ChebySolver<GT>);
+            return walk(args.alpha, args.epsilon, restartWeights, args.initialRanks, ChebySolver<GT>);
         default :
-            return walk(args.alpha, args.epsilon, restartWeights, version, args.initialRanks, LinearAlgebraSolver<GT>);
+            return walk(args.alpha, args.epsilon, restartWeights, args.initialRanks, LinearAlgebraSolver<GT>);
     }
 }
 
 
 template<class GT>
 template<typename Solver>
-Walk<GT> RandomWalker<GT>::walk(typename  GT::Calc alpha, typename  GT::Calc epsilon, GraphList<VertexHP<GT>> restartWeights, int version, GraphList<VertexHP<GT>> initialRanks, Solver solver)
+Walk<GT> RandomWalker<GT>::walk(typename  GT::Calc alpha, typename  GT::Calc epsilon, GraphList<VertexHP<GT>> restartWeights, GraphList<VertexHP<GT>> initialRanks, Solver solver)
 {
 //     const VGraph<GT> * G = graph_;
 
@@ -247,7 +247,7 @@ Walk<GT> RandomWalker<GT>::walk(typename  GT::Calc alpha, typename  GT::Calc eps
     std::string header = std::string("PageRank Result; ") 
     + "alpha " + std::to_string(alpha) + "; "
     + "epsilon " + std::to_string(epsilon) + "; "
-    + "version " + std::to_string(version) + "; "
+//     + "version " + std::to_string(version) + "; "
     + "convergence " + std::to_string(result.first) + "; ";
 // 
      return retVal.setHeader(header);

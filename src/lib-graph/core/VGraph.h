@@ -155,7 +155,8 @@ class VGraph
         const std::vector<Index> & getJA()const;    
         const VectorIA<T> & getIA()const;
         
-
+        const VertexController<T>& getVertexData()const;
+        
         /*
          * Used to get the correct, ordered row version from decompression and rebuilding based on IA Range
          */
@@ -1172,6 +1173,12 @@ template<class T>
 const VectorIA<T> & VGraph<T>::getIA()const
 {
     return IA_;
+}
+
+template<class T>
+const VertexController<T>& VGraph<T>::getVertexData()const
+{
+    return vertexData_;
 }
 
 template<class T>

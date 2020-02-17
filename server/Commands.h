@@ -36,11 +36,26 @@ namespace Commands
         labels["vertex"] = graph.getVertexLabels();
         labels["edge"] = graph.getEdgeLabels();
         
+        
+        //NodeData
+        //Need form [{"id":0, "name":"...", "labels":[0,1,1] }]
+        auto vertexData=json::array();
+        for(typename GT::Index i=0; i<graph.size(0).nodes_; ++i)
+        {
+            json js;
+            js["id"] = i;
+            js["name"]= graph.getID(i);
+            js["labels"] = graph.getVertexData().lookupLabels(i);
+            vertexData.push_back(js);
+        }
+        
+        
         //Consolidating
         ret["nodes"] = graph.size(0).nodes_;
         ret["versions"] = jsArr ;
         ret["tree"] = jsArr2;
         ret["labels"] = labels;
+        ret["vertexData"];
 // //         std::cout<<ret<<std::endl;
         return ret;
     }
@@ -51,7 +66,7 @@ namespace Commands
         json retVal;
         
         IntegratedViewer<GT> IV(graph);
-        IV.viewUnion({args["version"]});
+        IV.viewUnion(args["versions"].get<std::vector<typename GT::VersionIndex>>());
         
         RandomWalker<GT> RW(IV);
 
@@ -73,7 +88,7 @@ namespace Commands
 //         }
         
         //auto res = RW.walk(GraphList<VertexS<GT>>(source), args["version"], args_walk);
-        auto res = RW.walk(GraphList<VertexS<GT>>(source), 0, args_walk);
+        auto res = RW.walk(GraphList<VertexS<GT>>(source), args_walk);
         
         res.sort(Sort::valueDec);
         
