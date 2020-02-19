@@ -33,7 +33,11 @@ namespace Commands
         
         //labels
         json labels;
-        labels["vertex"] = graph.getVertexLabels();
+        labels["vertex"]["names"] = graph.getVertexLabels();
+        for(int i=0; i<labels["vertex"]["names"].size(); ++i)
+            labels["vertex"]["url"].push_back( graph.getVertexData().lookupURL(i));//"test";
+        
+        
         labels["edge"] = graph.getEdgeLabels();
         
 //         for(const auto& e :  graph.getVertexLabels())

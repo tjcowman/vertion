@@ -13,6 +13,8 @@ class LabelMap
         
         std::vector<std::string> getLabels()const;
        
+        std::string getExternalURL(int labelIndex)const;
+        
         size_t size()const;
        
         LabelMap<GT> merge(const LabelMap<GT>& rhs)const;
@@ -28,6 +30,7 @@ class LabelMap
         
     private:
         
+        std::map<typename GT::Index, std::string> externalURLS_;
         std::map<typename GT::Index, std::string>  poss_;
         std::map<std::string, typename GT::Index>  labels_;
 };
@@ -58,6 +61,16 @@ std::vector<std::string> LabelMap<GT>::getLabels()const
     for(const auto& e : poss_)
         retVal[e.first] = e.second;
     return retVal;
+}
+
+template<class GT>
+std::string  LabelMap<GT>::getExternalURL(int labelIndex)const
+{
+    auto url = externalURLS_.find(labelIndex);
+    if(url != externalURLS_.end())
+        return(url->second);
+    else
+        return "";
 }
 
 template<class GT>
@@ -133,7 +146,7 @@ auto LabelMap<GT>::lookup(const K& key)const
 template<class GT>
 void LabelMap<GT>::read_serial(std::istream& is)
 {
-    int slotsUsed;
+    size_t slotsUsed;
     is>>slotsUsed;
     
     //read labelNames 
@@ -142,6 +155,17 @@ void LabelMap<GT>::read_serial(std::istream& is)
         std::string name;
         is>>name;
         addLabel(name);
+    }
+    
+    size_t lines;
+    is>>lines;
+    for(size_t i=0; i < lines; ++i)
+    {
+        size_t key;
+        std::string val;
+        is>>key>>val;
+        
+        externalURLS_.insert({key,val});
     }
 }
 
@@ -155,4 +179,10 @@ void LabelMap<GT>::write_serial(std::ostream& os)const
     //write labelNames 
     for(const auto& e : ordered)
         os<<e<<"\n";
+    
+    os<<externalURLS_.size()<<"\n";
+    for(const auto& e : externalURLS_)
+    {
+        os<<e.first<<"\t"<<e.second;
+    }
 }

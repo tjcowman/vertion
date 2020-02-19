@@ -21,13 +21,16 @@ class VersionList extends React.Component {
             this.setState({
                 raw: response.data,
             })
+             console.log(response)
             this.props.setVertexData(response.data.vertexData);
             this.props.setLabels(response.data.labels.vertex, response.data.labels.edge);
-            
-            console.log(response)
+//             console.log(response.data.labels.vertex);
+           
+
         }).then(()=>{          
             let tags = {};
 
+            console.log(this.props.getLabels());
             
             for(let i in this.state.raw.versions){
                 let ar =  this.state.raw.versions[i].tags;
@@ -110,7 +113,7 @@ class VersionList extends React.Component {
                             
                             Vertex Labels: 
                             <div className="card-body pb-0 pt-0">
-                                {this.props.getLabels()[0].map((e,i) =>(
+                                { this.props.getLabels()[0].names.map((e,i) =>(
                                     <button key={i} className="btn btn-outline-secondary m-1 btn-smaller" >{e}</button>
                                 ))}
                             </div>

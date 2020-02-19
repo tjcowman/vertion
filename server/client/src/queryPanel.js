@@ -1,5 +1,5 @@
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { Button, Form,Col,Row} from 'react-bootstrap';
+import { Button, Form,Col,Row,Tabs,Tab} from 'react-bootstrap';
 
 import React from 'react';
 import ReactDOM from 'react-dom'; 
@@ -9,6 +9,40 @@ import BootstrapTable from 'react-bootstrap-table-next';
 import paginationFactory from 'react-bootstrap-table2-paginator';
 import filterFactory, { textFilter } from 'react-bootstrap-table2-filter';
     
+
+
+import CytoscapeComponent from 'react-cytoscapejs'
+
+class Demo extends React.Component {
+  
+  state = {
+    w: 100,
+    h: 100,
+    elements : [
+{ data: { id: 'one', label: 'Node 1' }, position: { x: 0, y: 0 } },
+{ data: { id: 'two', label: 'Node 2' }, position: { x: 100, y: 0 }},
+{ data: { source: 'one', target: 'two', label: 'Edge from Node1 to Node2'}}
+]
+  }
+
+  componentDidMount = () => {
+    this.setState({
+      w: window.innerWidth,
+      h:window.innerHeight
+    })
+  }
+  
+  render() {
+    return(
+      <div>
+        <CytoscapeComponent
+            elements={this.state.elements}
+            style={{ width: this.state.w, height: this.state.h }}
+        />
+      </div>
+    )
+}
+}
 
 
 function getColumns(){
@@ -86,16 +120,23 @@ class QueryPanel extends React.Component {
   }
 
 
-  convertLabelsToText(labelBits, labelNames){
+  labelBitsToArray(labelBits, labelsUsed){
+    let indexes = [];
+    for(let i=0; i<labelsUsed; ++i) {
+        if (labelBits & 0x1)
+            indexes.push(i);
+    
+    labelBits = labelBits >> 1;
+    }
+    return indexes;
+  }
+  
+  convertLabelArrayToText(labelArray, labelNames){
     let names=[];
 //     console.log(labelNames);
-    for(let i=0; i<labelNames.length; ++i) {
-        if (labelBits & 0x1)
-             names.push(labelNames[i]);
-        labelBits = labelBits >> 1;
+    for(let e in labelArray)
+      names.push(labelNames[e]);
         
-    }
-      
     return names;
       
   }
@@ -117,14 +158,27 @@ class QueryPanel extends React.Component {
     
         Axios.post('http://localhost:9060', JSON.stringify(command)).then((response)=>{
          
-            response.data.weights.forEach((e,i) => (
-                e["row"]=i,  
-                e["name"]=this.props.getVertexDataRow(e["id"])["name"],
+            response.data.weights.forEach((e,i) => {
+                let labelBits = this.props.getVertexDataRow(e["id"])["labels"];
+                let labelArray = this.labelBitsToArray(labelBits, this.props.getLabels()[0].names.length);
+                //let externalURLPrexfix = this.get
+                                
+                e["row"]=i;  
+//                   label=== 1 ? :
+                   // this.props.getVertexDataRow(e["id"])["name"]  <a href="url">this.props.getVertexDataRow(e["id"])["name"]</a>,
+                e["name"]=this.props.getVertexDataRow(e["id"])["name"];
         
-                e["labels"] = this.convertLabelsToText(this.props.getVertexDataRow(e["id"])["labels"], this.props.getLabels()[0])//this.props.getVertexDataRow(e["id"])["labels"],
+                e["labels"] = this.convertLabelArrayToText(labelArray, this.props.getLabels()[0].names);//this.props.getVertexDataRow(e["id"])["labels"],
+//                 e["labels"] = [];
                 
+//                 for(let li in labelArray)
+//                 {
+//                     this.props.getLabels()[0].url[labelArray[li]]  !== ""  ? 
+//                         e["labels"].push(<a href={this.props.getLabels()[0].url[li] + e["name"]} target="_blank">{this.props.getLabels()[0].names[li]}</a>) :
+//                         e["labels"].push(this.props.getLabels()[0].names[labelArray[li]]);
+//                 }
                
-            ));
+            });
             
             
             
@@ -158,8 +212,16 @@ class QueryPanel extends React.Component {
 
             <Button className="form-control" variant="primary" onClick={(e) =>this.handleSubmit(e)} >Submit</Button>
 
+
             <div  style={{ marginTop: 20 }}>
-            <BootstrapTable striped condensed keyField='row' data={ this.state.result} columns={ getColumns()}  pagination={ paginationFactory(options)} filter={ filterFactory() }   />
+            <Tabs defaultActiveKey="results-table" id="resultsFormat">
+                <Tab eventKey="results-table" title="Table">
+                    <BootstrapTable striped condensed keyField='row' data={ this.state.result} columns={ getColumns()}  pagination={ paginationFactory(options)} filter={ filterFactory() }   />
+                </Tab>
+                <Tab eventKey="results-graph" title="Graph">
+                    <Demo/>
+                </Tab>
+            </Tabs>
             </div>
        
 

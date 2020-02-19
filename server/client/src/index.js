@@ -17,7 +17,7 @@ class App extends React.Component {
     constructor(props){
         super(props);
         this.state={
-            vertexLabels : [],
+            vertexLabels : {names:[], urls:[]},
             edgeLabels : [],
             vertexData : [],
             versions_s : []
@@ -56,9 +56,15 @@ class App extends React.Component {
             vertexLabels: vertexLabels,
             edgeLabels: edgeLabels
         })
+        
+//         console.log(vertexLabels)
+//         console.log(this.state.vertexLabels);
     }
     
+    
     getLabels = () => {
+        
+
         return [this.state.vertexLabels, this.state.edgeLabels];
     }
     

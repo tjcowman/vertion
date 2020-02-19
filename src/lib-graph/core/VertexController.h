@@ -32,6 +32,7 @@ class VertexController
         
         auto lookup(const std::string& id)const;
         auto lookup(Index index)const;
+        std::string lookupURL(Index index)const;
         
         VertexLabel<GT> lookupLabels(Index index)const;
         
@@ -116,6 +117,12 @@ template<class GT>
 VertexLabel<GT> VertexController<GT>::lookupLabels(Index index)const
 {
     return ids_[index].second;
+}
+
+template<class GT>
+std::string VertexController<GT>::lookupURL(Index index)const
+{
+    return labelNames_.getExternalURL(index);
 }
 
 template<class GT>
