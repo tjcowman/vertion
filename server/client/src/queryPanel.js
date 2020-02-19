@@ -11,21 +11,25 @@ import filterFactory, { textFilter } from 'react-bootstrap-table2-filter';
     
 
 
-function getColumns(data){
-    let col=[]
-    console.log(data[0])
-    for(let e in data[0]){
-        console.log(e)
-        
-        if(e !== "row")
-            col.push({"dataField":e, "text":e});
-        
-        if (e ==="id")
-            col[col.length-1]["filter"]=textFilter();
-    }
-        
-        
-    console.log(col);    
+function getColumns(){
+    let col = [
+        {
+            dataField: "name",
+            text: "name",
+            filter: textFilter()
+        },
+        {
+            dataField: "labels",
+            text: "labels",
+            filter: textFilter()
+        },
+        {
+            dataField: "value",
+            text: "value"
+        }
+    
+    ]   
+
     return col;
 }
 
@@ -82,7 +86,19 @@ class QueryPanel extends React.Component {
   }
 
 
-  
+  convertLabelsToText(labelBits, labelNames){
+    let names=[];
+//     console.log(labelNames);
+    for(let i=0; i<labelNames.length; ++i) {
+        if (labelBits & 0x1)
+             names.push(labelNames[i]);
+        labelBits = labelBits >> 1;
+        
+    }
+      
+    return names;
+      
+  }
   
   handleSubmit(event) {
 
@@ -96,15 +112,24 @@ class QueryPanel extends React.Component {
             
         
         let command = {cmd:"rwr", versions:versions, alpha:Number(this.state.alpha), epsilon:Number(this.state.epsilon), topk:Number(this.state.topk), source:JSON.parse(this.state.source)}; 
-        console.log(JSON.stringify(command))
-        console.log(JSON.parse(this.state.source))
+//         console.log(JSON.stringify(command))
+//         console.log(JSON.parse(this.state.source))
     
         Axios.post('http://localhost:9060', JSON.stringify(command)).then((response)=>{
+         
+            response.data.weights.forEach((e,i) => (
+                e["row"]=i,  
+                e["name"]=this.props.getVertexDataRow(e["id"])["name"],
+        
+                e["labels"] = this.convertLabelsToText(this.props.getVertexDataRow(e["id"])["labels"], this.props.getLabels()[0])//this.props.getVertexDataRow(e["id"])["labels"],
+                
+               
+            ));
             
-            response.data.weights.forEach((e,i) => e["row"]=i  );
+            
             
             this.setState({result: response.data.weights})
-          console.log(this.state.result);
+//           console.log(this.state.result);
         });
       
     }
@@ -121,7 +146,6 @@ class QueryPanel extends React.Component {
             <div className="card">
                 <div className="card-body"> 
                     <Row>
-                    {/*  <Col>Version<Form.Control name="version" value={this.state.version} onChange={(e) =>this.handleChange(e)} /></Col>*/}
                         <Col>Source<Form.Control name="source" value={this.state.source} onChange={(e) =>this.handleChange(e)} /></Col>
                         <Col>Alpha <Form.Control  name="alpha"  value={this.state.alpha} onChange={(e) =>this.handleChange(e)} /> </Col>
                         <Col>Epsilon<Form.Control   name="epsilon"  value={this.state.epsilon} onChange={(e) =>this.handleChange(e)} /></Col>
@@ -135,7 +159,7 @@ class QueryPanel extends React.Component {
             <Button className="form-control" variant="primary" onClick={(e) =>this.handleSubmit(e)} >Submit</Button>
 
             <div  style={{ marginTop: 20 }}>
-            <BootstrapTable striped condensed keyField='row' data={ this.state.result} columns={ getColumns(this.state.result)}  pagination={ paginationFactory(options)} filter={ filterFactory() }   />
+            <BootstrapTable striped condensed keyField='row' data={ this.state.result} columns={ getColumns()}  pagination={ paginationFactory(options)} filter={ filterFactory() }   />
             </div>
        
 

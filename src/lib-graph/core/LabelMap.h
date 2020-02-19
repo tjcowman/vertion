@@ -35,6 +35,9 @@ class LabelMap
 template<class GT>
 int LabelMap<GT>::addLabel(const std::string& s)
 {
+//     for(const auto& e : poss_)
+//         std::cout<<e.first<<" : "<< e.second<<std::endl;
+    
     if(poss_.size() < GT::LabelSize)
     {
         poss_.insert({poss_.size(),s});
@@ -147,7 +150,9 @@ void LabelMap<GT>::write_serial(std::ostream& os)const
 {
     os<<size()<<"\n";
     
+    auto ordered = getLabels();
+    
     //write labelNames 
-    for(const auto& e : labels_)
-        os<<e.first<<"\n";
+    for(const auto& e : ordered)
+        os<<e<<"\n";
 }

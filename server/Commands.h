@@ -36,7 +36,10 @@ namespace Commands
         labels["vertex"] = graph.getVertexLabels();
         labels["edge"] = graph.getEdgeLabels();
         
+//         for(const auto& e :  graph.getVertexLabels())
+//             std::cout<<e<<std::endl;
         
+//         std::cout<<labels["vertex"]<<std::endl;
         //NodeData
         //Need form [{"id":0, "name":"...", "labels":[0,1,1] }]
         auto vertexData=json::array();
@@ -45,13 +48,14 @@ namespace Commands
             json js;
             js["id"] = i;
             js["name"]= graph.getID(i);
-            js["labels"] = graph.getVertexData().lookupLabels(i);
+            js["labels"] = graph.getVertexData().lookupLabels(i).getBits().to_ulong();
             vertexData.push_back(js);
         }
         
         
         //Consolidating
         ret["nodes"] = graph.size(0).nodes_;
+        ret["vertexData"] = vertexData;
         ret["versions"] = jsArr ;
         ret["tree"] = jsArr2;
         ret["labels"] = labels;

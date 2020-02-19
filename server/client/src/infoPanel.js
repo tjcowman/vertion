@@ -7,8 +7,6 @@ class VersionList extends React.Component {
         super(props);
         this.state = {
             raw: [],
-            vertexLabels: [],
-            edgeLabels: [],
             tags: [],
             tree: [],
             names: [],
@@ -22,13 +20,14 @@ class VersionList extends React.Component {
         Axios.get('http://localhost:9060/ls', date.getTime()).then((response)=>{
             this.setState({
                 raw: response.data,
-                vertexLabels:response.data.labels.vertex, 
-                edgeLabels:response.data.labels.edge
             })
+            this.props.setVertexData(response.data.vertexData);
+            this.props.setLabels(response.data.labels.vertex, response.data.labels.edge);
             
+            console.log(response)
         }).then(()=>{          
             let tags = {};
-//              console.log(this.state.raw);
+
             
             for(let i in this.state.raw.versions){
                 let ar =  this.state.raw.versions[i].tags;
@@ -46,10 +45,7 @@ class VersionList extends React.Component {
             let tagsArr = Object.keys(tags).map((e,i) => ([e,i]));
             let namesArr =this.state.raw.versions.map( (e,i) => ([e.name])   );
             let newData= []; this.convertToTree(this.state.raw.tree, 0, 0, newData);
-//             console.log(namesArr);
-            
-//              console.log(this.state.raw.labels);
-            
+
             this.setState({
                 tags: tagsArr,
                 selectedTags: Array(tagsArr.length).fill(false),
@@ -57,8 +53,9 @@ class VersionList extends React.Component {
                 names: namesArr,
                 tree: newData,
             });
-//             console.log(this.state.tree)          
+     
         });
+     
         
     }
     
@@ -113,14 +110,14 @@ class VersionList extends React.Component {
                             
                             Vertex Labels: 
                             <div className="card-body pb-0 pt-0">
-                                {this.state.vertexLabels.map((e,i) =>(
+                                {this.props.getLabels()[0].map((e,i) =>(
                                     <button key={i} className="btn btn-outline-secondary m-1 btn-smaller" >{e}</button>
                                 ))}
                             </div>
                             
                             Edge Labels: 
                             <div className="card-body pb-0 pt-0">
-                                {this.state.edgeLabels.map((e,i) =>(
+                                {this.props.getLabels()[1].map((e,i) =>(
                                     <button key={i} className="btn btn-outline-secondary m-1 btn-smaller" >{e}</button>
                                 ))}
                             </div>

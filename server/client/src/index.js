@@ -13,37 +13,19 @@ import './index.css';
 
 
 
-
-// class DescriptionPanel extends React.Component {
-//   constructor(props) {
-//     super(props);
-//     
-//    
-//   }
-//   
-//   render(){
-//     return(
-//         <></>
-//     );
-//   }
-//   
-// }
-
 class App extends React.Component {
     constructor(props){
         super(props);
         this.state={
+            vertexLabels : [],
+            edgeLabels : [],
+            vertexData : [],
             versions_s : []
         }
-        
-         
-        this.selectVersionToggle = this.selectVersionToggle.bind(this);
-        this.isSelected = this.isSelected.bind(this);
-        this.getSelectedVersions = this.getSelectedVersions.bind(this);
     }
     
     
-    selectVersionToggle(index) {
+    selectVersionToggle=(index)=>{
         const versions_s = this.state.versions_s.slice();
         versions_s[Number(index)] = !versions_s[Number(index)];
         
@@ -54,11 +36,11 @@ class App extends React.Component {
 
     }
     
-    isSelected(index) {
+    isSelected=(index)=>{
         return this.state.versions_s[index] === true;
     }
     
-    getSelectedVersions(){
+    getSelectedVersions=()=>{
 
             let ret = [];
             for(let i in this.state.versions_s)
@@ -67,6 +49,28 @@ class App extends React.Component {
 
             return(ret);
     }
+    
+    
+    setLabels=(vertexLabels, edgeLabels)=>{
+        this.setState({
+            vertexLabels: vertexLabels,
+            edgeLabels: edgeLabels
+        })
+    }
+    
+    getLabels = () => {
+        return [this.state.vertexLabels, this.state.edgeLabels];
+    }
+    
+    setVertexData =(vertexData)=>{
+        this.setState({
+            vertexData: vertexData
+        })
+    }
+    
+    getVertexDataRow=(rowIndex)=>{
+        return this.state.vertexData[rowIndex];
+    }
 
     
     render(){
@@ -74,11 +78,11 @@ class App extends React.Component {
         <div>
             
             <div className="card rwrPanel">
-                <QueryPanel getSelectedVersions={this.getSelectedVersions}/>
+                <QueryPanel getSelectedVersions={this.getSelectedVersions}  getVertexDataRow={this.getVertexDataRow} getLabels={this.getLabels} />
             </div>
         
             <div className="card versionPanel" >
-                <VersionList selectVersionToggle={this.selectVersionToggle} isSelected={this.isSelected} />
+                <VersionList selectVersionToggle={this.selectVersionToggle} isSelected={this.isSelected} setVertexData={this.setVertexData} getLabels={this.getLabels} setLabels={this.setLabels} />
             </div>
            {/* <div className="card descriptionPanel">
                 <DescriptionPanel/>
