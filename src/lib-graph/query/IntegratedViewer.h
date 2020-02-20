@@ -18,6 +18,8 @@ class IntegratedViewer
         
         void viewUnion(std::vector<typename GT::VersionIndex> versions);
         
+        GraphList<EdgeElement<GT>> mapVertexes(const GraphList<VertexU<GT>>& nodes)const;
+        
 //     private:
         
         std::vector<EdgeLabel<GT>> L_; //Edge labels
@@ -70,9 +72,12 @@ auto setUnionReduced(ZippedRowIT<GT> first1, ZippedRowIT<GT> last1, ZippedRowIT<
         }
         else 
         {
-            *result = *first1;
+            std::tuple<typename GT::Index, typename GT::Value, EdgeLabel<GT>> z = (*first1);
+            
 //             std::get<1>(*result) += std::get<1>(*first2);
-//             std::get<2>(*result) = std::get<2>(*result).makeUnion(std::get<2>(*first2));
+             std::get<2>(z) = std::get<2>(z).makeUnion(std::get<2>(*first2));
+             *result = z;
+//             std::get<2>((*first1));// = (*result)[2].makeUnion((*first2)[2]);
             ++first1; 
             ++first2; 
         }
@@ -117,6 +122,8 @@ void IntegratedViewer<GT>::viewUnion(std::vector<typename GT::VersionIndex> vers
 
 //         
     }   
+    std::cout<<"VIEW SIZES"<<std::endl;
+    std::cout<<L_.size()<<" "<<A_.size()<<" "<<JA_.size()<<" "<<IA_.size()<<std::endl;
     std::cout<<"FINISHED VIEW"<<std::endl;
 //     for(const auto& e : JA_)
 //         std::cout<<e<<" ";
@@ -135,4 +142,50 @@ void IntegratedViewer<GT>::viewUnion(std::vector<typename GT::VersionIndex> vers
 //     std::cout<<std::endl;
 //     
     
+}
+
+template<class GT>
+GraphList<EdgeElement<GT>> IntegratedViewer<GT>::mapVertexes(const GraphList<VertexU<GT>>& nodes)const
+{
+    GraphList<EdgeElement<GT>> retVal;
+    bool restrictive=true;
+    
+    std::set<typename GT::Index> nodesUsed;
+    for(const auto& e : nodes.getElements())
+        nodesUsed.insert(e.index_);
+    
+    for(auto e : nodes.getElements())
+    {
+        auto index1 = IA_[e.index_].s1();
+        auto index2 = index1 + IA_[e.index_].s2();
+        
+//         auto [index1, index2] = ;
+        
+//         auto AJA = graph.template getRowVersion<Row::AJA>(e.index_, version);
+//         auto L = graph.template getRowVersion<Row::L>(e.index_, version);
+//         
+//         auto itPair = std::make_pair(AJA.second.begin(), AJA.second.end()); //graph.getOutgoingNodes(e.index_, version);
+//         auto itPairVal =  AJA.first.begin(); //graph.getOutgoingValues(e.index_, version).first;
+//         auto itPairLabel = L.begin();
+//         
+//         
+ //       for(auto it=itPair.first; it!=itPair.second; ++it)
+     
+        for(;index1<index2; ++index1)
+        {
+            if(!restrictive || nodesUsed.find(JA_[index1])!=nodesUsed.end())
+            {
+                retVal.push_back(EdgeElement<GT>(e.index_, JA_[index1], A_[index1], L_[index1]));
+            }
+//             if(!restrictive || nodesUsed.find(*it)!=nodesUsed.end())
+//                 retVal.push_back(EdgeElement<GT>{e.index_,*it, *itPairVal, *itPairLabel});
+//             ++itPairVal;
+//             ++itPairLabel;
+        }
+    }
+    //std::cout<<retVal<<std::endl;
+    
+    
+    
+    return retVal;
 }

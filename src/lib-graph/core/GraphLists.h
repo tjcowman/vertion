@@ -80,9 +80,9 @@ EdgeList mapVertexListToEdgeList(const VGraph<GT>& graph, int version, const Gra
 
 //TODO BUG: MAKE THIS SO IT CAN TAKE INTERSECTIO NOF EDGES OR UNION ALSO REWRITE 
 template<class GT>
-EdgeList mapVertexListToEdgeList(const VGraph<GT> & graph, const std::vector<int>& versions, const GraphList<VertexU<GT>>& vertexList, bool restrictive)
+GraphList<EdgeElement<GT>> mapVertexListToEdgeList(const VGraph<GT> & graph, const std::vector<typename GT::VersionIndex>& versions, const GraphList<VertexU<GT>>& vertexList, bool restrictive)
 {
-    EdgeList retVal(graph.getContext());
+    GraphList<EdgeElement<GT>> retVal(graph.getContext());
     
     std::set<typename GT::Index> nodesUsed;
     for(const auto& e : vertexList.getElements())

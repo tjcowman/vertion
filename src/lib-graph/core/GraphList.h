@@ -101,6 +101,8 @@ class GraphList
         void clear();
         void push_back(T element); 
         void push_back(const GraphList<T>& graphList);
+       
+        void resize(size_t i);
         
         void setElements(const std::vector<T>& elements);
         
@@ -166,6 +168,12 @@ static GraphList<VertexS<T>> make_VertexList(const std::vector<typename T::Index
     for(const auto& e : indexes)
         retVal.push_back(VertexS<T>(e, f()));
     return retVal;
+}
+
+template<class T>
+void GraphList<T>::resize(size_t i)
+{
+    elements_.resize(i);
 }
 
 template<class T, class F>

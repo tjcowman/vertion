@@ -72,39 +72,48 @@ namespace Commands
     json rwr(const VGraph<GT>& graph, const json& args)
     {
         json retVal;
+        std::vector<typename GT::VersionIndex> versions = args["versions"].get<std::vector<typename GT::VersionIndex>>();
+        
         
         IntegratedViewer<GT> IV(graph);
-        IV.viewUnion(args["versions"].get<std::vector<typename GT::VersionIndex>>());
+        
+        IV.viewUnion(versions);
         
         RandomWalker<GT> RW(IV);
-
-        
-        
         //specifiy arguments
         typename RandomWalker<GT>::Args_Walk args_walk{args["alpha"], args["epsilon"], GraphList<VertexS<GT>>()};
         
-        //GraphList<VertexS<GT>> source( (args["source"])); //[[0,.2] ]
+
         std::cout<<args["source"]<<std::endl;
         std::vector<VertexS<GT>> source  = (args["source"]);
-        
-        
         std::cout<<GraphList<VertexS<GT>>(source);
         std::cout<<source.size()<<std::endl;
-//         for(const auto& e : args["source"])
-//         {
-//             source.push_back(std::make_pair(e[0], e[1]));
-//         }
-        
-        //auto res = RW.walk(GraphList<VertexS<GT>>(source), args["version"], args_walk);
+
         auto res = RW.walk(GraphList<VertexS<GT>>(source), args_walk);
-        
         res.sort(Sort::valueDec);
+        res.resize(std::min(size_t(args["topk"]), res.size()));
         
-        for(size_t i=0; i<std::min(size_t(args["topk"]), res.size()); ++i)
+        if(args["mode"] == "nl")
         {
-            retVal["weights"] +=  {{"id", res[i].index_}, {"value", res[i].value_}};
+            for(size_t i=0; i<std::min(size_t(args["topk"]), res.size()); ++i)
+            {
+                retVal["weights"] +=  {{"id", res[i].index_}, {"value", res[i].value_}};
+            }
         }
-        
+        else if(args["mode"] == "el")
+        {
+            GraphList<EdgeElement<GT>> edges = IV.mapVertexes(res);
+            for(size_t i=0; i<res.size(); ++i)
+            {
+                retVal["nodes"] +=  {{"id", res[i].index_}, {"value", res[i].value_}};
+            }
+            for(const auto& e : edges)
+            {
+                retVal["edges"] += {{"id1",e.index1_}, {"id2", e.index2_}, {"value",e.value_}, {"labels",e.labels_.getBits().to_ulong()}};
+            }
+            
+
+        }
         
         std::cout<<"Query Finished"<<std::endl;
         return retVal;

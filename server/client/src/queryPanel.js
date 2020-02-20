@@ -15,35 +15,71 @@ import CytoscapeComponent from 'react-cytoscapejs'
 
 class Demo extends React.Component {
   
-  state = {
-    w: 100,
-    h: 100,
-    elements : [
-{ data: { id: 'one', label: 'Node 1' }, position: { x: 0, y: 0 } },
-{ data: { id: 'two', label: 'Node 2' }, position: { x: 100, y: 0 }},
-{ data: { source: 'one', target: 'two', label: 'Edge from Node1 to Node2'}}
-]
+  constructor(props){
+    super(props);
+    this.state={
+        w: 200,
+        h: 200,
+    }
   }
+    
+//   state = {
+//     w: 100,
+//     h: 100,
+//     elements : [
+//     { data: { id: 'one', label: 'Node 1' }, position: { x: 0, y: 0 } },
+//     { data: { id: 'two', label: 'Node 2' }, position: { x: 100, y: 0 }},
+// ]
+//   }
 
   componentDidMount = () => {
     this.setState({
       w: window.innerWidth,
-      h:window.innerHeight
+      h: window.innerHeight
+    })
+     this.setUpListeners()
+  }
+  
+  setUpListeners = () => {
+    this.cy.on('click', 'node', (event) => {
+//       console.log(event.target)
+//       console.log(this.state.elements)
+//       console.log(this.props.elements2)
+      this.cy.layout({ name: 'cose' }).run();
     })
   }
   
+//   setElements = (nodes) => {
+//     this.setState({
+//         elements: [nodes,{}]
+//     })
+//   }
+  
   render() {
+//     const layout = { name: 'cola' };
     return(
       <div>
         <CytoscapeComponent
-            elements={this.state.elements}
+            elements={this.props.elements}
+//             layout={layout}
             style={{ width: this.state.w, height: this.state.h }}
+            cy={(cy) => {this.cy = cy}}
         />
       </div>
     )
-}
+    }
 }
 
+
+function cyformat_nodes(raw){
+    console.log(raw);
+    return raw.map( (e) => ({data: { id: e.id, label: e.name }, position: { x: 0, y: 0 } }));
+
+}
+
+function cyformat_edges(raw){
+    return raw.map((e) => ({ data: { source: e.id1, target: e.id2, label: e.labels}} ) );
+}
 
 function getColumns(){
     let col = [
@@ -102,7 +138,7 @@ class QueryPanel extends React.Component {
         alpha: .15,
         epsilon: 1e-5,
         topk: 10,
-        result: [{"row":null, "id":null, "value":null}],
+        result: {nodes:[{"row":null, "id":null, "value":null}], edges: [] },
     };
 
     this.handleChange = this.handleChange.bind(this);
@@ -135,7 +171,7 @@ class QueryPanel extends React.Component {
     let names=[];
 //     console.log(labelNames);
     for(let e in labelArray)
-      names.push(labelNames[e]);
+      names.push(labelNames[labelArray[e]]);
         
     return names;
       
@@ -152,13 +188,15 @@ class QueryPanel extends React.Component {
         }
             
         
-        let command = {cmd:"rwr", versions:versions, alpha:Number(this.state.alpha), epsilon:Number(this.state.epsilon), topk:Number(this.state.topk), source:JSON.parse(this.state.source)}; 
+        //let command = {cmd:"rwr", versions:versions, alpha:Number(this.state.alpha), epsilon:Number(this.state.epsilon), topk:Number(this.state.topk), source:JSON.parse(this.state.source), mode:nl};
+        let command = {cmd:"rwr", versions:versions, alpha:Number(this.state.alpha), epsilon:Number(this.state.epsilon), topk:Number(this.state.topk), source:JSON.parse(this.state.source), mode:"el"}; 
 //         console.log(JSON.stringify(command))
 //         console.log(JSON.parse(this.state.source))
     
         Axios.post('http://localhost:9060', JSON.stringify(command)).then((response)=>{
+         console.log(response)
          
-            response.data.weights.forEach((e,i) => {
+            response.data.nodes.forEach((e,i) => {
                 let labelBits = this.props.getVertexDataRow(e["id"])["labels"];
                 let labelArray = this.labelBitsToArray(labelBits, this.props.getLabels()[0].names.length);
                 //let externalURLPrexfix = this.get
@@ -182,7 +220,7 @@ class QueryPanel extends React.Component {
             
             
             
-            this.setState({result: response.data.weights})
+            this.setState({result: response.data})
 //           console.log(this.state.result);
         });
       
@@ -216,10 +254,10 @@ class QueryPanel extends React.Component {
             <div  style={{ marginTop: 20 }}>
             <Tabs defaultActiveKey="results-table" id="resultsFormat">
                 <Tab eventKey="results-table" title="Table">
-                    <BootstrapTable striped condensed keyField='row' data={ this.state.result} columns={ getColumns()}  pagination={ paginationFactory(options)} filter={ filterFactory() }   />
+                    <BootstrapTable striped condensed keyField='row' data={ this.state.result.nodes} columns={ getColumns()}  pagination={ paginationFactory(options)} filter={ filterFactory() }   />
                 </Tab>
                 <Tab eventKey="results-graph" title="Graph">
-                    <Demo/>
+                 {/*   <Demo elements={cyformat_nodes(this.state.result.nodes).concat(cyformat_edges(this.state.result.edges)) } />*/}
                 </Tab>
             </Tabs>
             </div>
@@ -233,3 +271,4 @@ class QueryPanel extends React.Component {
 
 
 export default QueryPanel;
+// , cyformat_edges(this.state.result.edges)
