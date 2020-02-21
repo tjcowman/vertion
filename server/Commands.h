@@ -3,7 +3,7 @@
 
 #include <nlohmann/json.hpp>
 
-#include<algorithm>
+#include <algorithm>
 using json = nlohmann::json;
 
 namespace Commands
@@ -132,4 +132,33 @@ namespace Commands
         return retVal;
     }
 
+    template<class GT>
+    json mft(const VGraph<GT>& graph, const json& args)
+    {
+        json ret;
+        
+        std::vector<typename GT::VersionIndex> versions = args["versions"].get<std::vector<typename GT::VersionIndex>>();
+        IntegratedViewer<GT> IV(graph);
+        IV.viewUnion(versions);
+        
+        Triangles TR(IV);
+   
+   
+        TR.enumerate();
+        auto m = TR.countMotifs(); //map<array<labels>, count>
+            
+        for(const auto& e : m)
+        {
+            std::vector<u_long> pattern;
+            for(auto ee : e.first)
+                pattern.push_back(ee.getBits().to_ulong());
+            ret["motifs"] += {{"pattern", pattern }, {"count",e.second}};
+//             for(const auto& ee : e.first)
+//                     std::cout<<ee<<" ";
+//             
+//             std::cout<<" :"<<e.second<<"\n";
+        }
+        return ret;
+    }
+    
 };

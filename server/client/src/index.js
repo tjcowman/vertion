@@ -11,14 +11,45 @@ import QueryPanel from './queryPanel.js'
 
 import './index.css';
 
+class LabelSet{
+    constructor(names){
+        this.names = names;
+//         this.urls = 
+    }
+    
+    bitsToArray(labelBits){
+        let indexes = [];
+        for(let i=0; i<this.names.length; ++i) {
+            if (labelBits & 0x1)
+                indexes.push(i);
+        
+            labelBits = labelBits >> 1;
+        }
+        return indexes;
+    }
+  
+    arrayToNames(labelArray){
+        let names=[];
+
+        for(let e in labelArray)
+            names.push(this.names[labelArray[e]]);
+            
+        return names;
+    }
+    
+    bitsToNames(labelBits){
+        return this.arrayToNames(this.bitsToArray(labelBits));
+    }
+  
+}
 
 
 class App extends React.Component {
     constructor(props){
         super(props);
         this.state={
-            vertexLabels : {names:[], urls:[]},
-            edgeLabels : [],
+            vertexLabels : new LabelSet([]),
+            edgeLabels : new LabelSet([]),
             vertexData : [],
             versions_s : []
         }
@@ -53,8 +84,9 @@ class App extends React.Component {
     
     setLabels=(vertexLabels, edgeLabels)=>{
         this.setState({
-            vertexLabels: vertexLabels,
-            edgeLabels: edgeLabels
+//             vertexLabels: vertexLabels,
+            vertexLabels : new LabelSet(vertexLabels.names),
+            edgeLabels: new LabelSet(edgeLabels)
         })
         
 //         console.log(vertexLabels)
@@ -64,8 +96,8 @@ class App extends React.Component {
     
     getLabels = () => {
         
-
-        return [this.state.vertexLabels, this.state.edgeLabels];
+        return [this.state.vertexLabels, this.state.edgeLabels]
+//        return [this.state.vertexLabels, this.state.edgeLabels];
     }
     
     setVertexData =(vertexData)=>{

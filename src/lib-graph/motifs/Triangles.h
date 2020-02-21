@@ -2,6 +2,7 @@
 
 #include <array>
 #include "vertion.h"
+#include "query/IntegratedViewer.h"
 
 template<class GT>
 struct Triangle
@@ -55,40 +56,42 @@ template<class GT>
 class Triangles
 {
     public:
-        Triangles(const VGraph<GT>& graph, typename GT::VersionIndex version);
+        Triangles(const IntegratedViewer<GT>& graph/*, typename GT::VersionIndex version*/);
         
         //NOTE: This considers directional reachability during search but returns undirected edges
         void enumerate();
         auto countMotifs()const;
     
     private:
-        const VGraph<GT>* graph_;
-        typename GT::VersionIndex version_;
+        const IntegratedViewer<GT>* graph_;
         std::vector<Triangle<GT> > motifs_;
 };
 
 template<class GT>
-Triangles<GT>::Triangles(const VGraph<GT>& graph, typename GT::VersionIndex version)
+Triangles<GT>::Triangles(const IntegratedViewer<GT>& graph/*, typename GT::VersionIndex version*/)
 {
     graph_ = &graph;
-    version_ = version;
+//     version_ = version;
 }
 
 template<class GT>
 void Triangles<GT>::enumerate()
 {
-    GraphList<VertexI<GT>> nodeDegrees = graph_->getDegrees(version_).select([](const auto& e ){return e.value_ > 1;});
+    GraphList<VertexI<GT>> nodeDegrees = graph_->getDegrees().select([](const auto& e ){return e.value_ > 1;});
 
     for(const auto& u : nodeDegrees )
     {
-        auto row1 = graph_->template getRowVersion<Row::JAL>(u.index_, version_);
+        //auto row1 = graph_->template getRowVersion<Row::JAL>(u.index_, version_);
+        auto row1 = graph_->getlabeledRow(u.index_);
         
         for(const auto& v : row1 )
         {
             if(v.first > u.index_)
             {
-                auto row2 = graph_->template getRowVersion<Row::JAL>(v.first, version_);
-            
+                //auto row2 = graph_->template getRowVersion<Row::JAL>(v.first, version_);
+                 auto row2 = graph_->getlabeledRow(v.first);
+                //auto ro
+                
                 //seperately get the intersections to obtain the directional labels
                 std::vector<std::pair<typename GT::Index, EdgeLabel<GT>> > res1;
                 std::set_intersection(row1.begin(), row1.end(), row2.begin(), row2.end(), std::back_inserter(res1), [](const auto& e1, const auto& e2){return e1.first < e2.first;});

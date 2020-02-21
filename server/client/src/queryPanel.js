@@ -9,6 +9,7 @@ import BootstrapTable from 'react-bootstrap-table-next';
 import paginationFactory from 'react-bootstrap-table2-paginator';
 import filterFactory, { textFilter } from 'react-bootstrap-table2-filter';
     
+import MotifComponent from './motifComponent.js';
 
 
 import CytoscapeComponent from 'react-cytoscapejs'
@@ -156,26 +157,26 @@ class QueryPanel extends React.Component {
   }
 
 
-  labelBitsToArray(labelBits, labelsUsed){
-    let indexes = [];
-    for(let i=0; i<labelsUsed; ++i) {
-        if (labelBits & 0x1)
-            indexes.push(i);
-    
-    labelBits = labelBits >> 1;
-    }
-    return indexes;
-  }
-  
-  convertLabelArrayToText(labelArray, labelNames){
-    let names=[];
-//     console.log(labelNames);
-    for(let e in labelArray)
-      names.push(labelNames[labelArray[e]]);
-        
-    return names;
-      
-  }
+//   labelBitsToArray(labelBits, labelsUsed){
+//     let indexes = [];
+//     for(let i=0; i<labelsUsed; ++i) {
+//         if (labelBits & 0x1)
+//             indexes.push(i);
+//     
+//     labelBits = labelBits >> 1;
+//     }
+//     return indexes;
+//   }
+//   
+//   convertLabelArrayToText(labelArray, labelNames){
+//     let names=[];
+// //     console.log(labelNames);
+//     for(let e in labelArray)
+//       names.push(labelNames[labelArray[e]]);
+//         
+//     return names;
+//       
+//   }
   
   handleSubmit(event) {
 
@@ -198,7 +199,6 @@ class QueryPanel extends React.Component {
          
             response.data.nodes.forEach((e,i) => {
                 let labelBits = this.props.getVertexDataRow(e["id"])["labels"];
-                let labelArray = this.labelBitsToArray(labelBits, this.props.getLabels()[0].names.length);
                 //let externalURLPrexfix = this.get
                                 
                 e["row"]=i;  
@@ -206,7 +206,8 @@ class QueryPanel extends React.Component {
                    // this.props.getVertexDataRow(e["id"])["name"]  <a href="url">this.props.getVertexDataRow(e["id"])["name"]</a>,
                 e["name"]=this.props.getVertexDataRow(e["id"])["name"];
         
-                e["labels"] = this.convertLabelArrayToText(labelArray, this.props.getLabels()[0].names);//this.props.getVertexDataRow(e["id"])["labels"],
+                //e["labels"] = this.convertLabelArrayToText(labelArray, this.props.getLabels()[0].names);//this.props.getVertexDataRow(e["id"])["labels"],
+                e["labels"] = this.props.getLabels()[0].bitsToNames(labelBits);
 //                 e["labels"] = [];
                 
 //                 for(let li in labelArray)
@@ -256,8 +257,11 @@ class QueryPanel extends React.Component {
                 <Tab eventKey="results-table" title="Table">
                     <BootstrapTable striped condensed keyField='row' data={ this.state.result.nodes} columns={ getColumns()}  pagination={ paginationFactory(options)} filter={ filterFactory() }   />
                 </Tab>
+                <Tab eventKey="results-motif" title="Motifs">
+                    <MotifComponent getSelectedVersions={this.props.getSelectedVersions}/>
+                </Tab>
                 <Tab eventKey="results-graph" title="Graph">
-                 {/*   <Demo elements={cyformat_nodes(this.state.result.nodes).concat(cyformat_edges(this.state.result.edges)) } />*/}
+                    {/*   <Demo elements={cyformat_nodes(this.state.result.nodes).concat(cyformat_edges(this.state.result.edges)) } />*/}
                 </Tab>
             </Tabs>
             </div>

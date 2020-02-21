@@ -120,7 +120,7 @@ class VersionList extends React.Component {
                             
                             Edge Labels: 
                             <div className="card-body pb-0 pt-0">
-                                {this.props.getLabels()[1].map((e,i) =>(
+                                {this.props.getLabels()[1].names.map((e,i) =>(
                                     <button key={i} className="btn btn-outline-secondary m-1 btn-smaller" >{e}</button>
                                 ))}
                             </div>

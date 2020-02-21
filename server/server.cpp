@@ -160,9 +160,30 @@ int main(int argc, char* argv[] )
     
     IO.read_serial(args.graph);
     
-    HelloHandler::graph_ = &G;
-    Http::listenAndServe<HelloHandler>(Address("*:"+std::to_string(args.port)));
+     HelloHandler::graph_ = &G;
+//     Http::listenAndServe<HelloHandler>(Address("*:"+std::to_string(args.port)));
     
+    
+    auto server = std::make_shared<Http::Endpoint>(Address("*:"+std::to_string(args.port)));
+    auto opts = Http::Endpoint::options()
+//       .maxPayload(m_max_payload)
+      .threads(2)
+      .flags(Tcp::Options::ReuseAddr);
+    
+    server->init(opts);
+    server->setHandler(Http::make_handler<HelloHandler>());
+    server->serveThreaded();
+    
+    while(true)
+    {
+        std::string input;
+        std::cin>>input;
+        if(input =="q")
+        {
+            server->shutdown();
+            exit(0);
+        }
+    }
     
 //     Address addr(Ipv4::any(), Port(std::to_string(args.port)));
 // 

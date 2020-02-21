@@ -1,5 +1,6 @@
 #include "vertion.h"
 #include "motifs/Triangles.h"
+#include "query/IntegratedViewer.h"
 #include <iostream>
 
 int main()
@@ -10,7 +11,12 @@ int main()
     IO.read_serial("input/graph/ex2.vgraph");
     std::cout<<G.size()<<"\n";
     
-   Triangles TR(G,2);
+    IntegratedViewer IV(G);
+    IV.viewUnion({2});
+    
+    Triangles TR(IV);
+   
+   
    TR.enumerate();
    auto m = TR.countMotifs();
     

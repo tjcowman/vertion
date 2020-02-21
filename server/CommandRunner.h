@@ -3,7 +3,8 @@
 #include "vertion.h"
 #include "query/RandomWalker.h"
 #include "query/IntegratedViewer.h"
-//#include "CommandParser.h"
+#include "motifs/Triangles.h"
+
 #include "Commands.h"
 
 #include <nlohmann/json.hpp>
@@ -53,6 +54,8 @@ json CommandRunner<GT>::run(const json& command)const
         return Commands::rwr<GT>(*graph_, command);
     else if(command["cmd"] == "lsv")
         return Commands::lsv<GT>(*graph_, command);
+    else if(command["cmd"] == "mft")
+        return Commands::mft<GT>(*graph_, command);
     
     
     return json();

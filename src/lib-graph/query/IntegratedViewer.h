@@ -20,6 +20,10 @@ class IntegratedViewer
         
         GraphList<EdgeElement<GT>> mapVertexes(const GraphList<VertexU<GT>>& nodes)const;
         
+        
+        GraphList<VertexI<GT>> getDegrees()const;
+        std::vector<std::pair<typename GT::Index,  EdgeLabel<GT>>> getlabeledRow(typename GT::Index index)const;
+        
 //     private:
         
         std::vector<EdgeLabel<GT>> L_; //Edge labels
@@ -173,4 +177,26 @@ GraphList<EdgeElement<GT>> IntegratedViewer<GT>::mapVertexes(const GraphList<Ver
     
     
     return retVal;
+}
+
+template<class GT>
+GraphList<VertexI<GT>> IntegratedViewer<GT>::getDegrees()const
+{
+    GraphList<VertexI<GT>> degrees;
+    for(typename GT::Index i=0; i<IA_.size(); ++i)
+        degrees.push_back(VertexI<GT>{i,IA_[i].s2()});
+    
+    return degrees;
+}
+
+template<class GT>
+std::vector<std::pair<typename GT::Index,  EdgeLabel<GT>>> IntegratedViewer<GT>::getlabeledRow(typename GT::Index index)const
+{
+    std::vector<std::pair<typename GT::Index,  EdgeLabel<GT>>> row;
+      row.resize(IA_[index].s2());
+//     
+    for(typename GT::Index i=IA_[index].s1(); i < IA_[index].s1()+IA_[index].s2(); ++i)
+        row[i -IA_[index].s1()] = std::make_pair(JA_[i], L_[i]);
+        
+    return row;
 }
