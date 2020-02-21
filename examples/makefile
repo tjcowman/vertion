@@ -23,6 +23,10 @@ query_traversal: | $(BINDIR)
 query_components: | $(BINDIR)
 	$(CC) $(INC) $(CF) query_components.cpp -o $(BINDIR)/query_components
 
+query_motifTriangles: | $(BINDIR)
+	$(CC) $(INC) $(CF) query_motifTriangles.cpp -o $(BINDIR)/query_motifTriangles
+	
+
 merger: | $(BINDIR)
 	$(CC) $(INC) $(CF) merger.cpp -o $(BINDIR)/merger
 

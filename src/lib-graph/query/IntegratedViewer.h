@@ -159,17 +159,6 @@ GraphList<EdgeElement<GT>> IntegratedViewer<GT>::mapVertexes(const GraphList<Ver
         auto index1 = IA_[e.index_].s1();
         auto index2 = index1 + IA_[e.index_].s2();
         
-//         auto [index1, index2] = ;
-        
-//         auto AJA = graph.template getRowVersion<Row::AJA>(e.index_, version);
-//         auto L = graph.template getRowVersion<Row::L>(e.index_, version);
-//         
-//         auto itPair = std::make_pair(AJA.second.begin(), AJA.second.end()); //graph.getOutgoingNodes(e.index_, version);
-//         auto itPairVal =  AJA.first.begin(); //graph.getOutgoingValues(e.index_, version).first;
-//         auto itPairLabel = L.begin();
-//         
-//         
- //       for(auto it=itPair.first; it!=itPair.second; ++it)
      
         for(;index1<index2; ++index1)
         {
@@ -177,10 +166,6 @@ GraphList<EdgeElement<GT>> IntegratedViewer<GT>::mapVertexes(const GraphList<Ver
             {
                 retVal.push_back(EdgeElement<GT>(e.index_, JA_[index1], A_[index1], L_[index1]));
             }
-//             if(!restrictive || nodesUsed.find(*it)!=nodesUsed.end())
-//                 retVal.push_back(EdgeElement<GT>{e.index_,*it, *itPairVal, *itPairLabel});
-//             ++itPairVal;
-//             ++itPairLabel;
         }
     }
     //std::cout<<retVal<<std::endl;
