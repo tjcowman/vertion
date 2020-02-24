@@ -48,14 +48,19 @@ class LabelSet{
 
 class SelectedVersions{
     constructor(versions){
-        this.versionNames = versions
-        this.versionLists = [[]]
+        this.versionNames = [];
+        this.versionLists = [];
+        
+        if(typeof versions !== 'undefined'){
+            this.versionNames = versions
+            this.versionLists = new Array(versions.length).fill(false)
+        }
     }
 }
 
 class GraphData{
     constructor(serverResponse){
-        console.log(serverResponse)
+//         console.log(serverResponse)
         
         this.data={
             labels: {
@@ -102,18 +107,35 @@ class App extends React.Component {
     
     
     selectVersionToggle=(index)=>{
+        
         const versions_s = this.state.versions_s.slice();
         versions_s[Number(index)] = !versions_s[Number(index)];
         
         this.setState({
             versions_s: versions_s,
         })
-            
-
+    }
+    
+    selectVersionToggle2=(set, index)=>{
+        console.log("SVT2", this.state.versions_s2)
+        const newVersionList = this.state.versions_s2.versionLists.slice();
+        
+        newVersionList[set * this.state.versions_s2.versionNames.length + Number(index)] = !this.state.versions_s2.versionLists[set * this.state.versions_s2.versionNames.length + Number(index)];
+        
+        this.setState({
+            versions_s2:{
+                versionNames : this.state.versions_s2.versionNames,
+                versionLists : newVersionList,
+            }
+        })
     }
     
     isSelected=(index)=>{
         return this.state.versions_s[index] === true;
+    }
+    
+    isSelected2=(set, index)=>{
+        return this.state.versions_s2.versionLists[set * this.state.versions_s2.versionNames.length + Number(index)] === true;
     }
     
     getVersions = ()=>{
@@ -151,7 +173,7 @@ class App extends React.Component {
             
                 <Tab eventKey="selectVersions" title="Versions">
                     <div className="card rwrPanel">
-                        <SelectVersionsComponent getVersions={this.getVersions}/>
+                        <SelectVersionsComponent getVersions={this.getVersions} isSelected={this.isSelected2} selectVersionToggle={this.selectVersionToggle2}/>
                     </div>
                 </Tab>
                 
