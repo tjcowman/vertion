@@ -2,7 +2,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import { Button, Form,Col,Row,Tabs,Tab} from 'react-bootstrap';
 
 import React from 'react';
-import ReactDOM from 'react-dom'; 
+// import ReactDOM from 'react-dom'; 
 import Axios from 'axios';
  
 import BootstrapTable from 'react-bootstrap-table-next';
@@ -156,44 +156,20 @@ class QueryPanel extends React.Component {
  
   }
 
-
-//   labelBitsToArray(labelBits, labelsUsed){
-//     let indexes = [];
-//     for(let i=0; i<labelsUsed; ++i) {
-//         if (labelBits & 0x1)
-//             indexes.push(i);
-//     
-//     labelBits = labelBits >> 1;
-//     }
-//     return indexes;
-//   }
-//   
-//   convertLabelArrayToText(labelArray, labelNames){
-//     let names=[];
-// //     console.log(labelNames);
-//     for(let e in labelArray)
-//       names.push(labelNames[labelArray[e]]);
-//         
-//     return names;
-//       
-//   }
-  
   handleSubmit(event) {
 
     try{
         let versions = this.props.getSelectedVersions();
+        console.log("IF", versions)
+        console.log(versions.length)
         if(versions.length === 0)
         {
-            this.setState({result:  [{"row":null, "id":null, "value":null}]});
-            return;
+             this.setState({result:  {nodes:[{"row":null, "id":null, "value":null}], edges: [] } });
+             return;
         }
-            
-        
         //let command = {cmd:"rwr", versions:versions, alpha:Number(this.state.alpha), epsilon:Number(this.state.epsilon), topk:Number(this.state.topk), source:JSON.parse(this.state.source), mode:nl};
         let command = {cmd:"rwr", versions:versions, alpha:Number(this.state.alpha), epsilon:Number(this.state.epsilon), topk:Number(this.state.topk), source:JSON.parse(this.state.source), mode:"el"}; 
-//         console.log(JSON.stringify(command))
-//         console.log(JSON.parse(this.state.source))
-    
+
         Axios.post('http://localhost:9060', JSON.stringify(command)).then((response)=>{
          console.log(response)
          
@@ -258,7 +234,7 @@ class QueryPanel extends React.Component {
                     <BootstrapTable striped condensed keyField='row' data={ this.state.result.nodes} columns={ getColumns()}  pagination={ paginationFactory(options)} filter={ filterFactory() }   />
                 </Tab>
                 <Tab eventKey="results-motif" title="Motifs">
-                    <MotifComponent getSelectedVersions={this.props.getSelectedVersions}/>
+                    <MotifComponent getSelectedVersions={this.props.getSelectedVersions} getLabels={this.props.getLabels}/>
                 </Tab>
                 <Tab eventKey="results-graph" title="Graph">
                     {/*   <Demo elements={cyformat_nodes(this.state.result.nodes).concat(cyformat_edges(this.state.result.edges)) } />*/}

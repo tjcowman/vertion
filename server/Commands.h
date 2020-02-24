@@ -146,7 +146,8 @@ namespace Commands
    
         TR.enumerate();
         auto m = TR.countMotifs(); //map<array<labels>, count>
-            
+         
+        ret["motifs"] = {};
         for(const auto& e : m)
         {
             std::vector<u_long> pattern;

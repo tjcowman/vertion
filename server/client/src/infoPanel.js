@@ -1,5 +1,5 @@
 import {Button, ButtonGroup} from 'react-bootstrap'
-import React, { Component } from 'react';
+import React from 'react';
 import Axios from 'axios';
 
 class VersionList extends React.Component {
@@ -21,12 +21,7 @@ class VersionList extends React.Component {
             this.setState({
                 raw: response.data,
             })
-             console.log(response)
-            this.props.setVertexData(response.data.vertexData);
-            this.props.setLabels(response.data.labels.vertex, response.data.labels.edge);
-//             console.log(response.data.labels.vertex);
-           
-
+               this.props.setData(response.data);
         }).then(()=>{          
             let tags = {};
 
@@ -52,7 +47,6 @@ class VersionList extends React.Component {
             this.setState({
                 tags: tagsArr,
                 selectedTags: Array(tagsArr.length).fill(false),
-                selectedVersions: Array(this.state.raw.nodes).fill(false),
                 names: namesArr,
                 tree: newData,
             });
@@ -86,7 +80,7 @@ class VersionList extends React.Component {
         this.setState({
             selectedTags: selectedTags,
         })
-
+//         console.log(this.state.selectedTags)
     }
     
 

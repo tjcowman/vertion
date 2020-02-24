@@ -1,5 +1,6 @@
 import 'bootstrap/dist/css/bootstrap.min.css';
 // import { Button, ButtonToolbar, Form,Col,Row} from 'react-bootstrap';
+import { Button, Form,Col,Row,Tabs,Tab} from 'react-bootstrap';
 
 import React from 'react';
 import ReactDOM from 'react-dom'; 
@@ -7,7 +8,9 @@ import ReactDOM from 'react-dom';
 
 
 import VersionList from  './infoPanel.js';
-import QueryPanel from './queryPanel.js'
+import QueryPanel from './queryPanel.js';
+import SelectVersionsComponent from './selectVersionsComponent.js';
+import SelectNodesComponent from './selectNodesComponent.js';
 
 import './index.css';
 
@@ -43,17 +46,59 @@ class LabelSet{
   
 }
 
+class SelectedVersions{
+    constructor(versions){
+        this.versionNames = versions
+        this.versionLists = [[]]
+    }
+}
+
+class GraphData{
+    constructor(serverResponse){
+        console.log(serverResponse)
+        
+        this.data={
+            labels: {
+                vertex: new LabelSet([]),
+                edge: new LabelSet([])
+                
+            },
+            versions: [],
+            vertexData: []
+        }
+        
+
+        if(typeof serverResponse !== 'undefined'){
+            this.data.labels.vertex = new LabelSet(serverResponse.labels.vertex.names);
+            this.data.labels.edge = new LabelSet(serverResponse.labels.edge);
+            this.data.versions = serverResponse.versions;
+            this.data.vertexData = serverResponse.vertexData;
+        }
+
+    }
+  
+
+}
 
 class App extends React.Component {
     constructor(props){
         super(props);
         this.state={
-            vertexLabels : new LabelSet([]),
-            edgeLabels : new LabelSet([]),
-            vertexData : [],
-            versions_s : []
+            graphData: new GraphData(),
+            versions_s : [],
+            versions_s2 : new SelectedVersions(),
         }
     }
+    
+    
+    setData=(serverResponse)=>{
+        this.setState({
+            graphData: new GraphData(serverResponse),
+            versions_s2 : new SelectedVersions(serverResponse.versions)
+        });
+    }
+    
+
     
     
     selectVersionToggle=(index)=>{
@@ -71,43 +116,30 @@ class App extends React.Component {
         return this.state.versions_s[index] === true;
     }
     
+    getVersions = ()=>{
+        return this.state.versions_s2;
+    }
+    
     getSelectedVersions=()=>{
 
-            let ret = [];
-            for(let i in this.state.versions_s)
-                if(this.state.versions_s[i])
-                    ret.push(Number(i));
+        let ret = [];
+        for(let i in this.state.versions_s)
+            if(this.state.versions_s[i])
+                ret.push(Number(i));
 
-            return(ret);
+        console.log("SV", ret)
+        return(ret);
     }
     
-    
-    setLabels=(vertexLabels, edgeLabels)=>{
-        this.setState({
-//             vertexLabels: vertexLabels,
-            vertexLabels : new LabelSet(vertexLabels.names),
-            edgeLabels: new LabelSet(edgeLabels)
-        })
-        
-//         console.log(vertexLabels)
-//         console.log(this.state.vertexLabels);
-    }
     
     
     getLabels = () => {
-        
-        return [this.state.vertexLabels, this.state.edgeLabels]
-//        return [this.state.vertexLabels, this.state.edgeLabels];
+        return [this.state.graphData.data.labels.vertex, this.state.graphData.data.labels.edge]
     }
     
-    setVertexData =(vertexData)=>{
-        this.setState({
-            vertexData: vertexData
-        })
-    }
-    
+
     getVertexDataRow=(rowIndex)=>{
-        return this.state.vertexData[rowIndex];
+        return this.state.graphData.data.vertexData[rowIndex];
     }
 
     
@@ -115,16 +147,32 @@ class App extends React.Component {
         return(
         <div>
             
-            <div className="card rwrPanel">
-                <QueryPanel getSelectedVersions={this.getSelectedVersions}  getVertexDataRow={this.getVertexDataRow} getLabels={this.getLabels} />
-            </div>
+            <Tabs defaultActiveKey="selectVersions" id="mainTab">
+            
+                <Tab eventKey="selectVersions" title="Versions">
+                    <div className="card rwrPanel">
+                        <SelectVersionsComponent getVersions={this.getVersions}/>
+                    </div>
+                </Tab>
+                
+                <Tab eventKey="selectNodes" title="Nodes">
+                    <div className="card rwrPanel">
+                        <SelectNodesComponent />
+                    </div>
+                </Tab>
+                
+                <Tab eventKey="query" title="Query">
+                    <div className="card rwrPanel">
+                        <QueryPanel getSelectedVersions={this.getSelectedVersions}  getVertexDataRow={this.getVertexDataRow} getLabels={this.getLabels} />
+                    </div>
+                </Tab>
+        
+            </Tabs>
         
             <div className="card versionPanel" >
-                <VersionList selectVersionToggle={this.selectVersionToggle} isSelected={this.isSelected} setVertexData={this.setVertexData} getLabels={this.getLabels} setLabels={this.setLabels} />
+                <VersionList selectVersionToggle={this.selectVersionToggle} isSelected={this.isSelected} /*setVertexData={this.setVertexData}*/ getLabels={this.getLabels} /*setLabels={this.setLabels}*/ setData={this.setData} />
             </div>
-           {/* <div className="card descriptionPanel">
-                <DescriptionPanel/>
-            </div>*/}
+
         </div>
         );
     }
