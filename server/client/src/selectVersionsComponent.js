@@ -1,48 +1,52 @@
 import React from 'react';
 
-import {Button, ButtonGroup, CardGroup, CardDeck, Card} from 'react-bootstrap'
+import {Button, ButtonGroup, CardGroup, CardDeck, Card, ListGroup, ListGroupItem} from 'react-bootstrap'
 
 class SelectVersionsComponent extends React.Component{ 
     
     constructor(props){
         super(props);
         this.state={
-            activeCard :0
+            activeCard :0,
+            cardIds: [0,1]
         }
     }
     
     
-    handleCardClick = (cardId) => {
+    handleCardClick=(cardId)=>{
         this.setState({activeCard: cardId});
         console.log(this.state.activeCard)
     }
     
+//     handleSelectVersion=()=>{
+//         
+//     }
+//     
     render(){
         return(
             <div>
      
-            
-                
-                
                     <CardDeck className= "m-2">
-                    <div className= {this.state.activeCard==0 ? "card border-primary border-bold" : "card"} onClick={() => this.handleCardClick(0)}>
-                         <Card.Header>Set 0</Card.Header>
-                         <Card.Body>
-                        temp1
-                        </Card.Body>
-                    </div>
-                    <div className={this.state.activeCard==1 ? "card border-primary border-bold" : "card"} onClick={() => this.handleCardClick(1)}>
-                        <Card.Header>Set 1</Card.Header>
-                        <Card.Body>
-                        temp2
-                         </Card.Body>
-                    </div>
-                    <div className={this.state.activeCard==2 ? "card border-primary border-bold" : "card"} onClick={() => this.handleCardClick(2)}>
-                        <Card.Header>Set 2</Card.Header>
-                        <Card.Body>
-                        temp2
-                         </Card.Body>
-                    </div>
+                    
+                         {this.state.cardIds.map((e,i)=> (
+                             
+                             <div key={i} className= {this.state.activeCard==e ? "card border-primary border-bold " : "card "} onClick={() => this.handleCardClick(e)}>
+                                <Card.Header>Set {e}</Card.Header>
+                                <Card.Body className="versionSelectCard">
+                               
+                                    <ListGroup>
+                                    {
+                                        this.props.getSelectedVersions(e).map((ee,ii)=> (
+                                        <ListGroupItem  key={ii} className="versionSelectItem">{this.props.getVersions().versionNames[ee].name}</ListGroupItem>
+                                    ))}
+                                    
+                                    </ListGroup>
+                                
+                                
+                                </Card.Body>
+                            </div>
+                            ))}
+                    
                     </CardDeck>
                       
                       
@@ -55,11 +59,12 @@ class SelectVersionsComponent extends React.Component{
                                 <button  key={i}
                                 value={e.name} 
                                 name={i} 
-                                className={this.props.isSelected(0,i) ? "active btn btn-outline-secondary m-1 btn-sm vName " : "btn btn-outline-secondary m-1 btn-sm vName"}
-                                onClick={(event) =>this.props.selectVersionToggle(0,i)}> {e.name} 
+                                className={this.props.isSelected(this.state.activeCard,i) ? "active btn btn-outline-secondary m-1 btn-sm vName " : "btn btn-outline-secondary m-1 btn-sm vName"}
+                                onClick={(event) =>this.props.selectVersionToggle(this.state.activeCard,i)}> {e.name} 
                                 </button>
                         ))}
                         </div>
+                        
                     </div>
                     
                     

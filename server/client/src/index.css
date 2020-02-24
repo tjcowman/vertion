@@ -56,10 +56,15 @@ select.versionNames{
     
 }
 
-.versionSelect{
-    float:left;
+.versionSelectItem{
+    font-size: small;
+    padding: 5px;
+/*     margin: 2px; */
 }
-.versionSelectName{
-    float:left;
+.versionSelectCard{
+    height: 300px;
+/*     margin: 2px; */
+    overflow-y:scroll;
+    
     
 }

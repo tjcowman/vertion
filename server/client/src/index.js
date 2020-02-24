@@ -138,7 +138,7 @@ class App extends React.Component {
         return this.state.versions_s2.versionLists[set * this.state.versions_s2.versionNames.length + Number(index)] === true;
     }
     
-    getVersions = ()=>{
+    getVersions=()=>{
         return this.state.versions_s2;
     }
     
@@ -153,6 +153,18 @@ class App extends React.Component {
         return(ret);
     }
     
+    getSelectedVersions2=(set)=>{
+        let ret=[];
+//         console.log("VS2", this.state.versions_s2)
+        let offset = this.state.versions_s2.versionNames.length;
+        for(let i=(set*offset) ; i<((set+1)*offset) ; ++i){
+            if(this.state.versions_s2.versionLists[i])
+                ret.push(i-(set*offset));
+            
+        }
+        return ret;
+        
+    }
     
     
     getLabels = () => {
@@ -173,7 +185,7 @@ class App extends React.Component {
             
                 <Tab eventKey="selectVersions" title="Versions">
                     <div className="card rwrPanel">
-                        <SelectVersionsComponent getVersions={this.getVersions} isSelected={this.isSelected2} selectVersionToggle={this.selectVersionToggle2}/>
+                        <SelectVersionsComponent getVersions={this.getVersions} isSelected={this.isSelected2} selectVersionToggle={this.selectVersionToggle2} getSelectedVersions={this.getSelectedVersions2}/>
                     </div>
                 </Tab>
                 
