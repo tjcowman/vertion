@@ -130,6 +130,7 @@ class VersionList extends React.Component {
                     </div>
                 
             
+                    {/*
                     <h3>Version Tree</h3>
                     <div className="card mb-3" >
                         
@@ -149,6 +150,7 @@ class VersionList extends React.Component {
                         
                         
                     </div>
+                    */}
                     
                 </div>
                 

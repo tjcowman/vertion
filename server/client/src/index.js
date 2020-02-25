@@ -78,6 +78,10 @@ class GraphData{
             this.data.labels.edge = new LabelSet(serverResponse.labels.edge);
             this.data.versions = serverResponse.versions;
             this.data.vertexData = serverResponse.vertexData;
+            
+            this.data.vertexData.forEach((e) => e.labelsNames =  this.data.labels.vertex.bitsToNames(e.labels));
+            
+//             console.log(this.data.vertexData)
         }
 
     }
@@ -92,6 +96,7 @@ class App extends React.Component {
             graphData: new GraphData(),
             versions_s : [],
             versions_s2 : new SelectedVersions(),
+            nodes_s : new Set(),
         }
     }
     
@@ -103,8 +108,23 @@ class App extends React.Component {
         });
     }
     
+    getSelectedNodes=()=>{
+        return this.state.nodes_s;
+    }
 
+    selectNodes=(nodeIds)=>{
+        this.setState(prevState => {
+             {nodes_s : prevState.nodes_s.add(nodeIds)}
+        });
+        console.log("SL", this.state.nodes_s)
+    }
     
+    unSelectNodes=(nodeIds)=>{
+        this.setState(prevState => {
+             {nodes_s : prevState.nodes_s.delete(nodeIds)}
+        });
+        console.log("SL", this.state.nodes_s)
+    }
     
     selectVersionToggle=(index)=>{
         
@@ -143,14 +163,16 @@ class App extends React.Component {
     }
     
     getSelectedVersions=()=>{
-
+/*
         let ret = [];
         for(let i in this.state.versions_s)
             if(this.state.versions_s[i])
                 ret.push(Number(i));
 
         console.log("SV", ret)
-        return(ret);
+        return(ret);*/
+        return this.getSelectedVersions2(0);
+
     }
     
     getSelectedVersions2=(set)=>{
@@ -178,6 +200,7 @@ class App extends React.Component {
 
     
     render(){
+//         console.log("RE", this.state.graphData.vertexData)
         return(
         <div>
             
@@ -191,18 +214,19 @@ class App extends React.Component {
                 
                 <Tab eventKey="selectNodes" title="Nodes">
                     <div className="card rwrPanel">
-                        <SelectNodesComponent />
+                        <SelectNodesComponent allNodes={this.state.graphData.data.vertexData} selectNodes={this.selectNodes} unSelectNodes={this.unSelectNodes} />
                     </div>
                 </Tab>
                 
                 <Tab eventKey="query" title="Query">
                     <div className="card rwrPanel">
-                        <QueryPanel getSelectedVersions={this.getSelectedVersions}  getVertexDataRow={this.getVertexDataRow} getLabels={this.getLabels} />
+                        <QueryPanel getSelectedVersions={this.getSelectedVersions}  getVertexDataRow={this.getVertexDataRow} getLabels={this.getLabels} getSelectedNodes={this.getSelectedNodes}/>
                     </div>
                 </Tab>
         
             </Tabs>
         
+
             <div className="card versionPanel" >
                 <VersionList selectVersionToggle={this.selectVersionToggle} isSelected={this.isSelected} /*setVertexData={this.setVertexData}*/ getLabels={this.getLabels} /*setLabels={this.setLabels}*/ setData={this.setData} />
             </div>

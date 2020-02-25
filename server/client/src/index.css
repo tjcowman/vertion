@@ -59,12 +59,26 @@ select.versionNames{
 .versionSelectItem{
     font-size: small;
     padding: 5px;
-/*     margin: 2px; */
+
 }
+
 .versionSelectCard{
     height: 300px;
-/*     margin: 2px; */
     overflow-y:scroll;
-    
-    
+}
+
+.nodeSelectItem{
+/*     font-size: small; */
+
+}
+
+/*.table td{
+    padding: 5px;
+}*/
+
+.nodeSelect{
+    padding: 250px;
+    &td{
+        padding: 250px;
+    }
 }
