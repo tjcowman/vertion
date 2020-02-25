@@ -5,10 +5,6 @@
 
 }
 
-.rwr{
-    background: #aff;
-    width: 100px;
-}
 
 .responseArea{
      background: #fff;
@@ -39,11 +35,6 @@ select.versionNames{
 /*         background-color: #4CAF50; */
 }
 
-.vName{
-    
-    
-}
-
 
 .btn-smaller{
     margin: 1px;
@@ -66,15 +57,6 @@ select.versionNames{
     height: 300px;
     overflow-y:scroll;
 }
-
-.nodeSelectItem{
-/*     font-size: small; */
-
-}
-
-/*.table td{
-    padding: 5px;
-}*/
 
 .nodeSelect{
     padding: 250px;

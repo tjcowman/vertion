@@ -1,6 +1,6 @@
 import 'bootstrap/dist/css/bootstrap.min.css';
 // import { Button, ButtonToolbar, Form,Col,Row} from 'react-bootstrap';
-import { Button, Form,Col,Row,Tabs,Tab} from 'react-bootstrap';
+import { Button, Form,Col,Row,Tabs,Tab, Card} from 'react-bootstrap';
 
 import React from 'react';
 import ReactDOM from 'react-dom'; 
@@ -11,6 +11,10 @@ import VersionList from  './infoPanel.js';
 import QueryPanel from './queryPanel.js';
 import SelectVersionsComponent from './selectVersionsComponent.js';
 import SelectNodesComponent from './selectNodesComponent.js';
+
+import QueryComponent_rwr from './queryComponent_rwr.js';
+import QueryComponent_tri from './queryComponent_tri.js';
+
 
 import './index.css';
 
@@ -94,9 +98,9 @@ class App extends React.Component {
         super(props);
         this.state={
             graphData: new GraphData(),
-            versions_s : [],
             versions_s2 : new SelectedVersions(),
             nodes_s : new Set(),
+            nodes_s2 :  [new Set(), new Set()],
         }
     }
     
@@ -125,6 +129,26 @@ class App extends React.Component {
         });
         console.log("SL", this.state.nodes_s)
     }
+    
+    selectNodes2=(set, nodeIds)=>{
+        console.log("SL2", this.state.nodes_s2)
+        this.setState(prevState => {
+             {nodes_s2 : prevState.nodes_s2[set].add(nodeIds)}
+        });
+//         console.log("SL", this.state.nodes_s)
+    }
+    
+    unSelectNodes2=(set, nodeIds)=>{
+        this.setState(prevState => {
+             {nodes_s2 : prevState.nodes_s2[set].delete(nodeIds)}
+        });
+        console.log("SL", this.state.nodes_s)
+    }
+    
+    getSelectedNodes2=(set)=>{
+        return this.state.nodes_s2[set];
+    }
+    
     
     selectVersionToggle=(index)=>{
         
@@ -199,39 +223,59 @@ class App extends React.Component {
     }
 
     
+    renderSideMenu(){
+        return(
+            <Card className="versionPanel">
+                <VersionList selectVersionToggle={this.selectVersionToggle} isSelected={this.isSelected}  getLabels={this.getLabels}  setData={this.setData} />
+            </Card>
+        );
+        
+    }
+    
+    renderMainPanel(){
+        return(
+             <Tabs defaultActiveKey="selectVersions" id="mainTab" >
+                
+                    <Tab eventKey="selectVersions" title="Versions">
+                        <Card className="rwrPanel">
+                            <SelectVersionsComponent getVersions={this.getVersions} isSelected={this.isSelected2} selectVersionToggle={this.selectVersionToggle2} getSelectedVersions={this.getSelectedVersions2}/>
+                        </Card>
+                    </Tab>
+                    
+                    <Tab eventKey="selectNodes" title="Nodes">
+                        <Card className="rwrPanel">
+                            <SelectNodesComponent allNodes={this.state.graphData.data.vertexData} selectNodes={this.selectNodes} unSelectNodes={this.unSelectNodes} selectNodes2={this.selectNodes2} unSelectNodes2={this.unSelectNodes2} getSelectedNodes2={this.getSelectedNodes2} selNodes={this.state.nodes_s2}/>
+                        </Card>
+                    </Tab>
+                    
+           
+                    <Tab eventKey="query_rwr" title="RWR">
+                    <Card className="rwrPanel">
+                        <QueryComponent_rwr getSelectedVersions={this.getSelectedVersions}  getVertexDataRow={this.getVertexDataRow} getLabels={this.getLabels} getSelectedNodes={this.getSelectedNodes}/>
+                        </Card>
+                    </Tab>
+                    
+                    <Tab eventKey="query_tri" title="Motifs">
+                    <Card className="rwrPanel">
+                        <QueryComponent_tri getSelectedVersions={this.getSelectedVersions}  getVertexDataRow={this.getVertexDataRow} getLabels={this.getLabels} getSelectedNodes={this.getSelectedNodes}/>
+                        </Card>
+                    </Tab>
+            
+                </Tabs>
+        
+        );
+    }
+    
     render(){
 //         console.log("RE", this.state.graphData.vertexData)
         return(
-        <div>
-            
-            <Tabs defaultActiveKey="selectVersions" id="mainTab">
-            
-                <Tab eventKey="selectVersions" title="Versions">
-                    <div className="card rwrPanel">
-                        <SelectVersionsComponent getVersions={this.getVersions} isSelected={this.isSelected2} selectVersionToggle={this.selectVersionToggle2} getSelectedVersions={this.getSelectedVersions2}/>
-                    </div>
-                </Tab>
-                
-                <Tab eventKey="selectNodes" title="Nodes">
-                    <div className="card rwrPanel">
-                        <SelectNodesComponent allNodes={this.state.graphData.data.vertexData} selectNodes={this.selectNodes} unSelectNodes={this.unSelectNodes} />
-                    </div>
-                </Tab>
-                
-                <Tab eventKey="query" title="Query">
-                    <div className="card rwrPanel">
-                        <QueryPanel getSelectedVersions={this.getSelectedVersions}  getVertexDataRow={this.getVertexDataRow} getLabels={this.getLabels} getSelectedNodes={this.getSelectedNodes}/>
-                    </div>
-                </Tab>
-        
-            </Tabs>
-        
+            <div> 
+               
+            {this.renderMainPanel()}
+            {this.renderSideMenu()}
 
-            <div className="card versionPanel" >
-                <VersionList selectVersionToggle={this.selectVersionToggle} isSelected={this.isSelected} /*setVertexData={this.setVertexData}*/ getLabels={this.getLabels} /*setLabels={this.setLabels}*/ setData={this.setData} />
-            </div>
 
-        </div>
+            </div> 
         );
     }
     

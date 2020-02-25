@@ -1,11 +1,16 @@
 import React from 'react';
+
+import 'bootstrap/dist/css/bootstrap.min.css';
+import { Button, Form,Col,Row,Tabs,Tab, Card, TabPane} from 'react-bootstrap';
+
+
 // import ReactDOM from 'react-dom'; 
-// import CytoscapeComponent from 'react-cytoscapejs'
 import Axios from 'axios';
-
-import { Button,Card} from 'react-bootstrap';
-
+ 
 import BootstrapTable from 'react-bootstrap-table-next';
+import paginationFactory from 'react-bootstrap-table2-paginator';
+import filterFactory, { textFilter } from 'react-bootstrap-table2-filter';
+    
 
 
 class MotifList{
@@ -51,7 +56,7 @@ class MotifList{
     }
 }
 
-class MotifComponent extends React.Component{
+class QueryComponent_tri extends React.Component{
     constructor(props){
         super(props)
         this.state={
@@ -106,4 +111,5 @@ class MotifComponent extends React.Component{
     }
 }
 
-export default MotifComponent;
+
+export default QueryComponent_tri;

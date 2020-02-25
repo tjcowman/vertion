@@ -1,7 +1,9 @@
+import React from 'react';
+
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Button, Form,Col,Row,Tabs,Tab, Card, TabPane} from 'react-bootstrap';
 
-import React from 'react';
+
 // import ReactDOM from 'react-dom'; 
 import Axios from 'axios';
  
@@ -9,70 +11,6 @@ import BootstrapTable from 'react-bootstrap-table-next';
 import paginationFactory from 'react-bootstrap-table2-paginator';
 import filterFactory, { textFilter } from 'react-bootstrap-table2-filter';
     
-import MotifComponent from './motifComponent.js';
-
-
-import CytoscapeComponent from 'react-cytoscapejs'
-
-// class Demo extends React.Component {
-//   
-//   constructor(props){
-//     super(props);
-//     this.state={
-//         w: 200,
-//         h: 200,
-//     }
-//   }
-//     
-// 
-//   componentDidMount = () => {
-//     this.setState({
-//       w: window.innerWidth,
-//       h: window.innerHeight
-//     })
-//      this.setUpListeners()
-//   }
-//   
-//   setUpListeners = () => {
-//     this.cy.on('click', 'node', (event) => {
-// //       console.log(event.target)
-// //       console.log(this.state.elements)
-// //       console.log(this.props.elements2)
-//       this.cy.layout({ name: 'cose' }).run();
-//     })
-//   }
-//   
-// //   setElements = (nodes) => {
-// //     this.setState({
-// //         elements: [nodes,{}]
-// //     })
-// //   }
-//   
-//   render() {
-// //     const layout = { name: 'cola' };
-//     return(
-//       <div>
-//         <CytoscapeComponent
-//             elements={this.props.elements}
-// //             layout={layout}
-//             style={{ width: this.state.w, height: this.state.h }}
-//             cy={(cy) => {this.cy = cy}}
-//         />
-//       </div>
-//     )
-//     }
-// }
-// 
-// 
-// function cyformat_nodes(raw){
-//     console.log(raw);
-//     return raw.map( (e) => ({data: { id: e.id, label: e.name }, position: { x: 0, y: 0 } }));
-// 
-// }
-// 
-// function cyformat_edges(raw){
-//     return raw.map((e) => ({ data: { source: e.id1, target: e.id2, label: e.labels}} ) );
-// }
 
 function getColumns(){
     return [
@@ -95,9 +33,8 @@ function getColumns(){
 
 }
 
-
-class QueryPanel extends React.Component {
-  constructor(props) {
+class QueryComponent_rwr extends React.Component{
+constructor(props) {
     super(props);
     this.state = {
         versions: [],
@@ -202,21 +139,10 @@ class QueryPanel extends React.Component {
           <Card.Header>Results</Card.Header>
           <Card.Body>
           
-                <Tabs defaultActiveKey="results-table" id="resultsFormat" >
-                    <Tab eventKey="results-table" title="Table" >
-                        <Card.Body>
-                            <BootstrapTable striped keyField='row' data={ this.state.result.nodes} columns={ getColumns()}  pagination={ paginationFactory()} filter={ filterFactory() }   />
-                        </Card.Body>
-                    </Tab>
+  
+                <BootstrapTable striped keyField='row' data={ this.state.result.nodes} columns={ getColumns()}  pagination={ paginationFactory()} filter={ filterFactory() }   />
+           
                     
-                    <Tab eventKey="results-motif" title="Motifs">
-
-                        <Card.Body>
-                        <MotifComponent getSelectedVersions={this.props.getSelectedVersions} getLabels={this.props.getLabels}/>
-                        </Card.Body>
-                    </Tab>
-                    
-                </Tabs>
      
         </Card.Body>
         </Card>
@@ -239,8 +165,6 @@ class QueryPanel extends React.Component {
 
     );
   }
-}
+} 
 
-
-export default QueryPanel;
-// , cyformat_edges(this.state.result.edges)
+export default QueryComponent_rwr;

@@ -25,8 +25,29 @@ class SelectVersionsComponent extends React.Component{
     render(){
         return(
             <div>
-     
-                    <CardDeck className= "m-2">
+            
+                <Card.Body>
+                    <div className="card">
+                        <Card.Header>Versions</Card.Header>
+                        <div className=" card-body "> {
+//                             console.log(this.props.getVersions()),
+                            this.props.getVersions().versionNames.map((e,i)=>(
+                            
+                                <button  key={i}
+                                value={e.name} 
+                                name={i} 
+                                className={this.props.isSelected(this.state.activeCard,i) ? "active btn btn-outline-secondary m-1 btn-sm vName " : "btn btn-outline-secondary m-1 btn-sm vName"}
+                                onClick={(event) =>this.props.selectVersionToggle(this.state.activeCard,i)}> {e.name} 
+                                </button>
+                        ))}
+                        </div>
+                        
+                    </div>
+                    
+                </Card.Body>
+            
+            <Card.Body>
+                    <CardDeck >
                     
                          {this.state.cardIds.map((e,i)=> (
                              
@@ -48,26 +69,9 @@ class SelectVersionsComponent extends React.Component{
                             ))}
                     
                     </CardDeck>
-                      
-                      
-                    <div className="card m-2">
-                        <Card.Header>Versions</Card.Header>
-                        <div className=" card-body "> {
-//                             console.log(this.props.getVersions()),
-                            this.props.getVersions().versionNames.map((e,i)=>(
-                            
-                                <button  key={i}
-                                value={e.name} 
-                                name={i} 
-                                className={this.props.isSelected(this.state.activeCard,i) ? "active btn btn-outline-secondary m-1 btn-sm vName " : "btn btn-outline-secondary m-1 btn-sm vName"}
-                                onClick={(event) =>this.props.selectVersionToggle(this.state.activeCard,i)}> {e.name} 
-                                </button>
-                        ))}
-                        </div>
-                        
-                    </div>
-                    
-                    
+                </Card.Body>
+                
+
                 </div>
             
            
