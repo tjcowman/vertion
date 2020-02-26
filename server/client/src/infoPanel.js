@@ -1,8 +1,8 @@
-import {Button, ButtonGroup} from 'react-bootstrap'
+import {} from 'react-bootstrap'
 import React from 'react';
 import Axios from 'axios';
 
-class VersionList extends React.Component {
+class InfoPanel extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
@@ -22,7 +22,7 @@ class VersionList extends React.Component {
                 raw: response.data,
             })
                this.props.setData(response.data);
-        }).then(()=>{          
+        })/*.then(()=>{          
             let tags = {};
 
             console.log(this.props.getLabels());
@@ -51,7 +51,7 @@ class VersionList extends React.Component {
                 tree: newData,
             });
      
-        });
+        });*/
      
         
     }
@@ -160,4 +160,4 @@ class VersionList extends React.Component {
     }
 } 
 
-export default VersionList;
+export default InfoPanel;

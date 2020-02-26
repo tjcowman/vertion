@@ -1,6 +1,6 @@
 import React from 'react';
 
-import {Button, ButtonGroup, CardGroup, CardDeck, Card, ListGroup, ListGroupItem} from 'react-bootstrap'
+import {CardDeck, Card, ListGroup, ListGroupItem} from 'react-bootstrap'
 
 
 
@@ -53,7 +53,7 @@ class SelectVersionsComponent extends React.Component{
                     
                          {this.state.cardIds.map((e,i)=> (
                              
-                             <div key={i} className= {this.state.activeCard==e ? "card border-primary border-bold " : "card "} onClick={() => this.handleCardClick(e)}>
+                             <div key={i} className= {this.state.activeCard===e ? "card border-primary border-bold " : "card "} onClick={() => this.handleCardClick(e)}>
                                 <Card.Header>Set {e}</Card.Header>
                                 <Card.Body className="versionSelectCard">
                                

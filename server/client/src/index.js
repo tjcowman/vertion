@@ -1,19 +1,19 @@
 import 'bootstrap/dist/css/bootstrap.min.css';
-// import { Button, ButtonToolbar, Form,Col,Row} from 'react-bootstrap';
-import { Button, Form,Col,Row,Tabs,Tab, Card} from 'react-bootstrap';
+
+import {Tabs,Tab, Card} from 'react-bootstrap';
 
 import React from 'react';
 import ReactDOM from 'react-dom'; 
 // import Axios from 'axios';
+import Axios from 'axios';
 
+import InfoPanel from  './infoPanel.js';
 
-import VersionList from  './infoPanel.js';
-import QueryPanel from './queryPanel.js';
 import SelectVersionsComponent from './selectVersionsComponent.js';
 import SelectNodesComponent from './selectNodesComponent.js';
 
-import QueryComponent_rwr from './queryComponent_rwr.js';
-import QueryComponent_tri from './queryComponent_tri.js';
+import QueryComponentRWR from './queryComponentRWR.js';
+import QueryComponentMotif from './queryComponentMotif.js';
 
 
 import './index.css';
@@ -98,11 +98,29 @@ class App extends React.Component {
         super(props);
         this.state={
             graphData: new GraphData(),
-            versions_s2 : new SelectedVersions(),
-            nodes_s : new Set(),
-            nodes_s2 :  [new Set(), new Set()],
+            versions_s : new SelectedVersions(),
+            nodes_s :  [new Set(), new Set()],
             nodeLookup: new Map(),
         }
+        
+        var date = new Date();
+         Axios.get('http://localhost:9060/ls', date.getTime()).then((response)=>{
+             console.log(response)
+             
+            let nodeLookup = new Map();
+    
+            response.data.vertexData.forEach((e) =>(
+                nodeLookup.set(e.name, e.id)
+            ));
+
+            this.setState({
+                graphData: new GraphData(response.data),
+                versions_s : new SelectedVersions(response.data.versions),
+                nodeLookup : nodeLookup
+            })
+
+         })
+        
     }
     
     
@@ -112,39 +130,37 @@ class App extends React.Component {
         serverResponse.vertexData.forEach((e) =>(
                 nodeLookup.set(e.name, e.id)
         ));
-//         console.log(nodeLookup)
+
         this.setState({
             graphData: new GraphData(serverResponse),
-            versions_s2 : new SelectedVersions(serverResponse.versions),
+            versions_s : new SelectedVersions(serverResponse.versions),
             nodeLookup : nodeLookup
         });
     }
     
 
     selectNodes2=(set, nodeIds)=>{
-        console.log("SL2", this.state.nodes_s2)
+//         console.log("SL2", this.state.nodes_s)
         this.setState(prevState => {
-//              {nodes_s2 : prevState.nodes_s2[set].add(nodeIds)}
-            {nodes_s2 : nodeIds.forEach(prevState.nodes_s2[set].add, prevState.nodes_s2[set])}
+            nodes_s : nodeIds.forEach(prevState.nodes_s[set].add, prevState.nodes_s[set])
         });
 //         console.log("SL", this.state.nodes_s)
     }
     
     unSelectNodes2=(set, nodeIds)=>{
         this.setState(prevState => {
-//              {nodes_s2 : prevState.nodes_s2[set].delete(nodeIds)}
-            {nodes_s2 : nodeIds.forEach(prevState.nodes_s2[set].delete, prevState.nodes_s2[set])}
+            nodes_s : nodeIds.forEach(prevState.nodes_s[set].delete, prevState.nodes_s[set])
         });
         console.log("SL", this.state.nodes_s)
     }
     
     getSelectedNodes2=(set)=>{
-        return this.state.nodes_s2[set];
+        return this.state.nodes_s[set];
     }
     
     getSelectedNodeDifference=()=>{
-        let l1 = [...this.state.nodes_s2[0]].filter((e)=>(!this.state.nodes_s2[1].has(e)));
-        let l2 = [...this.state.nodes_s2[1]].filter((e)=>(!this.state.nodes_s2[0].has(e)));
+        let l1 = [...this.state.nodes_s[0]].filter((e)=>(!this.state.nodes_s[1].has(e)));
+        let l2 = [...this.state.nodes_s[1]].filter((e)=>(!this.state.nodes_s[0].has(e)));
         let c = [];
         l1.forEach((e)=>{c.push({v:0, id:e})})
         l2.forEach((e)=>{c.push({v:1, id:e})})
@@ -163,14 +179,14 @@ class App extends React.Component {
     }
     
     selectVersionToggle2=(set, index)=>{
-        console.log("SVT2", this.state.versions_s2)
-        const newVersionList = this.state.versions_s2.versionLists.slice();
+        console.log("SVT2", this.state.versions_s)
+        const newVersionList = this.state.versions_s.versionLists.slice();
         
-        newVersionList[set * this.state.versions_s2.versionNames.length + Number(index)] = !this.state.versions_s2.versionLists[set * this.state.versions_s2.versionNames.length + Number(index)];
+        newVersionList[set * this.state.versions_s.versionNames.length + Number(index)] = !this.state.versions_s.versionLists[set * this.state.versions_s.versionNames.length + Number(index)];
         
         this.setState({
-            versions_s2:{
-                versionNames : this.state.versions_s2.versionNames,
+            versions_s:{
+                versionNames : this.state.versions_s.versionNames,
                 versionLists : newVersionList,
             }
         })
@@ -181,22 +197,14 @@ class App extends React.Component {
     }
     
     isSelected2=(set, index)=>{
-        return this.state.versions_s2.versionLists[set * this.state.versions_s2.versionNames.length + Number(index)] === true;
+        return this.state.versions_s.versionLists[set * this.state.versions_s.versionNames.length + Number(index)] === true;
     }
     
     getVersions=()=>{
-        return this.state.versions_s2;
+        return this.state.versions_s;
     }
     
     getSelectedVersions=()=>{
-/*
-        let ret = [];
-        for(let i in this.state.versions_s)
-            if(this.state.versions_s[i])
-                ret.push(Number(i));
-
-        console.log("SV", ret)
-        return(ret);*/
         return this.getSelectedVersions2(0);
 
     }
@@ -204,9 +212,9 @@ class App extends React.Component {
     getSelectedVersions2=(set)=>{
         let ret=[];
 //         console.log("VS2", this.state.versions_s2)
-        let offset = this.state.versions_s2.versionNames.length;
+        let offset = this.state.versions_s.versionNames.length;
         for(let i=(set*offset) ; i<((set+1)*offset) ; ++i){
-            if(this.state.versions_s2.versionLists[i])
+            if(this.state.versions_s.versionLists[i])
                 ret.push(i-(set*offset));
             
         }
@@ -228,7 +236,7 @@ class App extends React.Component {
     renderSideMenu(){
         return(
             <Card className="versionPanel">
-                <VersionList selectVersionToggle={this.selectVersionToggle} isSelected={this.isSelected}  getLabels={this.getLabels}  setData={this.setData} />
+                <InfoPanel isSelected={this.isSelected}  getLabels={this.getLabels}  setData={this.setData} />
             </Card>
         );
         
@@ -239,16 +247,16 @@ class App extends React.Component {
              <Tabs defaultActiveKey="selectVersions" id="mainTab" >
                 
                     <Tab eventKey="selectVersions" title="Versions">
-                        <Card className="rwrPanel">
+                        <Card className="mainPanel">
                             <SelectVersionsComponent getVersions={this.getVersions} isSelected={this.isSelected2} selectVersionToggle={this.selectVersionToggle2} getSelectedVersions={this.getSelectedVersions2}/>
                         </Card>
                     </Tab>
                     
                     <Tab eventKey="selectNodes" title="Nodes">
-                        <Card className="rwrPanel">
+                        <Card className="mainPanel">
                             <SelectNodesComponent allNodes={this.state.graphData.data.vertexData} 
                                 selectNodes2={this.selectNodes2} unSelectNodes2={this.unSelectNodes2} 
-                                getSelectedNodes2={this.getSelectedNodes2} selNodes={this.state.nodes_s2}
+                                getSelectedNodes2={this.getSelectedNodes2} selNodes={this.state.nodes_s}
                                 nodeLookup={this.state.nodeLookup}
                                 getSelectedNodesDifference={this.getSelectedNodeDifference}
                             />
@@ -257,14 +265,14 @@ class App extends React.Component {
                     
            
                     <Tab eventKey="query_rwr" title="RWR">
-                    <Card className="rwrPanel">
-                        <QueryComponent_rwr getSelectedVersions={this.getSelectedVersions}  getVertexDataRow={this.getVertexDataRow} getLabels={this.getLabels} getSelectedNodes={this.getSelectedNodes}/>
+                    <Card className="mainPanel">
+                        <QueryComponentRWR getSelectedVersions={this.getSelectedVersions}  getVertexDataRow={this.getVertexDataRow} getLabels={this.getLabels} getSelectedNodes={this.getSelectedNodes2}/>
                         </Card>
                     </Tab>
                     
                     <Tab eventKey="query_tri" title="Motifs">
-                    <Card className="rwrPanel">
-                        <QueryComponent_tri getSelectedVersions={this.getSelectedVersions}  getVertexDataRow={this.getVertexDataRow} getLabels={this.getLabels} getSelectedNodes={this.getSelectedNodes}/>
+                    <Card className="mainPanel">
+                        <QueryComponentMotif getSelectedVersions={this.getSelectedVersions}  getVertexDataRow={this.getVertexDataRow} getLabels={this.getLabels} getSelectedNodes={this.getSelectedNodes2}/>
                         </Card>
                     </Tab>
             
@@ -279,7 +287,7 @@ class App extends React.Component {
             <div> 
                
             {this.renderMainPanel()}
-            {this.renderSideMenu()}
+             {/*this.renderSideMenu()*/}
 
 
             </div> 

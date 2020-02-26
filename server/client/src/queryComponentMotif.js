@@ -32,14 +32,7 @@ class MotifList{
             ).join(" : ");
         }
         
-//         this.motifs.map((e) => (
-//              e = e.pattern.map((ee) => (
-//                 ee = this.labelNames.bitsToNames(ee),
-//                      console.log("ee", ee)                   
-//             )),
-//              console.log("e", e)
-//         ))
-//         console.log(this.motifs)
+
     }
     
     getColumns(){
@@ -56,7 +49,7 @@ class MotifList{
     }
 }
 
-class QueryComponent_tri extends React.Component{
+class QueryComponentMotif extends React.Component{
     constructor(props){
         super(props)
         this.state={
@@ -96,6 +89,16 @@ class QueryComponent_tri extends React.Component{
         event.preventDefault();
     }
     
+    renderSettings(){
+      return (
+        <>
+        </>
+
+
+      );
+
+    }
+    
     render(){
         return(
             
@@ -112,4 +115,4 @@ class QueryComponent_tri extends React.Component{
 }
 
 
-export default QueryComponent_tri;
+export default QueryComponentMotif;
