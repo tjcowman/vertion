@@ -101,46 +101,39 @@ class App extends React.Component {
             versions_s2 : new SelectedVersions(),
             nodes_s : new Set(),
             nodes_s2 :  [new Set(), new Set()],
+            nodeLookup: new Map(),
         }
     }
     
     
     setData=(serverResponse)=>{
+        let nodeLookup = new Map();
+        
+        serverResponse.vertexData.forEach((e) =>(
+                nodeLookup.set(e.name, e.id)
+        ));
+//         console.log(nodeLookup)
         this.setState({
             graphData: new GraphData(serverResponse),
-            versions_s2 : new SelectedVersions(serverResponse.versions)
+            versions_s2 : new SelectedVersions(serverResponse.versions),
+            nodeLookup : nodeLookup
         });
     }
     
-    getSelectedNodes=()=>{
-        return this.state.nodes_s;
-    }
 
-    selectNodes=(nodeIds)=>{
-        this.setState(prevState => {
-             {nodes_s : prevState.nodes_s.add(nodeIds)}
-        });
-        console.log("SL", this.state.nodes_s)
-    }
-    
-    unSelectNodes=(nodeIds)=>{
-        this.setState(prevState => {
-             {nodes_s : prevState.nodes_s.delete(nodeIds)}
-        });
-        console.log("SL", this.state.nodes_s)
-    }
-    
     selectNodes2=(set, nodeIds)=>{
         console.log("SL2", this.state.nodes_s2)
         this.setState(prevState => {
-             {nodes_s2 : prevState.nodes_s2[set].add(nodeIds)}
+//              {nodes_s2 : prevState.nodes_s2[set].add(nodeIds)}
+            {nodes_s2 : nodeIds.forEach(prevState.nodes_s2[set].add, prevState.nodes_s2[set])}
         });
 //         console.log("SL", this.state.nodes_s)
     }
     
     unSelectNodes2=(set, nodeIds)=>{
         this.setState(prevState => {
-             {nodes_s2 : prevState.nodes_s2[set].delete(nodeIds)}
+//              {nodes_s2 : prevState.nodes_s2[set].delete(nodeIds)}
+            {nodes_s2 : nodeIds.forEach(prevState.nodes_s2[set].delete, prevState.nodes_s2[set])}
         });
         console.log("SL", this.state.nodes_s)
     }
@@ -149,6 +142,15 @@ class App extends React.Component {
         return this.state.nodes_s2[set];
     }
     
+    getSelectedNodeDifference=()=>{
+        let l1 = [...this.state.nodes_s2[0]].filter((e)=>(!this.state.nodes_s2[1].has(e)));
+        let l2 = [...this.state.nodes_s2[1]].filter((e)=>(!this.state.nodes_s2[0].has(e)));
+        let c = [];
+        l1.forEach((e)=>{c.push({v:0, id:e})})
+        l2.forEach((e)=>{c.push({v:1, id:e})})
+        
+        return c
+    }
     
     selectVersionToggle=(index)=>{
         
@@ -244,7 +246,12 @@ class App extends React.Component {
                     
                     <Tab eventKey="selectNodes" title="Nodes">
                         <Card className="rwrPanel">
-                            <SelectNodesComponent allNodes={this.state.graphData.data.vertexData} selectNodes={this.selectNodes} unSelectNodes={this.unSelectNodes} selectNodes2={this.selectNodes2} unSelectNodes2={this.unSelectNodes2} getSelectedNodes2={this.getSelectedNodes2} selNodes={this.state.nodes_s2}/>
+                            <SelectNodesComponent allNodes={this.state.graphData.data.vertexData} 
+                                selectNodes2={this.selectNodes2} unSelectNodes2={this.unSelectNodes2} 
+                                getSelectedNodes2={this.getSelectedNodes2} selNodes={this.state.nodes_s2}
+                                nodeLookup={this.state.nodeLookup}
+                                getSelectedNodesDifference={this.getSelectedNodeDifference}
+                            />
                         </Card>
                     </Tab>
                     
