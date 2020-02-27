@@ -179,4 +179,4 @@ class QueryComponentRWR extends React.Component{
   }
 } 
 
-export default QueryComponentRWR;
+export  {SettingsRWR, QueryComponentRWR};

@@ -141,10 +141,27 @@ namespace Commands
         IntegratedViewer<GT> IV(graph);
         IV.viewUnion(versions);
         
+        
+        
+        
+         RandomWalker<GT> RW(IV);
+         std::vector<VertexS<GT>> source  = (args["source"]);
+        //specifiy arguments
+        typename RandomWalker<GT>::Args_Walk args_walk{args["alpha"], args["epsilon"], GraphList<VertexS<GT>>()};
+        
+
+        auto filterRes = RW.walk(GraphList<VertexS<GT>>(source), args_walk);
+        filterRes.sort(Sort::valueDec);
+        filterRes.resize(std::min(size_t(args["topk"]), filterRes.size()));
+        
+        
         Triangles TR(IV);
+        
+        
+        
+        
    
-   
-        TR.enumerate();
+        TR.enumerateFiltered(filterRes);
         auto m = TR.countMotifs(); //map<array<labels>, count>
          
         ret["motifs"] = {};

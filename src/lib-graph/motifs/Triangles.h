@@ -60,6 +60,7 @@ class Triangles
         
         //NOTE: This considers directional reachability during search but returns undirected edges
         void enumerate();
+        void enumerateFiltered(const GraphList<VertexU<GT>>& nodes);
         auto countMotifs()const;
     
     private:
@@ -122,6 +123,50 @@ void Triangles<GT>::enumerate()
         }
     }
 
+}
+
+template<class GT>
+void Triangles<GT>::enumerateFiltered(const GraphList<VertexU<GT>>& nodes)
+{
+    auto  nodesFiltered = nodes.select([this](const auto& e){return graph_->getDegree(e.index_)>1;}).getIndexes();
+    std::sort(nodesFiltered.begin(), nodesFiltered.end()); //So they can be looked up in log time
+    
+    for(const auto& u : nodesFiltered )
+    {
+        auto row1 = graph_->getlabeledRow(u);
+        
+        for(const auto& v : row1 )
+        {
+            if(v.first > u && std::binary_search(nodesFiltered.begin(), nodesFiltered.end(), v.first) )
+            {
+                 auto row2 = graph_->getlabeledRow(v.first);
+
+                //seperately get the intersections to obtain the directional labels
+                std::vector<std::pair<typename GT::Index, EdgeLabel<GT>> > res1;
+                std::set_intersection(row1.begin(), row1.end(), row2.begin(), row2.end(), std::back_inserter(res1), [](const auto& e1, const auto& e2){return e1.first < e2.first;});
+            
+                std::vector<std::pair<typename GT::Index, EdgeLabel<GT>> > res2;
+                std::set_intersection(row2.begin(), row2.end(), row1.begin(), row1.end(), std::back_inserter(res2), [](const auto& e1, const auto& e2){return e1.first < e2.first;});
+                
+                auto ite1 = res1.begin();
+                auto ite2 = res2.begin();
+                
+                while(ite1 != res1.end())
+                {
+                    if(ite1->first > v.first && std::binary_search(nodesFiltered.begin(), nodesFiltered.end(), ite1->first) )
+                    {
+                        motifs_.push_back(Triangle<GT>( {v.second, ite1->second, ite2->second}, {u, v.first, ite1->first} ));
+
+                    }
+                    ++ite1;
+                    ++ite2;
+                }
+            }
+            
+        }
+    }
+    
+    
 }
 
 template<class GT>

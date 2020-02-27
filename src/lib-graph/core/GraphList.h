@@ -77,6 +77,8 @@ class GraphList
         GraphList(const std::vector<T>& elements);
         GraphList(GraphList<T> list, typename T::graph_type::Index begin, typename T::graph_type::Index end);
         
+        void operator=(const GraphList<T>& rhs);
+        
         //Binary IO
         void readBinary(std::istream& stream);
         void writeBinary( std::ostream& stream);
@@ -130,6 +132,7 @@ class GraphList
         
         template<typename F>
         GraphList select(F f)const;
+        
         template<typename F>
         std::pair<GraphList, std::vector<typename T::Index> > selectRank(F f)const;
         
@@ -249,6 +252,14 @@ GraphList<T>::GraphList(GraphList<T> list, typename T::graph_type::Index begin, 
 //     std::cout<<list.size()<<std::endl;
     context_ = list.getContext();
     elements_.insert( elements_.end(), list.elements_.begin()+begin, list.elements_.begin()+end);
+}
+
+template<class T>
+void GraphList<T>::operator=(const GraphList<T>& rhs)
+{
+    header_ = rhs.header_;
+    context_ = rhs.context_;
+    elements_ = rhs.elements_;
 }
 
 template<class T>

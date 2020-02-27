@@ -19,8 +19,8 @@
 
 .mainPanel
 {
-    float: left;  
-    width: 70%;
+   /* float: left;  
+    width: 70%;*/
 }
 
 select.versionNames{

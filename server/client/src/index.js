@@ -12,7 +12,7 @@ import InfoPanel from  './infoPanel.js';
 import SelectVersionsComponent from './selectVersionsComponent.js';
 import SelectNodesComponent from './selectNodesComponent.js';
 
-import QueryComponentRWR from './queryComponentRWR.js';
+import {QueryComponentRWR} from './queryComponentRWR.js';
 import QueryComponentMotif from './queryComponentMotif.js';
 
 
@@ -244,12 +244,22 @@ class App extends React.Component {
     
     renderMainPanel(){
         return(
-             <Tabs defaultActiveKey="selectVersions" id="mainTab" >
+             <Tabs defaultActiveKey="info" id="mainTab" >
+                
+                    <Tab eventKey="info" title="VGraph">
+                        <Card className="mainPanel">
+                            
+                        </Card>
+                    </Tab>
                 
                     <Tab eventKey="selectVersions" title="Versions">
                         <Card className="mainPanel">
                             <SelectVersionsComponent getVersions={this.getVersions} isSelected={this.isSelected2} selectVersionToggle={this.selectVersionToggle2} getSelectedVersions={this.getSelectedVersions2}/>
                         </Card>
+                    </Tab>
+                    
+                    <Tab eventKey="selectLabels" title="Labels">
+                    
                     </Tab>
                     
                     <Tab eventKey="selectNodes" title="Nodes">
