@@ -2,6 +2,7 @@ import React from 'react';
 
 import {CardDeck, Card, ListGroup, ListGroupItem} from 'react-bootstrap'
 
+import {SelectedElementDeck}  from './selectedElementDeck.js'
 
 
 class SelectVersionsComponent extends React.Component{ 
@@ -19,11 +20,7 @@ class SelectVersionsComponent extends React.Component{
         this.setState({activeCard: cardId});
         console.log(this.state.activeCard)
     }
-    
-//     handleSelectVersion=()=>{
-//         
-//     }
-//     
+         
     render(){
         return(
             <div>
@@ -48,33 +45,17 @@ class SelectVersionsComponent extends React.Component{
                     
                 </Card.Body>
             
-            <Card.Body>
-                    <CardDeck >
-                    
-                         {this.state.cardIds.map((e,i)=> (
-                             
-                             <div key={i} className= {this.state.activeCard===e ? "card border-primary border-bold " : "card "} onClick={() => this.handleCardClick(e)}>
-                                <Card.Header>Set {e}</Card.Header>
-                                <Card.Body className="versionSelectCard">
-                               
-                                    <ListGroup>
-                                    {
-                                        this.props.getSelectedVersions(e).map((ee,ii)=> (
-                                        <ListGroupItem  key={ii} className="versionSelectItem">{this.props.getVersions().versionNames[ee].name}</ListGroupItem>
-                                    ))}
-                                    
-                                    </ListGroup>
-                                
-                                
-                                </Card.Body>
-                            </div>
-                            ))}
-                    
-                    </CardDeck>
+                <Card.Body>
+                    <SelectedElementDeck activeCard={this.state.activeCard} 
+                        cardIds={this.state.cardIds} 
+                        handleCardClick={this.handleCardClick} 
+                        elementIndexes={this.props.getSelectedVersions}
+                        displayLookup={this.props.getVersions().versionNames}
+                    />
                 </Card.Body>
                 
 
-                </div>
+            </div>
             
            
         );

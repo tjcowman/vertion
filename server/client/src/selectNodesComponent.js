@@ -5,7 +5,7 @@ import paginationFactory from 'react-bootstrap-table2-paginator';
 
 import {Card, CardDeck, ListGroup, ListGroupItem, Button, Row, Col} from 'react-bootstrap'
 
-
+import {SelectedElementDeck}  from './selectedElementDeck.js'
 
 import ToolkitProvider, { Search } from 'react-bootstrap-table2-toolkit';
 
@@ -124,49 +124,15 @@ class SelectNodesComponent extends React.Component{
     
     RenderSelectedNodes(){
         return (
-             <CardDeck >
-            
-                    {this.state.cardIds.map((e,i)=> (
-                        
-                        <div key={i} className= {this.state.activeCard===e ? "card border-primary border-bold " : "card "} onClick={() => this.handleCardClick(e)}>
-                        <Card.Header>Set {e}</Card.Header>
-                        <Card.Body className="versionSelectCard">
-                            
-                            <ListGroup>
-                            {                                
-                                [...this.props.getSelectedNodes2(e)].map((ee,ii)=> (
-                                    <ListGroupItem  
-                                        key={ii} className="versionSelectItem"
-                                        
-                                        >
-                                            {this.props.allNodes[ee].name}
-                                        
-                                    </ListGroupItem>
-                                ))
-                            }                                    
-                            </ListGroup>
-                        
-                        
-                        </Card.Body>
-                    </div>
-                    ))}
-            
-                    <Card>
-                        <Card.Header>Difference</Card.Header>
-                        <Card.Body className="versionSelectCard">
-                            <ListGroup>
-                            {                                
-                                this.props.getSelectedNodesDifference().map((ee,ii)=> (
-//                                       <ListGroupItem  key={ii} className="versionSelectItem" style={ee.v ==0 ? {"backgroundColor": "#ede7f6" } : {"backgroundColor": "#e0f2f1"} }>{this.props.allNodes[ee.id].name}</ListGroupItem>
-                                        <ListGroupItem  key={ii} className="versionSelectItem" >{this.props.allNodes[ee.id].name}</ListGroupItem>
-                                ))
-                            }                                    
-                            </ListGroup>
-                        
-                        </Card.Body>
-                    </Card>
-            
-            </CardDeck>
+
+            <SelectedElementDeck activeCard={this.state.activeCard} 
+                cardIds={this.state.cardIds} 
+                handleCardClick={this.handleCardClick} 
+                elementIndexes={this.props.getSelectedNodes2}
+                displayLookup={this.props.allNodes}
+                showDiff={true}
+            />
+           
         );
     }
     
