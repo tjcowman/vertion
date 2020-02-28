@@ -11,6 +11,7 @@ import InfoPanel from  './infoPanel.js';
 
 import SelectVersionsComponent from './selectVersionsComponent.js';
 import SelectNodesComponent from './selectNodesComponent.js';
+import {SelectLabelsComponent} from './selectLabelsComponent.js'
 
 import {QueryComponentRWR} from './queryComponentRWR.js';
 import QueryComponentMotif from './queryComponentMotif.js';
@@ -99,7 +100,10 @@ class App extends React.Component {
         this.state={
             graphData: new GraphData(),
             versions_s : new SelectedVersions(),
+//             versions_s : [new Set(), new Set()],
             nodes_s :  [new Set(), new Set()],
+            labelsV_s : [new Set(), new Set()],
+            labelsE_s : [new Set(), new Set()],
             nodeLookup: new Map(),
         }
         
@@ -156,16 +160,6 @@ class App extends React.Component {
     
     getSelectedNodes2=(set)=>{
         return this.state.nodes_s[set];
-    }
-    
-    getSelectedNodeDifference=()=>{
-        let l1 = [...this.state.nodes_s[0]].filter((e)=>(!this.state.nodes_s[1].has(e)));
-        let l2 = [...this.state.nodes_s[1]].filter((e)=>(!this.state.nodes_s[0].has(e)));
-        let c = [];
-        l1.forEach((e)=>{c.push({v:0, id:e})})
-        l2.forEach((e)=>{c.push({v:1, id:e})})
-        
-        return c
     }
     
     selectVersionToggle=(index)=>{
@@ -254,12 +248,24 @@ class App extends React.Component {
                 
                     <Tab eventKey="selectVersions" title="Versions">
                         <Card className="mainPanel">
-                            <SelectVersionsComponent getVersions={this.getVersions} isSelected={this.isSelected2} selectVersionToggle={this.selectVersionToggle2} getSelectedVersions={this.getSelectedVersions2}/>
+                            <SelectVersionsComponent getVersions={this.getVersions} 
+                            isSelected={this.isSelected2} 
+                            selectVersionToggle={this.selectVersionToggle2} 
+                            getSelectedVersions={this.getSelectedVersions2}
+                        />
                         </Card>
                     </Tab>
                     
                     <Tab eventKey="selectLabels" title="Labels">
-                    
+                        <Card className="mainPanel">
+                        {/*
+                            <SelectLabelsComponent
+                                vertexLabels={this.state.graphData.data.labels.vertex}
+                                edgeLabels={this.state.graphData.data.labels.edges}
+                                selectedVertexLabels={this.state.labelsV_s}
+                                selectedEdgeLabels={this.state.labelsE_s}
+                            /> */}
+                        </Card>
                     </Tab>
                     
                     <Tab eventKey="selectNodes" title="Nodes">
@@ -268,7 +274,7 @@ class App extends React.Component {
                                 selectNodes2={this.selectNodes2} unSelectNodes2={this.unSelectNodes2} 
                                 getSelectedNodes2={this.getSelectedNodes2} selNodes={this.state.nodes_s}
                                 nodeLookup={this.state.nodeLookup}
-                                getSelectedNodesDifference={this.getSelectedNodeDifference}
+                                
                             />
                         </Card>
                     </Tab>
@@ -276,7 +282,11 @@ class App extends React.Component {
            
                     <Tab eventKey="query_rwr" title="RWR">
                     <Card className="mainPanel">
-                        <QueryComponentRWR getSelectedVersions={this.getSelectedVersions}  getVertexDataRow={this.getVertexDataRow} getLabels={this.getLabels} getSelectedNodes={this.getSelectedNodes2}/>
+                        <QueryComponentRWR getSelectedVersions={this.getSelectedVersions}  
+                            getVertexDataRow={this.getVertexDataRow} 
+                            getLabels={this.getLabels} 
+                            getSelectedNodes={this.getSelectedNodes2}
+                        />
                         </Card>
                     </Tab>
                     

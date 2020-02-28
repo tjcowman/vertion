@@ -31,6 +31,7 @@ class SelectedElementDeck extends React.Component{
                     <Card.Header>Set {e}</Card.Header>
                     <Card.Body className="versionSelectCard">
                     
+                    {console.log("EI", this.props.elementIndexes(e))}
                         <ListGroup>
                         {
                             [...this.props.elementIndexes(e)].map((ee,ii)=> (
