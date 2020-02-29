@@ -66,7 +66,8 @@ class SelectNodesComponent extends React.Component{
         ));
         
 //          console.log("wut", ids)
-        this.props.selectNodes2(this.state.activeCard,  ids.filter(e => typeof e !== 'undefined' )) 
+//         this.props.selectNodes2(this.state.activeCard,  ids.filter(e => typeof e !== 'undefined' )) 
+        this.props.handleSelect("nodes_s", this.state.activeCard, ids.filter(e => typeof e !== 'undefined' ))
         
         this.setState({batchText: ""});
         this.handleCardClick(this.state.activeCard)
@@ -97,14 +98,7 @@ class SelectNodesComponent extends React.Component{
                                     clickToSelect: true, 
                                     hideSelectAll: true,
                                     onSelect: (row, isSelect, rowIndex,e) => {
-                                        if(isSelect){
-                                            this.props.selectNodes2(this.state.activeCard, [row.id])     
-                                        }
-                                        else{
-                                            this.props.unSelectNodes2(this.state.activeCard, [row.id])
-                                        }
-                                        //Used to trigger a rerender of the set cards
-                                        this.handleCardClick(this.state.activeCard)
+                                        this.props.handleToggle("nodes_s", this.state.activeCard, row.id)
                                     },
                                 }}  
                                 striped  
@@ -126,10 +120,11 @@ class SelectNodesComponent extends React.Component{
         return (
 
             <SelectedElementDeck activeCard={this.state.activeCard} 
+            partitionHeadings={[""]}
                 cardIds={this.state.cardIds} 
                 handleCardClick={this.handleCardClick} 
-                elementIndexes={this.props.selectedNodes}
-                displayLookup={this.props.allNodes}
+                elementIndexes={[this.props.selectedNodes]}
+                displayLookup={[this.props.allNodes]}
 //                 showDiff={true}
             />
            

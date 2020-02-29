@@ -72,7 +72,7 @@ class GraphData{
             
         }
         
-
+console.log(serverResponse)
         if(typeof serverResponse !== 'undefined'){
             this.data.labels.vertex = new LabelSet(serverResponse.labels.vertex.names);
             this.data.labels.edge = new LabelSet(serverResponse.labels.edge);
@@ -80,13 +80,13 @@ class GraphData{
             this.data.vertexData = serverResponse.vertexData;
             
             this.data.vertexData.forEach((e) => e.labelsNames =  this.data.labels.vertex.bitsToNames(e.labels));
-            this.labelNames = {
-                vertex : serverResponse.labels.vertex.names,
-                edge : serverResponse.labels.edge.names
+            this.data.labelNames = {
+                vertex : serverResponse.labels.vertex.names.map((e,i)=>({index : i, name : e})),
+                edge : serverResponse.labels.edge.map((e,i)=>({index : i, name : e}))
             }
             
             
-//             console.log(this.data.vertexData)
+//              console.log("TH", this)
         }
 
     }
@@ -101,7 +101,6 @@ class App extends React.Component {
             graphData: new GraphData(),
 //             versions_s : new SelectedVersions(),
             versions_s : [new Set(), new Set()],
-            versions_n : [0,0],
             
             nodes_s :  [new Set(), new Set()],
             labelsV_s : [new Set(), new Set()],
@@ -111,7 +110,7 @@ class App extends React.Component {
         
         var date = new Date();
          Axios.get('http://localhost:9060/ls', date.getTime()).then((response)=>{
-             console.log(response)
+//              console.log(response)
              
             let nodeLookup = new Map();
     
@@ -119,10 +118,18 @@ class App extends React.Component {
                 nodeLookup.set(e.name, e.id)
             ));
 
+            let allVertexLabels0 = new Set(Array(response.data.labels.vertex.names.length).keys());
+            let allEdgeLabels0 = new  Set(Array(response.data.labels.edge.length).keys());
+            
+            let allVertexLabels1 = new Set(Array(response.data.labels.vertex.names.length).keys());
+            let allEdgeLabels1 = new  Set(Array(response.data.labels.edge.length).keys());
+            
             this.setState({
                 graphData: new GraphData(response.data),
-//                 versions_s : new SelectedVersions(response.data.versions),
+                labelsV_s : [allVertexLabels0, allVertexLabels1],
+                labelsE_s : [allEdgeLabels0, allEdgeLabels1],
                 nodeLookup : nodeLookup
+                //Array(response.data.labels.vertex.names.length).keys()
             })
 
          })
@@ -145,24 +152,25 @@ class App extends React.Component {
     }
     
 
-    selectNodes2=(set, nodeIds)=>{
-//         console.log("SL2", this.state.nodes_s)
-        this.setState(prevState => {
-            nodes_s : nodeIds.forEach(prevState.nodes_s[set].add, prevState.nodes_s[set])
-        });
-//         console.log("SL", this.state.nodes_s)
+    handleToggle=(name, cardId, elementId)=>{
+        console.log(this.state[name])
+        let ns = this.state[name];
+                    
+        if(this.state[name][cardId].has(elementId)){
+            ns[cardId].delete(elementId);
+        }
+        else{
+            ns[cardId].add(elementId);
+        }
+                    
+        this.setState({[name] : ns});
     }
     
-    unSelectNodes2=(set, nodeIds)=>{
-        this.setState(prevState => {
-            nodes_s : nodeIds.forEach(prevState.nodes_s[set].delete, prevState.nodes_s[set])
-        });
-        console.log("SL", this.state.nodes_s)
+    handleCheckToggle=(name,cardId, elementId)=>{
+         return this.state[name][cardId].has(elementId);
     }
     
-    
-    
-    selectVersion=(set, versionIds)=>{
+    selectLabels=(set, versionIds)=>{
         console.log("S")
         let newCounts = this.state.versions_n;
         newCounts[set] = newCounts[set] + versionIds.length;
@@ -174,39 +182,7 @@ class App extends React.Component {
         
         this.setState({ versions_n : newCounts});
     }
-    
-    unSelectVersion=(set, versionIds)=>{
-        console.log("US")
-        let newCounts = this.state.versions_n;
-        newCounts[set] = newCounts[set] - versionIds.length;
-        
-        this.setState(prevState => {
-             versions_s : versionIds.forEach(prevState.versions_s[set].delete, prevState.versions_s[set])
-        });
-         this.setState({ versions_n : newCounts});
-
-    }
-    
-    toggleSelectVersion=(set, index)=>{
-        if(this.checkVersion(set,index))
-            this.unSelectVersion(set, [index]);
-        else
-            this.selectVersion(set,[index]);
-    }
-    
-    checkVersion=(set, index)=>{
-        return this.state.versions_s[set].has(index);
-    }
-    
-    getSelectedNodes2=(set)=>{
-        return this.state.nodes_s[set];
-    }
-    
-    
-    
-
-    
-
+   
     
     
     getLabels = () => {
@@ -243,11 +219,8 @@ class App extends React.Component {
                             <SelectVersionsComponent 
                                 versionData={this.state.graphData.data.versions}
                                 selectedVersions={this.state.versions_s}
-                                checkVersion={this.checkVersion}
-
-                                toggleSelectVersion={this.toggleSelectVersion}
-//                                 getSelectedVersions={this.getSelectedVersions}
-
+                                handleCheckToggle={this.handleCheckToggle}
+                                handleToggle={this.handleToggle}
                         />
                         </Card>
                     </Tab>
@@ -260,6 +233,9 @@ class App extends React.Component {
                                 edgeLabels={this.state.graphData.data.labelNames.edge}
                                 selectedVertexLabels={this.state.labelsV_s}
                                 selectedEdgeLabels={this.state.labelsE_s}
+                                
+                                handleCheckToggle={this.handleCheckToggle}
+                                handleToggle={this.handleToggle}
                             /> 
                         </Card>
                     </Tab>
@@ -270,11 +246,11 @@ class App extends React.Component {
                             <SelectNodesComponent 
                                 allNodes={this.state.graphData.data.vertexData} 
                                 
-                                selectNodes2={this.selectNodes2} 
-                                unSelectNodes2={this.unSelectNodes2} 
-                                
-                                selectedNodes={this.state.nodes_s}
+                                handleCheckToggle={this.handleCheckToggle}
+                                handleToggle={this.handleToggle}
+                                handleSelect={this.handleSelect}
 
+                                selectedNodes={this.state.nodes_s}
                                 nodeLookup={this.state.nodeLookup}
                                 
                             />
@@ -296,10 +272,10 @@ class App extends React.Component {
                     <Tab eventKey="query_tri" title="Motifs">
                     <Card className="mainPanel">
                         <QueryComponentMotif 
-                        selectedVersions={this.state.versions_s}  
-                        getVertexDataRow={this.getVertexDataRow}
-                        getLabels={this.getLabels} 
-                        getSelectedNodes={this.state.nodes_s}/>
+                            selectedVersions={this.state.versions_s}  
+                            getVertexDataRow={this.getVertexDataRow}
+                            getLabels={this.getLabels} 
+                            getSelectedNodes={this.state.nodes_s}/>
                         </Card>
                     </Tab>
             

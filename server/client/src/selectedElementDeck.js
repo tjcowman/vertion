@@ -4,26 +4,35 @@ import {CardDeck, Card, ListGroup, ListGroupItem} from 'react-bootstrap'
 const  SelectedElementDeck = (props) =>{
     
      return(
+
+                
              <CardDeck >
                      
                 {props.cardIds.map((e,i)=> (
                     
-                    <div key={i} className= {props.activeCard===e ? "card border-primary border-bold " : "card "} onClick={() => props.handleCardClick(e)}>
-                    <Card.Header>Set {e}</Card.Header>
-                    <Card.Body className="versionSelectCard">
                     
-                    {console.log("EI", props.elementIndexes)}
-                        <ListGroup>
-                        {
-                            [...props.elementIndexes[e]].map((ee,ii)=> (
-                            <ListGroupItem  key={ii} className="versionSelectItem">{props.displayLookup[ee].name}</ListGroupItem>
-                        ))}
+                    
+                        <div key={i} className= {props.activeCard===e ? "card border-primary border-bold " : "card "} onClick={() => props.handleCardClick(e)}>
+                        <Card.Header>Set {e}</Card.Header>
+                        <Card.Body className="versionSelectCard">
+
+                            {props.partitionHeadings.map((partition,partI) =>(
+                                <div key={partI}>
+                                    <b>{partition}</b>
+                                    <ListGroup>
+                                    {
+                                        [...props.elementIndexes[partI][e]].map((ee,ii)=> (
+                                        <ListGroupItem  key={ii} className="versionSelectItem" > {props.displayLookup[partI][ee].name} </ListGroupItem>
+                                    ))}
+                                    </ListGroup>
+                                </div>
+                            ))}
                         
-                        </ListGroup>
+                        </Card.Body>
+                        </div>
+                        
+                  
                     
-                    
-                    </Card.Body>
-                    </div>
                 ))}
                     
                     
