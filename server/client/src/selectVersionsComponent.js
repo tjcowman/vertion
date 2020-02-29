@@ -30,13 +30,19 @@ class SelectVersionsComponent extends React.Component{
                         <Card.Header>Versions</Card.Header>
                         <div className=" card-body "> {
 //                             console.log(this.props.getVersions()),
-                            this.props.getVersions().versionNames.map((e,i)=>(
+                            //this.props.getVersions().versionNames.map((e,i)=>(
+                            this.props.versionData.map((e,i)=>(
                             
                                 <button  key={i}
-                                value={e.name} 
-                                name={i} 
-                                className={this.props.isSelected(this.state.activeCard,i) ? "active btn btn-outline-secondary m-1 btn-sm vName " : "btn btn-outline-secondary m-1 btn-sm vName"}
-                                onClick={(event) =>this.props.selectVersionToggle(this.state.activeCard,i)}> {e.name} 
+                                    value={e.name} 
+                                    name={i} 
+                                    className={this.props.checkVersion(this.state.activeCard,i) ? "active btn btn-outline-secondary m-1 btn-sm vName " : "btn btn-outline-secondary m-1 btn-sm vName"}
+                                    onClick={(event) =>
+                                        this.props.toggleSelectVersion(this.state.activeCard,i)
+                                        
+                                    }
+                                > 
+                                {e.name} 
                                 </button>
                         ))}
                         </div>
@@ -49,8 +55,9 @@ class SelectVersionsComponent extends React.Component{
                     <SelectedElementDeck activeCard={this.state.activeCard} 
                         cardIds={this.state.cardIds} 
                         handleCardClick={this.handleCardClick} 
-                        elementIndexes={this.props.getSelectedVersions}
-                        displayLookup={this.props.getVersions().versionNames}
+                        elementIndexes={this.props.selectedVersions}
+                        displayLookup={this.props.versionData}
+                        
                     />
                 </Card.Body>
                 

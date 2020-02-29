@@ -51,11 +51,11 @@ class SelectNodesComponent extends React.Component{
         this.setState({
             batchText : event.target.value
         })
-        console.log(this.state.batchText)
+//         console.log(this.state.batchText)
     }
     
     handleBatchInputClick=(event)=>{
-         console.log(this.state.batchText)
+//          console.log(this.state.batchText)
          
         let ids = [];
          
@@ -93,7 +93,7 @@ class SelectNodesComponent extends React.Component{
                                 rowClasses="nodeSelectItem" 
                                 selectRow={{
                                     mode: 'checkbox',  
-                                    selected: [...this.props.getSelectedNodes2(this.state.activeCard)],
+                                    selected: [...this.props.selectedNodes[this.state.activeCard]],
                                     clickToSelect: true, 
                                     hideSelectAll: true,
                                     onSelect: (row, isSelect, rowIndex,e) => {
@@ -128,9 +128,9 @@ class SelectNodesComponent extends React.Component{
             <SelectedElementDeck activeCard={this.state.activeCard} 
                 cardIds={this.state.cardIds} 
                 handleCardClick={this.handleCardClick} 
-                elementIndexes={this.props.getSelectedNodes2}
+                elementIndexes={this.props.selectedNodes}
                 displayLookup={this.props.allNodes}
-                showDiff={true}
+//                 showDiff={true}
             />
            
         );

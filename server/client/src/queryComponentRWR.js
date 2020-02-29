@@ -97,7 +97,8 @@ class QueryComponentRWR extends React.Component{
   handleSubmit=(event)=>{
 
     try{
-        let versions = this.props.getSelectedVersions();
+        let versions = [...this.props.selectedVersions[0]];
+        console.log("VR", versions)
         if(versions.length === 0)
         {
              this.setState({result:  {nodes:[{"row":null, "id":null, "value":null}], edges: [] } });
@@ -107,9 +108,9 @@ class QueryComponentRWR extends React.Component{
         
         let epsilon = (1/(Math.pow(10,this.state.epsilon)));
         let selectedNodes = [];
-//         console.log("ep", epsilon)
-        this.props.getSelectedNodes(0).forEach((v1,v2) => (selectedNodes.push({i:v1, v:1})));
-//         console.log("SN", selectedNodes);
+         console.log("ep", epsilon)
+        this.props.selectedNodes[0].forEach((v1,v2) => (selectedNodes.push({i:v1, v:1})));
+         console.log("SN", selectedNodes);
 
         let command = {cmd:"rwr", versions:versions, alpha:Number(this.state.alpha), epsilon:Number(epsilon), topk:Number(this.state.topk), source:selectedNodes, mode:"el"}; 
 //         console.log("cmd", command)
