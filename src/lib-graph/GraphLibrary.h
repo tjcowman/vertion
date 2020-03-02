@@ -36,6 +36,8 @@ namespace GraphType
             
             using VersionIndex = int;
             using Index=int32_t;
+            static const Index invalidIndex = std::numeric_limits<Index>::max();
+            
             using Value=float;
             using VertexInternal= VertexType;
     };

@@ -14,6 +14,9 @@ read_graph: | $(BINDIR)
 extract_version: | $(BINDIR)
 	$(CC) $(INC) $(CF) extract_version.cpp -o $(BINDIR)/extract_version
 
+createView: | $(BINDIR)
+	$(CC) $(INC) $(CF) createView.cpp -o $(BINDIR)/createView
+
 #Queries
 query_rwr: | $(BINDIR)
 	$(CC) $(INC) $(CF) query_rwr.cpp -o $(BINDIR)/query_rwr

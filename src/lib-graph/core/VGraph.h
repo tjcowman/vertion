@@ -504,7 +504,7 @@ GraphList<VertexU<T>> VGraph<T>::getVertexList()const
     GraphList<VertexU<T>> retVal;
     
     for(Index i=0; i<vertexData_.size(); ++i)
-        retVal.push_back(VertexU<T>(i,true));
+        retVal.push_back(VertexU<T>(i,true, vertexData_.lookupLabels(i)));
     
     return retVal;
 }
