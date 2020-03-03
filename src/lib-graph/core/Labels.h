@@ -18,6 +18,7 @@ class Labels
         Labels();
         Labels(std::bitset<GT::LabelSize> bits);
         Labels(int bit);
+        Labels(const std::vector<int>& bits);
         
         Labels<L,GT> recode(const std::map<typename GT::Index, typename GT::Index>& mapping)const;
         
@@ -103,6 +104,13 @@ template <LabelGroup L, class T>
 Labels<L,T>::Labels(int bit)
 {
     add(bit);
+}
+
+template <LabelGroup L, class T>
+Labels<L,T>::Labels(const std::vector<int>& bits)
+{
+    for(const auto& e : bits)
+        add(e);
 }
 
 template <LabelGroup L, class GT> 

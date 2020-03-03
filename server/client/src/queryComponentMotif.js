@@ -3,7 +3,7 @@ import React from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Button, Form,Col,Row,Tabs,Tab, Card, TabPane} from 'react-bootstrap';
 
-
+import {BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip} from 'recharts';
 // import ReactDOM from 'react-dom'; 
 import Axios from 'axios';
  
@@ -76,7 +76,7 @@ class QueryComponentMotif extends React.Component{
     handleSubmit=(event)=>{
 //         console.log("wut")
         try{
-            let versions = this.props.getSelectedVersions();
+            let versions = [...this.props.selectedVersions[0]];
             if(versions.length === 0)
             {
                 this.setState({data: new MotifList()}); //{"pattern":[], "count":null }
@@ -85,17 +85,20 @@ class QueryComponentMotif extends React.Component{
                 
             let epsilon = (1/(Math.pow(10,this.state.epsilon)));
             let selectedNodes = [];
-
-            this.props.getSelectedNodes(0).forEach((v1,v2) => (selectedNodes.push({i:v1, v:1})));
+            console.log("ep", epsilon)
+            this.props.selectedNodes[0].forEach((v1,v2) => (selectedNodes.push({i:v1, v:1})));
+            console.log("SN", selectedNodes);
+//             this.props.getSelectedNodes(0).forEach((v1,v2) => (selectedNodes.push({i:v1, v:1})));
 //             let command = {cmd:"mft", versions:versions}; 
             let command = {cmd:"mft", versions:versions, alpha:Number(this.state.alpha), epsilon:Number(epsilon), topk:Number(this.state.topk), source:selectedNodes, mode:"el"}; 
         
+            var d = new Date();
             Axios.post('http://localhost:9060', JSON.stringify(command)).then((response)=>{
                 console.log("Response", response)
                 this.setState({
                     data: new MotifList(response.data.motifs, this.props.getLabels()[1])
                 });
-                
+                (console.log(new Date()-d));
                 
             })//.
 //             then(()=>{console.log("data",this.state.data)});
@@ -118,13 +121,35 @@ class QueryComponentMotif extends React.Component{
 
     }
     
+    renderBarChart(){
+        return(
+           
+            <>
+            {console.log(this.state.data)}
+            </>,
+            
+            <BarChart width={400} height={400} data={this.state.data.motifs}>
+                <XAxis dataKey="pattern" hide="true" />
+                 <YAxis />
+                 <Tooltip />
+                  <CartesianGrid stroke="#ccc" strokeDasharray="5 5" />
+                <Bar type="monotone" dataKey="count" fill="#8884d8" />
+            </BarChart>
+        );
+    }
+    
     render(){
         return(
             <>
+            "Change to take nodes as input then expand and run motifs"
+            {/*
             <Card.Body>
              <SettingsRWR handleChange={this.handleChange} alpha={this.state.alpha} epsilon={this.state.epsilon} topk={this.state.topk}/>
             </Card.Body>
-           
+            */}
+            
+            {/*this.renderBarChart()*/}
+                
             <Card>
             <Card.Body>
             <Button className="form-control" variant="primary" onClick={(e)=>this.handleSubmit(e)} >Enumerate</Button>

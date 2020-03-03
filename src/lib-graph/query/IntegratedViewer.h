@@ -17,7 +17,7 @@ class IntegratedViewer
         void clear();
         
         void describe(std::ostream& os);
-        
+        typename GT::Index getOriginalIndex(typename GT::Index viewIndex)const;
         
         void buildView(std::vector<typename GT::VersionIndex> versions, VertexLabel<GT> nodeLabels, EdgeLabel<GT> edgeLabels);
         
@@ -70,6 +70,12 @@ void IntegratedViewer<GT>::describe(std::ostream& os)
     for(const auto& e : IA_)
         std::cout<<e<<" ";
     std::cout<<std::endl;
+}
+
+template<class GT>
+typename GT::Index IntegratedViewer<GT>::getOriginalIndex(typename GT::Index viewIndex)const
+{
+    return viewIndexes_[viewIndex];
 }
 
 template<class GT>
@@ -159,7 +165,7 @@ void IntegratedViewer<GT>::buildView(std::vector<typename GT::VersionIndex> vers
     //Get full node list and filter out unrequested labels
     auto allNodes = graph_->getVertexList();
     
-    std::cout<<allNodes<<std::endl;
+//     std::cout<<allNodes<<std::endl;
     
     if(nodeLabels.getBits().any())
     {
@@ -167,7 +173,7 @@ void IntegratedViewer<GT>::buildView(std::vector<typename GT::VersionIndex> vers
             return ((e.labels_.getBits() & nodeLabels.getBits()).any());
         });
     }
-    std::cout<<allNodes.size()<<std::endl;
+//     std::cout<<allNodes.size()<<std::endl;
     
     
     IA_.reserve(allNodes.size());

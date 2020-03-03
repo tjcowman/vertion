@@ -6,9 +6,16 @@
 #include <algorithm>
 using json = nlohmann::json;
 
+template<class GT>
+auto run_rwr(const VGraph<GT>& graph, const json& args){
+    
+    
+}
+
 namespace Commands
 {
 
+    
     template<class GT>
     json ls(const VGraph<GT>& graph, const json& args)
     {
@@ -120,6 +127,50 @@ namespace Commands
     }
     
     template<class GT>
+    json rwr2(const VGraph<GT>& graph, const json& args)
+    {
+        json retVal;
+        std::vector<typename GT::VersionIndex> versions = args["versions"].get<std::vector<typename GT::VersionIndex>>();
+        std::vector<typename GT::Index> vertexLabels = args["vertexLabels"].get<std::vector<typename GT::Index>>();
+        std::vector<typename GT::Index> edgeLabels = args["edgeLabels"].get<std::vector<typename GT::Index>>();
+        std::vector<VertexS<GT>> source  = (args["source"]);
+        
+        IntegratedViewer<GT> IV(graph);
+        IV.buildView(versions, VertexLab(vertexLabels), EdgeLab(edgeLabels));
+        
+        RandomWalker<GT> RW(IV);
+        typename RandomWalker<GT>::Args_Walk args_walk{args["alpha"], args["epsilon"], GraphList<VertexS<GT>>()};
+        
+
+        auto res = RW.walk(GraphList<VertexS<GT>>(source), args_walk);
+        res.sort(Sort::valueDec);
+        res.resize(std::min(size_t(args["topk"]), res.size()));
+        
+        if(args["mode"] == "nl")
+        {
+            for(size_t i=0; i<std::min(size_t(args["topk"]), res.size()); ++i)
+            {
+                retVal["weights"] +=  {{"id",  IV.getOriginalIndex(res[i].index_)}, {"value", res[i].value_}};
+            }
+        }
+        else if(args["mode"] == "el")
+        {
+            GraphList<EdgeElement<GT>> edges = IV.mapVertexes(res);
+            for(size_t i=0; i<res.size(); ++i)
+            {
+                retVal["nodes"] +=  {{"id",  IV.getOriginalIndex(res[i].index_)}, {"value", res[i].value_}};
+            }
+            for(const auto& e : edges)
+            {
+                retVal["edges"] += {{"id1", IV.getOriginalIndex(e.index1_)}, {"id2", IV.getOriginalIndex(e.index2_)}, {"value",e.value_}, {"labels",e.labels_.getBits().to_ulong()}};
+            }
+        }
+        
+        std::cout<<"Query Finished"<<std::endl;
+        return retVal;
+    }
+    
+    template<class GT>
     json lsv(const VGraph<GT>& graph, const json& args)
     {
         json retVal;
@@ -171,10 +222,6 @@ namespace Commands
             for(auto ee : e.first)
                 pattern.push_back(ee.getBits().to_ulong());
             ret["motifs"] += {{"pattern", pattern }, {"count",e.second}};
-//             for(const auto& ee : e.first)
-//                     std::cout<<ee<<" ";
-//             
-//             std::cout<<" :"<<e.second<<"\n";
         }
         return ret;
     }

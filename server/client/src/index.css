@@ -1,3 +1,8 @@
+.versionDisplaySelect{
+    float:left;
+    padding: 5px;
+
+}
 
 .tableRow{
     font-size: small;

@@ -52,6 +52,7 @@ class LabelSet{
 }
 
 
+
 class GraphData{
     constructor(serverResponse){
 //         console.log(serverResponse)
@@ -106,6 +107,7 @@ class App extends React.Component {
             labelsV_s : [new Set(), new Set()],
             labelsE_s : [new Set(), new Set()],
             nodeLookup: new Map(),
+            versionTagDisplay : new Map(),
         }
         
         var date = new Date();
@@ -113,7 +115,8 @@ class App extends React.Component {
 //              console.log(response)
              
             let nodeLookup = new Map();
-    
+            
+            
             response.data.vertexData.forEach((e) =>(
                 nodeLookup.set(e.name, e.id)
             ));
@@ -124,7 +127,23 @@ class App extends React.Component {
             let allVertexLabels1 = new Set(Array(response.data.labels.vertex.names.length).keys());
             let allEdgeLabels1 = new  Set(Array(response.data.labels.edge.length).keys());
             
+            
+            let versionTagDisplay = new Map();
+            response.data.versions.forEach((e) => {
+                e.tags.forEach((t) => {
+//                     console.log(t)
+                    if (!versionTagDisplay.has(t)){
+                        versionTagDisplay.set(t,  [])
+                    }
+                    versionTagDisplay.get(t).push({index: e.index, name: e.name})
+                })
+                
+            });
+            
+            console.log(versionTagDisplay)
+            
             this.setState({
+                versionTagDisplay: versionTagDisplay,
                 graphData: new GraphData(response.data),
                 labelsV_s : [allVertexLabels0, allVertexLabels1],
                 labelsE_s : [allEdgeLabels0, allEdgeLabels1],
@@ -210,7 +229,7 @@ class App extends React.Component {
                 
                     <Tab eventKey="info" title="VGraph">
                         <Card className="mainPanel">
-                            
+                            "TODO: Add tissue specificity versions and use version tags to display in versions tab"
                         </Card>
                     </Tab>
                 
@@ -218,6 +237,7 @@ class App extends React.Component {
                         <Card className="mainPanel">
                             <SelectVersionsComponent 
                                 versionData={this.state.graphData.data.versions}
+                                versionTagDisplay={this.state.versionTagDisplay}
                                 selectedVersions={this.state.versions_s}
                                 handleCheckToggle={this.handleCheckToggle}
                                 handleToggle={this.handleToggle}
@@ -264,6 +284,8 @@ class App extends React.Component {
                             selectedVersions={this.state.versions_s}  
                             getVertexDataRow={this.getVertexDataRow} 
                             getLabels={this.getLabels} 
+                            selectedVertexLabels={this.state.labelsV_s}
+                            selectedEdgeLabels={this.state.labelsE_s}
                             selectedNodes={this.state.nodes_s}
                         />
                         </Card>
@@ -275,7 +297,8 @@ class App extends React.Component {
                             selectedVersions={this.state.versions_s}  
                             getVertexDataRow={this.getVertexDataRow}
                             getLabels={this.getLabels} 
-                            getSelectedNodes={this.state.nodes_s}/>
+                             selectedNodes={this.state.nodes_s}
+                        />
                         </Card>
                     </Tab>
             

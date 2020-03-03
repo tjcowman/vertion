@@ -112,7 +112,12 @@ class QueryComponentRWR extends React.Component{
         this.props.selectedNodes[0].forEach((v1,v2) => (selectedNodes.push({i:v1, v:1})));
          console.log("SN", selectedNodes);
 
-        let command = {cmd:"rwr", versions:versions, alpha:Number(this.state.alpha), epsilon:Number(epsilon), topk:Number(this.state.topk), source:selectedNodes, mode:"el"}; 
+//         let command = {cmd:"rwr", versions:versions, alpha:Number(this.state.alpha), epsilon:Number(epsilon), topk:Number(this.state.topk), source:selectedNodes, mode:"el"};
+        let command = {cmd:"rwr2", versions:versions, alpha:Number(this.state.alpha), epsilon:Number(epsilon), 
+            topk:Number(this.state.topk), source:selectedNodes, mode:"el",
+            vertexLabels: [...this.props.selectedVertexLabels[0]],
+            edgeLabels: [...this.props.selectedEdgeLabels[0]]
+        }; 
 //         console.log("cmd", command)
         
         
