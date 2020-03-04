@@ -1,5 +1,6 @@
 #pragma once
 #include "vertion.h"
+#include "ViewCache.h"
 
 #include <nlohmann/json.hpp>
 
@@ -71,12 +72,14 @@ namespace Commands
         ret["tree"] = jsArr2;
         ret["labels"] = labels;
         ret["vertexData"];
+        
+        ret["serverProps"] = graph.getServerProps();
 // //         std::cout<<ret<<std::endl;
         return ret;
     }
 
     template<class GT>
-    json rwr(const VGraph<GT>& graph, const json& args)
+    json rwr(const VGraph<GT>& graph, ViewCache<GT>& viewCache, const json& args)
     {
         json retVal;
         std::vector<typename GT::VersionIndex> versions = args["versions"].get<std::vector<typename GT::VersionIndex>>();
@@ -127,7 +130,7 @@ namespace Commands
     }
     
     template<class GT>
-    json rwr2(const VGraph<GT>& graph, const json& args)
+    json rwr2(const VGraph<GT>& graph, ViewCache<GT>& viewCache, const json& args)
     {
         json retVal;
         std::vector<typename GT::VersionIndex> versions = args["versions"].get<std::vector<typename GT::VersionIndex>>();
@@ -135,8 +138,13 @@ namespace Commands
         std::vector<typename GT::Index> edgeLabels = args["edgeLabels"].get<std::vector<typename GT::Index>>();
         std::vector<VertexS<GT>> source  = (args["source"]);
         
-        IntegratedViewer<GT> IV(graph);
-        IV.buildView(versions, VertexLab(vertexLabels), EdgeLab(edgeLabels));
+        
+        
+//         IntegratedViewer<GT> IV(graph);
+//         IV.buildView(versions, VertexLab(vertexLabels), EdgeLab(edgeLabels));
+        IntegratedViewer<GT> IV = viewCache.lookup(versions, VertexLab(vertexLabels), EdgeLab(edgeLabels)) ;
+        std::cout<<"finished lookup"<<std::endl;
+//         retVal["viewHash"] = viewCache.generate_uid(versions, VertexLab(vertexLabels), EdgeLab(edgeLabels));
         
         RandomWalker<GT> RW(IV);
         typename RandomWalker<GT>::Args_Walk args_walk{args["alpha"], args["epsilon"], GraphList<VertexS<GT>>()};
@@ -171,7 +179,7 @@ namespace Commands
     }
     
     template<class GT>
-    json lsv(const VGraph<GT>& graph, const json& args)
+    json lsv(const VGraph<GT>& graph, ViewCache<GT>& viewCache, const json& args)
     {
         json retVal;
         
@@ -184,7 +192,7 @@ namespace Commands
     }
 
     template<class GT>
-    json mft(const VGraph<GT>& graph, const json& args)
+    json mft(const VGraph<GT>& graph, ViewCache<GT>& viewCache, const json& args)
     {
         json ret;
         

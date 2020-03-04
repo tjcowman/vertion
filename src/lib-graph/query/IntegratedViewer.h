@@ -21,6 +21,8 @@ class IntegratedViewer
         
         void buildView(std::vector<typename GT::VersionIndex> versions, VertexLabel<GT> nodeLabels, EdgeLabel<GT> edgeLabels);
         
+        void buildViewWIntersect(std::vector<std::vector<typename GT::VersionIndex> > versions, VertexLabel<GT> nodeLabels, EdgeLabel<GT> edgeLabels);
+        
         void viewUnion(std::vector<typename GT::VersionIndex> versions);
         
         GraphList<EdgeElement<GT>> mapVertexes(const GraphList<VertexU<GT>>& nodes)const;
@@ -236,6 +238,11 @@ void IntegratedViewer<GT>::buildView(std::vector<typename GT::VersionIndex> vers
     
 }
 
+template<class GT>
+void IntegratedViewer<GT>::buildViewWIntersect(std::vector<std::vector<typename GT::VersionIndex> > versions, VertexLabel<GT> nodeLabels, EdgeLabel<GT> edgeLabels)
+{
+    
+}
 
 template<class GT>
 void IntegratedViewer<GT>::viewUnion(std::vector<typename GT::VersionIndex> versions)

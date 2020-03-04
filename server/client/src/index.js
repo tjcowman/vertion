@@ -73,7 +73,7 @@ class GraphData{
             
         }
         
-console.log(serverResponse)
+// console.log(serverResponse)
         if(typeof serverResponse !== 'undefined'){
             this.data.labels.vertex = new LabelSet(serverResponse.labels.vertex.names);
             this.data.labels.edge = new LabelSet(serverResponse.labels.edge);
@@ -100,9 +100,9 @@ class App extends React.Component {
         super(props);
         this.state={
             graphData: new GraphData(),
-//             versions_s : new SelectedVersions(),
-            versions_s : [new Set(), new Set()],
-            
+
+            serverProps : {},
+            versions_s : [new Set(), new Set()],            
             nodes_s :  [new Set(), new Set()],
             labelsV_s : [new Set(), new Set()],
             labelsE_s : [new Set(), new Set()],
@@ -112,10 +112,12 @@ class App extends React.Component {
         
         var date = new Date();
          Axios.get('http://localhost:9060/ls', date.getTime()).then((response)=>{
-//              console.log(response)
+             console.log("lsResponse", response)
              
             let nodeLookup = new Map();
             
+//             console.log(response.serverProp)
+            let serverProps = JSON.parse(response.data.serverProps);
             
             response.data.vertexData.forEach((e) =>(
                 nodeLookup.set(e.name, e.id)
@@ -140,16 +142,17 @@ class App extends React.Component {
                 
             });
             
-            console.log(versionTagDisplay)
+//             console.log(versionTagDisplay)
             
             this.setState({
+                serverProps : serverProps,
                 versionTagDisplay: versionTagDisplay,
                 graphData: new GraphData(response.data),
                 labelsV_s : [allVertexLabels0, allVertexLabels1],
                 labelsE_s : [allEdgeLabels0, allEdgeLabels1],
                 nodeLookup : nodeLookup
                 //Array(response.data.labels.vertex.names.length).keys()
-            })
+            }, () =>{console.log("initstate", this.state)})
 
          })
         
@@ -172,7 +175,7 @@ class App extends React.Component {
     
 
     handleToggle=(name, cardId, elementId)=>{
-        console.log(this.state[name])
+//         console.log(this.state[name])
         let ns = this.state[name];
                     
         if(this.state[name][cardId].has(elementId)){
@@ -190,7 +193,7 @@ class App extends React.Component {
     }
     
     selectLabels=(set, versionIds)=>{
-        console.log("S")
+//         console.log("S")
         let newCounts = this.state.versions_n;
         newCounts[set] = newCounts[set] + versionIds.length;
         
@@ -230,6 +233,7 @@ class App extends React.Component {
                     <Tab eventKey="info" title="VGraph">
                         <Card className="mainPanel">
                             "TODO: Add tissue specificity versions and use version tags to display in versions tab"
+                            "Create View and cache, return elementId for it"
                         </Card>
                     </Tab>
                 

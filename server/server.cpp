@@ -1,5 +1,6 @@
 #include "vertion.h"
 #include "CommandRunner.h"
+#include "ViewCache.h"
 
 #include <pistache/endpoint.h>
 
@@ -72,12 +73,13 @@ class HelloHandler : public Http::Handler
         
         HTTP_PROTOTYPE(HelloHandler)
         static const Graph* graph_;
+        static ViewCache<GraphType::GD>* viewCache_;
         
         void onRequest(const Http::Request& request, Http::ResponseWriter response) override
         {
             std::cout<<"Request: " + request.body()<<std::endl;
             std::cout<<eTag<<std::endl;
-            CommandRunner<GraphType::GD> CR(*graph_);
+            CommandRunner<GraphType::GD> CR(*graph_, *viewCache_);
             if (request.resource() == "/ls") 
             {
 
@@ -128,7 +130,7 @@ class HelloHandler : public Http::Handler
 
 std::string HelloHandler::eTag;
 const Graph* HelloHandler::graph_;
-
+ViewCache<GraphType::GD>* HelloHandler::viewCache_;
 
 struct Args
 {
@@ -160,7 +162,9 @@ int main(int argc, char* argv[] )
     
     IO.read_serial(args.graph);
     
-     HelloHandler::graph_ = &G;
+    HelloHandler::graph_ = &G;
+    ViewCache<GraphType::GD> VC(G);
+    HelloHandler::viewCache_ = &VC;
 //     Http::listenAndServe<HelloHandler>(Address("*:"+std::to_string(args.port)));
     
     
@@ -185,17 +189,6 @@ int main(int argc, char* argv[] )
         }
     }
     
-//     Address addr(Ipv4::any(), Port(std::to_string(args.port)));
-// 
-//     auto opts = Http::Endpoint::options().threads(1);
-//     Http::Endpoint server(addr);
-//     server.init(opts);
-//     
-// //     HelloHandler
-//     server.setHandler(std::make_shared<HelloHandler>());
-//     server.serve();
-
-
 
     return 0;
 }

@@ -18,7 +18,7 @@ class SelectVersionsComponent extends React.Component{
     
     handleCardClick=(cardId)=>{
         this.setState({activeCard: cardId});
-        console.log(this.state.activeCard)
+
     }
          
          
@@ -27,14 +27,14 @@ class SelectVersionsComponent extends React.Component{
             <Card>
             <Card.Header>Versions</Card.Header>
                 <Card.Body>
-                {console.log("VTD", [...this.props.versionTagDisplay])}
+               
                     {[...this.props.versionTagDisplay].map((e,i)=>(
                         <div key={i}>
                         <div className="border versionDisplaySelect">
                             <b>{e[0]}</b>
                             <div>
                             {e[1].map((ee,ii) =>(
-                                   console.log(ee, ii),
+//                                    console.log(ee, ii),
                                     <button  key={ii}
 
                                      

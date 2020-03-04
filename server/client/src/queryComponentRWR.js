@@ -138,7 +138,7 @@ class QueryComponentRWR extends React.Component{
             
             
             this.setState({result: response.data})
-//           console.log(this.state.result);
+           console.log(this.state.result);
         });
       
     }

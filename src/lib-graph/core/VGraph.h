@@ -145,7 +145,9 @@ class VGraph
         void insertEdges_quantileThreshold(const EdgeList& edges, typename T::VersionIndex fromVersion, std::vector<Tag> tags, Context asContext, typename T::Value width);
         
         void addVersion(const VersionChanges<T> & versionChanges, typename T::VersionIndex fromVersion);
-        
+
+        const std::string& getServerProps()const;
+            
         //Access row bounds for a given node
 
         auto getOutgoingNodes(Index node, typename T::VersionIndex version)const;
@@ -180,6 +182,9 @@ class VGraph
         bool checkVersionValid(typename T::VersionIndex version)const;
        
     private:
+        
+        //Used to store configuration properties if the graph is going to be used in the vertion front end, formatted as json object
+        std::string serverProps_;
         
         Context context_;
 
@@ -276,6 +281,12 @@ template <class T>
 int  VGraph<T>::addEdgeLabel(std::string s)
 {
     return LMap_.addLabel(s);
+}
+
+template <class T>
+const std::string& VGraph<T>::getServerProps()const
+{
+    return serverProps_;
 }
 
 // template<class T>

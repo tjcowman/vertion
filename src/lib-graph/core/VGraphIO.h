@@ -176,6 +176,14 @@ void VGraphIO<T>::read_serial(std::string hgraphFileName)const
                 read_serial_L(*graph_, IF);
             IF.close();
         }
+         std::ifstream IF;
+        IF.open(hgraphFileName + "/serverProps.js");
+            std::string input = std::string(std::istreambuf_iterator<char>(IF), std::istreambuf_iterator<char>());
+            auto ne = std::remove_if(input.begin(), input.end(), [](const auto& c){return c==' ' || c=='\n';});
+            
+            graph_->serverProps_ = std::string(input.begin(), ne);
+        IF.close();
+        
     }
 }
 
