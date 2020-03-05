@@ -1,5 +1,6 @@
 import React from 'react';
 
+
 import {CardDeck, Card, ListGroup, ListGroupItem} from 'react-bootstrap'
 
 import {SelectedElementDeck}  from './selectedElementDeck.js'
@@ -60,7 +61,7 @@ class SelectVersionsComponent extends React.Component{
          
     render(){
         return(
-            <div>
+            <Card>
             <Card.Body>
                 {this.renderVersionNames()}
             </Card.Body>
@@ -77,7 +78,7 @@ class SelectVersionsComponent extends React.Component{
                 </Card.Body>
                 
 
-            </div>
+            </Card>
             
            
         );

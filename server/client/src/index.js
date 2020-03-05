@@ -1,6 +1,6 @@
 import 'bootstrap/dist/css/bootstrap.min.css';
 
-import {Tabs,Tab, Card} from 'react-bootstrap';
+import {Tabs,Tab, Card, Navbar, Nav, Form, FormControl, Button, ListGroup} from 'react-bootstrap';
 
 import React from 'react';
 import ReactDOM from 'react-dom'; 
@@ -18,6 +18,7 @@ import QueryComponentMotif from './queryComponentMotif.js';
 
 
 import './index.css';
+import './sideBarMenu.css';
 
 class LabelSet{
     constructor(names){
@@ -99,6 +100,8 @@ class App extends React.Component {
     constructor(props){
         super(props);
         this.state={
+            activePanel: 'main',
+            
             graphData: new GraphData(),
 
             serverProps : {},
@@ -217,6 +220,11 @@ class App extends React.Component {
     }
 
     
+    handleSideMenuClick=(name)=>{
+
+        this.setState({activePanel : name});
+    }
+    
     renderSideMenu(){
         return(
             <Card className="versionPanel">
@@ -226,33 +234,26 @@ class App extends React.Component {
         
     }
     
-    renderMainPanel(){
-        return(
-             <Tabs defaultActiveKey="info" id="mainTab" >
-                
-                    <Tab eventKey="info" title="VGraph">
-                        <Card className="mainPanel">
-                            "TODO: Add tissue specificity versions and use version tags to display in versions tab"
-                            "Create View and cache, return elementId for it"
-                        </Card>
-                    </Tab>
-                
-                    <Tab eventKey="selectVersions" title="Versions">
-                        <Card className="mainPanel">
-                            <SelectVersionsComponent 
-                                versionData={this.state.graphData.data.versions}
-                                versionTagDisplay={this.state.versionTagDisplay}
-                                selectedVersions={this.state.versions_s}
-                                handleCheckToggle={this.handleCheckToggle}
-                                handleToggle={this.handleToggle}
-                        />
-                        </Card>
-                    </Tab>
-                  
-                    <Tab eventKey="selectLabels" title="Labels">
-                        <Card className="mainPanel">
-                        
-                            <SelectLabelsComponent
+
+    renderMainPanel2(){
+       
+        
+          switch(this.state.activePanel){
+                case 'main': return (
+                 
+                        "TODO: Add tissue specificity versions and use version tags to display in versions tab"
+                )
+                case 'versions': return (
+                    <SelectVersionsComponent 
+                        versionData={this.state.graphData.data.versions}
+                        versionTagDisplay={this.state.versionTagDisplay}
+                        selectedVersions={this.state.versions_s}
+                        handleCheckToggle={this.handleCheckToggle}
+                        handleToggle={this.handleToggle}
+                    />
+                )
+                case 'labels': return(
+                               <SelectLabelsComponent
                                 vertexLabels={this.state.graphData.data.labelNames.vertex}
                                 edgeLabels={this.state.graphData.data.labelNames.edge}
                                 selectedVertexLabels={this.state.labelsV_s}
@@ -261,12 +262,29 @@ class App extends React.Component {
                                 handleCheckToggle={this.handleCheckToggle}
                                 handleToggle={this.handleToggle}
                             /> 
-                        </Card>
-                    </Tab>
-                  
-                   
-                    <Tab eventKey="selectNodes" title="Nodes">
-                        <Card className="mainPanel">
+                    
+                )
+                case 'query_rwr': return(
+                        <QueryComponentRWR
+                            selectedVersions={this.state.versions_s}  
+                            getVertexDataRow={this.getVertexDataRow} 
+                            getLabels={this.getLabels} 
+                            selectedVertexLabels={this.state.labelsV_s}
+                            selectedEdgeLabels={this.state.labelsE_s}
+                            selectedNodes={this.state.nodes_s}
+                        />
+                )
+                case 'query_motif' :return(
+                                    
+                     <QueryComponentMotif 
+                            selectedVersions={this.state.versions_s}  
+                            getVertexDataRow={this.getVertexDataRow}
+                            getLabels={this.getLabels} 
+                             selectedNodes={this.state.nodes_s}
+                        />
+                )
+                case 'nodes': return(
+
                             <SelectNodesComponent 
                                 allNodes={this.state.graphData.data.vertexData} 
                                 
@@ -278,36 +296,46 @@ class App extends React.Component {
                                 nodeLookup={this.state.nodeLookup}
                                 
                             />
-                        </Card>
-                    </Tab>
+
+                              )
                     
-           
-                    <Tab eventKey="query_rwr" title="RWR">
-                    <Card className="mainPanel">
-                        <QueryComponentRWR
-                            selectedVersions={this.state.versions_s}  
-                            getVertexDataRow={this.getVertexDataRow} 
-                            getLabels={this.getLabels} 
-                            selectedVertexLabels={this.state.labelsV_s}
-                            selectedEdgeLabels={this.state.labelsE_s}
-                            selectedNodes={this.state.nodes_s}
-                        />
-                        </Card>
-                    </Tab>
-                    
-                    <Tab eventKey="query_tri" title="Motifs">
-                    <Card className="mainPanel">
-                        <QueryComponentMotif 
-                            selectedVersions={this.state.versions_s}  
-                            getVertexDataRow={this.getVertexDataRow}
-                            getLabels={this.getLabels} 
-                             selectedNodes={this.state.nodes_s}
-                        />
-                        </Card>
-                    </Tab>
+                
+          }
+         
+        
+    }
+    
+    renderSideBar(){
+        return(
+                        
             
-                </Tabs>
-      
+                <ListGroup>
+                    <ListGroup.Item className=" text-dark sideElementHeading border-bottom">
+                        GraphView
+                    </ListGroup.Item >
+                     <ListGroup.Item onClick={(e)=>this.handleSideMenuClick("main")} className=" btn text-muted sideElement">
+                        Main
+                    </ListGroup.Item>
+                    <ListGroup.Item   onClick={(e)=>this.handleSideMenuClick("versions")} className=" btn text-muted sideElement">
+                        Versions
+                    </ListGroup.Item>
+                    <ListGroup.Item  onClick={(e)=>this.handleSideMenuClick("labels")} className="btn text-muted sideElement">
+                        Labels
+                    </ListGroup.Item>
+                    <ListGroup.Item className=" text-dark sideElementHeading border-bottom">
+                        Queries
+                    </ListGroup.Item>
+                    <ListGroup.Item  onClick={(e)=>this.handleSideMenuClick("nodes")} className="btn text-muted sideElement">
+                        Nodes
+                    </ListGroup.Item>
+                    <ListGroup.Item  onClick={(e)=>this.handleSideMenuClick("query_rwr")} className="btn text-muted sideElement">
+                        RWR
+                    </ListGroup.Item>
+                    <ListGroup.Item  onClick={(e)=>this.handleSideMenuClick("query_motif")} className="btn text-muted sideElement">
+                        Motifs
+                    </ListGroup.Item>
+                </ListGroup>
+          
         );
     }
     
@@ -316,8 +344,18 @@ class App extends React.Component {
         return(
             <div> 
                
-            {this.renderMainPanel()}
-             {/*this.renderSideMenu()*/}
+                <div className= " border-bottom titleBar bg-dark">
+                    CoPhEx
+                </div>
+                
+                <div className="border-right menuContainer bg-light">  
+                    {this.renderSideBar()}
+                </div>
+                
+                <div className="displayPanel">
+                    {this.renderMainPanel2()}
+                </div>
+
 
 
             </div> 

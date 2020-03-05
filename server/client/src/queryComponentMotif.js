@@ -140,23 +140,24 @@ class QueryComponentMotif extends React.Component{
     
     render(){
         return(
-            <>
-            "Change to take nodes as input then expand and run motifs"
+         
+           
             {/*
             <Card.Body>
              <SettingsRWR handleChange={this.handleChange} alpha={this.state.alpha} epsilon={this.state.epsilon} topk={this.state.topk}/>
             </Card.Body>
-            */}
+            */},
             
-            {/*this.renderBarChart()*/}
+            {/*this.renderBarChart()*/},
                 
             <Card>
+             "Change to take nodes as input then expand and run motifs"
             <Card.Body>
             <Button className="form-control" variant="primary" onClick={(e)=>this.handleSubmit(e)} >Enumerate</Button>
             <BootstrapTable striped condensed keyField='row' data={ this.state.data.motifs} columns={ this.state.data.getColumns()}     /> </Card.Body>
 
             </Card>
-           </>
+       
         )
     }
 }

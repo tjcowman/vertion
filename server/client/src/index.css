@@ -10,6 +10,9 @@
 
 }
 
+.displayPanel{
+    float: right;
+}
 
 .responseArea{
      background: #fff;
