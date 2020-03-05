@@ -1,18 +1,31 @@
 .titleBar{
-/*     position:fixed; */
-/*     width: 100vw; */
-/*     height: 75px; */
-    background-color: black;
-    text-align:center;
-    font-size: 50px;
+
+    color: white;
+    height:75px;
+/*     margin: 20px; */
+/*     text-align:center; */
+/*     font-size: 36px; */
 /*     border: solid grey 2px; */
 /*     font-size: large; */
 }
 
+.displayPanel{
+    float:right;
+    width: calc(100% - 200px);
+}
+
+.mainContent{
+    position:relative;
+    top:75px;
+    
+}
+
+
 .menuContainer{
-position:fixed;
+    position:fixed;
+  
     padding:  20px;
-    float:left;
+/*     float:left; */
 /*      background-color: light;  */
 /*     border: solid 1px; */
     height: 100vh;
@@ -44,12 +57,3 @@ position:fixed;
     
     
     
-    
-sidebar {
-    width: 200px;
-    height: 100%;
-    margin-left: -160px;
-    float: left;
-    z-index: 8000;
-    margin-bottom: 0px;
-}

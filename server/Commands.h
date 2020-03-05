@@ -181,14 +181,42 @@ namespace Commands
     template<class GT>
     json lsv(const VGraph<GT>& graph, ViewCache<GT>& viewCache, const json& args)
     {
-        json retVal;
+        
+        
+        
+        json ret;
+        
+        std::vector<typename GT::VersionIndex> versions = args["versions"].get<std::vector<typename GT::VersionIndex>>();
+        if(versions.size() == 0)
+            return(json{{"nodes",json::array()}, {"edges", json::array()}});
+        
+        std::vector<typename GT::Index> vertexLabels = args["vertexLabels"].get<std::vector<typename GT::Index>>();
+        std::vector<typename GT::Index> edgeLabels = args["edgeLabels"].get<std::vector<typename GT::Index>>();        
+        IntegratedViewer<GT> IV = viewCache.lookup(versions, VertexLab(vertexLabels), EdgeLab(edgeLabels)) ;
+        
+        
+        auto edgeCounts = IV.countEdgeLabels();
+        auto nodeCounts = IV.countVertexLabels();
+        
+        
+        for(const auto& e : nodeCounts)
+            ret["nodes"].push_back({e.first.getBits().to_ulong(), e.second});
+        for(const auto& e : edgeCounts)
+            ret["edges"].push_back({e.first.getBits().to_ulong(), e.second});
         
         //Get nodes and edges
-        retVal["nodes"] = graph.size().nodes_;
-        retVal["edges"] = graph.size().edges_;
+//         for(const auto& e : IV.)
+        
+//         retVal["nodes"];
+            //l1
+            //l2
+//         retVal["edges"];
+            //l1
+        //l2
+        
         //Get the existing node and edge labels, maybe counts?
         
-        return retVal;
+        return ret;
     }
 
     template<class GT>

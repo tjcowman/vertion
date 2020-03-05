@@ -2,6 +2,8 @@
 
 #include "vertion.h"
 
+// #include <unordered_map>
+
 template<class GT>
 using ZippedRow = std::vector<std::tuple<typename GT::Index, typename GT::Value, EdgeLabel<GT>>>;
 template<class GT>
@@ -17,6 +19,11 @@ class IntegratedViewer
         void clear();
         
         void describe(std::ostream& os);
+        
+        std::map<VertexLabel<GT>, size_t> countVertexLabels()const;
+        std::map<EdgeLabel<GT>, size_t> countEdgeLabels()const;
+        
+        
         typename GT::Index getOriginalIndex(typename GT::Index viewIndex)const;
         
         void buildView(std::vector<typename GT::VersionIndex> versions, VertexLabel<GT> nodeLabels, EdgeLabel<GT> edgeLabels);
@@ -72,6 +79,40 @@ void IntegratedViewer<GT>::describe(std::ostream& os)
     for(const auto& e : IA_)
         std::cout<<e<<" ";
     std::cout<<std::endl;
+}
+
+template<class GT>
+std::map<VertexLabel<GT>, size_t> IntegratedViewer<GT>::countVertexLabels()const
+{
+    std::map<VertexLabel<GT>, size_t> counts;
+    
+    for(const auto& e : viewIndexes_)
+    {
+        auto eo = originalIndexes_[e];
+        auto label = graph_->getVertexData().lookupLabels(eo);
+        
+        if(counts.find( label) == counts.end())
+            counts[ label] = 1;
+        else
+            counts[ label] = counts[label]+1;
+    }
+        
+    return counts;
+}
+
+template<class GT>
+std::map<EdgeLabel<GT>, size_t> IntegratedViewer<GT>::countEdgeLabels()const
+{
+    std::map<EdgeLabel<GT>, size_t> counts;
+    
+    for(const auto& e : L_)
+    {
+        if(counts.find(e) == counts.end())
+            counts[e] = 1;
+        else
+            counts[e] = counts[e]+1;
+    }
+    return counts;
 }
 
 template<class GT>

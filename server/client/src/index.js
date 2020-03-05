@@ -234,14 +234,27 @@ class App extends React.Component {
         
     }
     
+    
+    handleDescribeClick(){
+        let command = { 
+            cmd: 'lsv',
+            versions: [...this.state.versions_s[0]],
+            vertexLabels: [...this.state.labelsV_s[0]],
+            edgeLabels: [...this.state.labelsE_s[0]]
+        }
+         Axios.post('http://localhost:9060', JSON.stringify(command)).then((response)=>{
+                    console.log(response);
+        });
+    }
 
     renderMainPanel2(){
        
         
           switch(this.state.activePanel){
                 case 'main': return (
-                 
-                        "TODO: Add tissue specificity versions and use version tags to display in versions tab"
+                    <Button onClick={(e)=>this.handleDescribeClick()} >test</Button>
+                    
+                       
                 )
                 case 'versions': return (
                     <SelectVersionsComponent 
@@ -344,18 +357,23 @@ class App extends React.Component {
         return(
             <div> 
                
-                <div className= " border-bottom titleBar bg-dark">
-                    CoPhEx
+                <div className= "fixed-top border-bottom titleBar bg-dark">
+
                 </div>
                 
-                <div className="border-right menuContainer bg-light">  
+             
+            <div className="mainContent" >
+                <div className=" border-right menuContainer bg-light" >  
+            
                     {this.renderSideBar()}
+                    
                 </div>
                 
-                <div className="displayPanel">
+                <div className= "displayPanel">
                     {this.renderMainPanel2()}
                 </div>
-
+            </div>
+               
 
 
             </div> 
