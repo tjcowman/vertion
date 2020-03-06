@@ -11,14 +11,15 @@ class SelectVersionsComponent extends React.Component{
     constructor(props){
         super(props);
         this.state={
-            activeCard :0,
-            cardIds: [0,1]
+//             activeCard :0,
+//             cardIds: [0,1]
         }
     }
     
     
     handleCardClick=(cardId)=>{
-        this.setState({activeCard: cardId});
+        this.props.handleClickVersionCard(cardId);
+//         this.setState({activeCard: cardId});
 
     }
          
@@ -39,9 +40,9 @@ class SelectVersionsComponent extends React.Component{
                                     <button  key={ii}
 
                                      
-                                        className={this.props.handleCheckToggle("versions_s",this.state.activeCard,ee.index) ? "active btn btn-outline-secondary m-1 btn-sm vName " : "btn btn-outline-secondary m-1 btn-sm vName"}
+                                        className={this.props.handleCheckToggle("versions_s",this.props.activeVersionCard,ee.index) ? "active btn btn-outline-secondary m-1 btn-sm vName " : "btn btn-outline-secondary m-1 btn-sm vName"}
                                         onClick={(event) =>
-                                            this.props.handleToggle("versions_s", this.state.activeCard, ee.index)
+                                            this.props.handleToggle("versions_s", this.props.activeVersionCard, ee.index)
                                         }
                                     > 
                                     {ee.name} 
@@ -68,12 +69,13 @@ class SelectVersionsComponent extends React.Component{
             
                
                 <Card.Body>
-                    <SelectedElementDeck activeCard={this.state.activeCard} 
-                        cardIds={this.state.cardIds} 
+                    <SelectedElementDeck activeCard={this.props.activeVersionCard} 
+                        cardIds={this.props.versionCards} 
                         partitionHeadings={[""]}
                         handleCardClick={this.handleCardClick} 
                         elementIndexes={[this.props.selectedVersions]}
                         displayLookup={[this.props.versionData]}
+                        handleClickAddVersionCard={this.props.handleAddVersionCard}
                     />
                 </Card.Body>
                 

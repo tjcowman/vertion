@@ -200,9 +200,16 @@ namespace Commands
         
         
         for(const auto& e : nodeCounts)
-            ret["nodes"].push_back({e.first.getBits().to_ulong(), e.second});
+            ret["nodes"].push_back({
+                {"labels", e.first.getBits().to_ulong()},
+                {"count", e.second}
+            });
         for(const auto& e : edgeCounts)
-            ret["edges"].push_back({e.first.getBits().to_ulong(), e.second});
+            ret["edges"].push_back({
+                {"labels",e.first.getBits().to_ulong()},
+                {"count", e.second}
+                
+            });
         
         //Get nodes and edges
 //         for(const auto& e : IV.)

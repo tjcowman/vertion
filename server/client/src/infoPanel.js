@@ -2,162 +2,73 @@ import {} from 'react-bootstrap'
 import React from 'react';
 import Axios from 'axios';
 
+import {SelectedElementDeck}  from './selectedElementDeck.js'
+
+import {Button, Card, ListGroup} from 'react-bootstrap';
+
 class InfoPanel extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            raw: [],
-            tags: [],
-            tree: [],
-            names: [],
-            integrationMethod: 0,
-            
-            selectedTags: [],
+            activeCard: 0,
+            cardIds:[0,1],
+            vertexCounts: [new Array(), new Array()],
+            edgeCounts: [new Array(), new Array()],
         };
-
-        
-        var date = new Date();
-        Axios.get('http://localhost:9060/ls', date.getTime()).then((response)=>{
-            this.setState({
-                raw: response.data,
-            })
-               this.props.setData(response.data);
-        })/*.then(()=>{          
-            let tags = {};
-
-            console.log(this.props.getLabels());
-            
-            for(let i in this.state.raw.versions){
-                let ar =  this.state.raw.versions[i].tags;
-                for(let j in ar){
-                    if(!isNaN(tags[ar[j]])){
-                        tags[ar[j]]++;
-                    }
-                    else{
-                        tags[ar[j]] = 1;
-                    }
-                }
-            }
-            
-            
-            let tagsArr = Object.keys(tags).map((e,i) => ([e,i]));
-            let namesArr =this.state.raw.versions.map( (e,i) => ([e.name])   );
-            let newData= []; this.convertToTree(this.state.raw.tree, 0, 0, newData);
-
-            this.setState({
-                tags: tagsArr,
-                selectedTags: Array(tagsArr.length).fill(false),
-                names: namesArr,
-                tree: newData,
-            });
-     
-        });*/
-     
-        
     }
     
-    convertToTree(data, depth, index, newData)
-    {
-        newData.push([depth, index]);
-        
-        if(data[index].length === 0)
-           return;
-        else{
-            for(let i=0; i<data[index].length; ++i){
-                this.convertToTree(data, depth+1,  data[index][i], newData);
-            }
+    
+        handleDescribeClick(){
+        let command = { 
+            cmd: 'lsv',
+            versions: [...this.props.selectedVersions[0]],
+            vertexLabels: [...this.props.selectedVertexLabels[0]],
+            edgeLabels: [...this.props.selectedEdgeLabels[0]]
         }
-    }
-    
-    handleClick(event)
-    {
-
-        event.target.checked=false;
-        
-        const selectedTags = this.state.selectedTags.slice();
-        selectedTags[Number(event.target.name)] = !selectedTags[Number(event.target.name)];
-//         
-        this.setState({
-            selectedTags: selectedTags,
-        })
-//         console.log(this.state.selectedTags)
-    }
-    
-
-    handleIntegrationToggle(event)
-    {
-        this.setState({
-            integrationMethod : event.target.value
+         Axios.post('http://localhost:9060', JSON.stringify(command)).then((response)=>{
+            console.log(response);
+            
+            let vertexCounts = response.data.nodes.map((e) => (
+                this.props.vertexLabelNames.bitsToNames(e.labels) + " : " + e.counts
+            ));
+            let edgeCounts = response.data.edges.map((e) => (
+                this.props.edgeLabelNames.bitsToNames(e.labels) + " : " + e.counts
+            ));
+            
+            this.setState({vertexCounts: vertexCounts, edgeCounts: edgeCounts , });
         });
     }
+
     
+    renderVertexCounts(){
+        return(
+            <>
+            <ListGroup>
+            {this.state.vertexCounts.map((e,i)=>(
+                <ListGroup.Item>{this.props.vertexLabelNames.bitsToNames(e.labels) }</ListGroup.Item>
+            ))}
+            </ListGroup></>
+        );
+    }
+    
+   
     render(){
         return(
+            <Card>
+            <Card.Body>
+            <Button onClick={(e)=>this.handleDescribeClick()} >test</Button>
+            
+            
 
-            <div className="card">
             
-                <div className="card-body">
-                
-                    <h3>VGraph</h3>
-                    <div className="card mb-3">
-                        <div className=" card-body">
-                            <div>Versions: {this.state.names.length}</div>
-                            <div>Nodes: {this.state.raw.nodes}</div>
-                            
-                            
-                            Vertex Labels: 
-                            <div className="card-body pb-0 pt-0">
-                                { this.props.getLabels()[0].names.map((e,i) =>(
-                                    <button key={i} className="btn btn-outline-secondary m-1 btn-smaller" >{e}</button>
-                                ))}
-                            </div>
-                            
-                            Edge Labels: 
-                            <div className="card-body pb-0 pt-0">
-                                {this.props.getLabels()[1].names.map((e,i) =>(
-                                    <button key={i} className="btn btn-outline-secondary m-1 btn-smaller" >{e}</button>
-                                ))}
-                            </div>
-                            
-                            Version Tags:
-                            <div  className="card-body pb-0 pt-0">
-                                {this.state.tags.map((e,i) => (
-                                    <button key={i} value={e[0]} name={i} className={this.state.selectedTags[i] ? "active btn btn-outline-secondary m-1 btn-smaller" : "btn btn-outline-secondary m-1 btn-smaller"} onClick={(event) =>this.handleClick(event)}>{e[0]}</button>
-                                ))}
-                            </div>
-                            
-                        </div>
-                    </div>
-                
             
-                    {/*
-                    <h3>Version Tree</h3>
-                    <div className="card mb-3" >
-                        
-                        
-                        <ButtonGroup className="card-body " size="sm" onClick={(e) =>this.handleIntegrationToggle(e)} >
-                            <Button  value={0} className={this.state.integrationMethod===0 ? "btn-secondary active": "btn-secondary"}  >Union</Button>
-                            <Button  value={1} className={this.state.integrationMethod===1 ? "btn-secondary active": "btn-secondary"}  >Intersection</Button>
-                        </ButtonGroup>
-                        
-                        <div className="card-body versionNames">
-                            {this.state.tree.map((e,i)=>(
-                                <div  key={i}>
-                                    {'......'.repeat(e[0])} <button  value={e[1]} name={i} className={this.props.isSelected(i) ? "active btn btn-outline-secondary m-1 btn-smaller vName" : "btn btn-outline-secondary m-1 btn-smaller vName"} onClick={(event) =>this.props.selectVersionToggle(i)}>{this.state.names[e[1]]}</button>
-                                </div>                                
-                            ))}
-                        </div>
-                        
-                        
-                    </div>
-                    */}
-                    
-                </div>
-                
-            </div>
+            {this.renderVertexCounts()}
+            </Card.Body>
+            </Card>
+           
              
         );
     }
 } 
 
-export default InfoPanel;
+export {InfoPanel};

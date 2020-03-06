@@ -1,0 +1,44 @@
+.deckContainer{
+/*     flex: 0 0; */
+/*     background-color: red; */
+    display: flex;
+    overflow-x:scroll;
+    
+}
+
+.cardC{
+    margin: 10px;
+    height: 400px;
+    width: 300px;
+    flex: 0 0 auto;
+/*     display: inline-block; */
+    border-radius : 0;
+/*     float:left; */
+/*     background-color: red; */
+}
+
+.card-bodyC{
+    overflow-y:scroll;
+}
+
+.itemC{
+    border: none;
+    font-size: small;
+    padding: 3px;
+
+} 
+
+.cardBlank::before{
+   content: "+";
+/*   height:200px; */
+/*   width:200px; */
+  font-size:200px;
+  display:flex;
+/*   flex-direction:row; */
+/*   align-items:center; */
+  justify-content:center;
+  font-weight:bold;
+/*   font-family:courier; */
+  color:lightgray;
+/*     background-color: ; */
+}

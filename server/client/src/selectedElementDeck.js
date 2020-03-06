@@ -1,20 +1,23 @@
 import React from 'react';
 
 import {CardDeck, Card, ListGroup, ListGroupItem} from 'react-bootstrap'
+
+import './selectedElementDeck.css'
+
 const  SelectedElementDeck = (props) =>{
     
      return(
 
                 
-             <CardDeck >
+           <div className="border deckContainer">
                      
                 {props.cardIds.map((e,i)=> (
                     
                     
                     
-                        <div key={i} className= {props.activeCard===e ? "card border-primary border-bold " : "card "} onClick={() => props.handleCardClick(e)}>
+                        <div key={i} className= {props.activeCard===e ? "card cardC border-primary border-bold  " : "card cardC "} onClick={() => props.handleCardClick(e)}>
                         <Card.Header>Set {e}</Card.Header>
-                        <Card.Body className="versionSelectCard">
+                        <Card.Body className="card-bodyC">
 
                             {props.partitionHeadings.map((partition,partI) =>(
                                 <div key={partI}>
@@ -22,7 +25,7 @@ const  SelectedElementDeck = (props) =>{
                                     <ListGroup>
                                     {
                                         [...props.elementIndexes[partI][e]].map((ee,ii)=> (
-                                        <ListGroupItem  key={ii} className="versionSelectItem" > {props.displayLookup[partI][ee].name} </ListGroupItem>
+                                        <ListGroupItem  key={ii} className="itemC" > {props.displayLookup[partI][ee].name} </ListGroupItem>
                                     ))}
                                     </ListGroup>
                                 </div>
@@ -34,16 +37,22 @@ const  SelectedElementDeck = (props) =>{
                   
                     
                 ))}
-                    
-                    
-                {props.showDiff ? 
+                
+              
+                <div className="card cardC cardBlank bg-light"
+                    onClick={()=>props.handleClickAddVersionCard()}
+                ></div>
+
+                
+                
+                {/*props.showDiff ? 
                     <Card>
                         <Card.Header>Difference</Card.Header>
                         <Card.Body className="versionSelectCard">
                             <ListGroup>
                             {                                
                                 getSelectedDifference().map((ee,ii)=> (
-                                    <ListGroupItem  key={ii} className="versionSelectItem" >{props.displayLookup[ee.id].name}</ListGroupItem>
+                                    <ListGroupItem  key={ii} className="itemC" >{props.displayLookup[ee.id].name}</ListGroupItem>
                                 ))
                             }                                    
                             </ListGroup>
@@ -51,10 +60,10 @@ const  SelectedElementDeck = (props) =>{
                     </Card>
                     
                     : ""
-                }
+                */}
                     
-                 
-            </CardDeck>
+                 </div>
+           
         )
     
 }

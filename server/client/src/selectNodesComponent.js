@@ -33,17 +33,18 @@ class SelectNodesComponent extends React.Component{
     constructor(props){
         super(props)
         this.state={
-            activeCard :0,
-            cardIds: [0,1],
-            
-            
+//             activeCard :0,
+//             cardIds: [0,1],
+//             
+//             
             
             batchText: ""
         }
     }
     
     handleCardClick=(cardId)=>{
-        this.setState({activeCard: cardId});
+//         this.setState({activeCard: cardId});
+        this.props.handleClickVersionCard(cardId);
 //         console.log(this.state.activeCard)
     }
     
@@ -67,10 +68,10 @@ class SelectNodesComponent extends React.Component{
         
 //          console.log("wut", ids)
 //         this.props.selectNodes2(this.state.activeCard,  ids.filter(e => typeof e !== 'undefined' )) 
-        this.props.handleSelect("nodes_s", this.state.activeCard, ids.filter(e => typeof e !== 'undefined' ))
+        this.props.handleSelect("nodes_s", this.props.activeVersionCard, ids.filter(e => typeof e !== 'undefined' ))
         
         this.setState({batchText: ""});
-        this.handleCardClick(this.state.activeCard)
+        this.handleCardClick(this.props.activeVersionCard)
     }
     
     renderTable1(){
@@ -94,11 +95,11 @@ class SelectNodesComponent extends React.Component{
                                 rowClasses="nodeSelectItem" 
                                 selectRow={{
                                     mode: 'checkbox',  
-                                    selected: [...this.props.selectedNodes[this.state.activeCard]],
+                                    selected: [...this.props.selectedNodes[this.props.activeVersionCard]],
                                     clickToSelect: true, 
                                     hideSelectAll: true,
                                     onSelect: (row, isSelect, rowIndex,e) => {
-                                        this.props.handleToggle("nodes_s", this.state.activeCard, row.id)
+                                        this.props.handleToggle("nodes_s", this.props.activeVersionCard, row.id)
                                     },
                                 }}  
                                 striped  
@@ -119,9 +120,9 @@ class SelectNodesComponent extends React.Component{
     RenderSelectedNodes(){
         return (
 
-            <SelectedElementDeck activeCard={this.state.activeCard} 
+            <SelectedElementDeck activeCard={this.props.activeVersionCard} 
             partitionHeadings={[""]}
-                cardIds={this.state.cardIds} 
+                cardIds={this.props.versionCards} 
                 handleCardClick={this.handleCardClick} 
                 elementIndexes={[this.props.selectedNodes]}
                 displayLookup={[this.props.allNodes]}

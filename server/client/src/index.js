@@ -7,7 +7,7 @@ import ReactDOM from 'react-dom';
 // import Axios from 'axios';
 import Axios from 'axios';
 
-import InfoPanel from  './infoPanel.js';
+import {InfoPanel} from  './infoPanel.js';
 
 import SelectVersionsComponent from './selectVersionsComponent.js';
 import SelectNodesComponent from './selectNodesComponent.js';
@@ -101,14 +101,18 @@ class App extends React.Component {
         super(props);
         this.state={
             activePanel: 'main',
-            
+            versionCards: [0],
+            activeVersionCard: 0,
             graphData: new GraphData(),
 
             serverProps : {},
-            versions_s : [new Set(), new Set()],            
-            nodes_s :  [new Set(), new Set()],
-            labelsV_s : [new Set(), new Set()],
-            labelsE_s : [new Set(), new Set()],
+            
+            versions_s : [new Set()],            
+            nodes_s :  [new Set()],
+            labelsV_s : [new Set()],
+            labelsE_s : [new Set()],
+            
+            
             nodeLookup: new Map(),
             versionTagDisplay : new Map(),
         }
@@ -129,8 +133,8 @@ class App extends React.Component {
             let allVertexLabels0 = new Set(Array(response.data.labels.vertex.names.length).keys());
             let allEdgeLabels0 = new  Set(Array(response.data.labels.edge.length).keys());
             
-            let allVertexLabels1 = new Set(Array(response.data.labels.vertex.names.length).keys());
-            let allEdgeLabels1 = new  Set(Array(response.data.labels.edge.length).keys());
+//             let allVertexLabels1 = new Set(Array(response.data.labels.vertex.names.length).keys());
+//             let allEdgeLabels1 = new  Set(Array(response.data.labels.edge.length).keys());
             
             
             let versionTagDisplay = new Map();
@@ -151,8 +155,8 @@ class App extends React.Component {
                 serverProps : serverProps,
                 versionTagDisplay: versionTagDisplay,
                 graphData: new GraphData(response.data),
-                labelsV_s : [allVertexLabels0, allVertexLabels1],
-                labelsE_s : [allEdgeLabels0, allEdgeLabels1],
+                labelsV_s : [allVertexLabels0],
+                labelsE_s : [allEdgeLabels0],
                 nodeLookup : nodeLookup
                 //Array(response.data.labels.vertex.names.length).keys()
             }, () =>{console.log("initstate", this.state)})
@@ -162,6 +166,7 @@ class App extends React.Component {
     }
     
     
+
     setData=(serverResponse)=>{
         let nodeLookup = new Map();
         
@@ -176,6 +181,39 @@ class App extends React.Component {
         });
     }
     
+    
+    handleAddVersionCard=()=>{
+        console.log(this.state.versionCards)
+        let versionCards = [...this.state.versionCards]
+        versionCards.push(this.state.versionCards.length);
+        
+        let allVertexLabels = new Set(Array(this.state.graphData.data.labels.vertex.names.length).keys());
+        let allEdgeLabels = new Set(Array(this.state.graphData.data.labels.edge.names.length).keys());
+//         Array(response.data.labels.edge.names.length).keys()
+        
+        let versions_s = [...this.state.versions_s];
+        versions_s.push(new Set());
+        let nodes_s = [...this.state.nodes_s];
+        nodes_s.push(new Set());
+        let labelsV_s =  [...this.state.labelsV_s];
+        labelsV_s.push(allVertexLabels);
+        let labelsE_s =  [...this.state.labelsE_s];
+         labelsE_s.push(allEdgeLabels);
+        
+        this.setState({
+            versionCards: versionCards,
+             
+            versions_s: versions_s,
+            
+            nodes_s :  nodes_s,
+            labelsV_s : labelsV_s,
+            labelsE_s : labelsE_s,
+        })
+    }
+    
+    handleClickVersionCard=(id)=>{
+        this.setState({activeVersionCard: id})
+    }
 
     handleToggle=(name, cardId, elementId)=>{
 //         console.log(this.state[name])
@@ -235,24 +273,21 @@ class App extends React.Component {
     }
     
     
-    handleDescribeClick(){
-        let command = { 
-            cmd: 'lsv',
-            versions: [...this.state.versions_s[0]],
-            vertexLabels: [...this.state.labelsV_s[0]],
-            edgeLabels: [...this.state.labelsE_s[0]]
-        }
-         Axios.post('http://localhost:9060', JSON.stringify(command)).then((response)=>{
-                    console.log(response);
-        });
-    }
 
     renderMainPanel2(){
        
         
           switch(this.state.activePanel){
                 case 'main': return (
-                    <Button onClick={(e)=>this.handleDescribeClick()} >test</Button>
+                    <InfoPanel
+                        vertexLabelNames={this.state.graphData.data.labels.vertex}
+                        edgeLabelNames={this.state.graphData.data.labels.edge}
+                        selectedVersions={this.state.versions_s}  
+                        selectedVertexLabels={this.state.labelsV_s}
+                        selectedEdgeLabels={this.state.labelsE_s}                   
+                    
+                    />
+                    
                     
                        
                 )
@@ -263,18 +298,28 @@ class App extends React.Component {
                         selectedVersions={this.state.versions_s}
                         handleCheckToggle={this.handleCheckToggle}
                         handleToggle={this.handleToggle}
+                        
+                        handleAddVersionCard = {this.handleAddVersionCard}
+                        handleClickVersionCard = {this.handleClickVersionCard}
+                        activeVersionCard={this.state.activeVersionCard}
+                        versionCards={this.state.versionCards}
                     />
                 )
                 case 'labels': return(
-                               <SelectLabelsComponent
-                                vertexLabels={this.state.graphData.data.labelNames.vertex}
-                                edgeLabels={this.state.graphData.data.labelNames.edge}
-                                selectedVertexLabels={this.state.labelsV_s}
-                                selectedEdgeLabels={this.state.labelsE_s}
-                                
-                                handleCheckToggle={this.handleCheckToggle}
-                                handleToggle={this.handleToggle}
-                            /> 
+                    <SelectLabelsComponent
+                        vertexLabels={this.state.graphData.data.labelNames.vertex}
+                        edgeLabels={this.state.graphData.data.labelNames.edge}
+                        selectedVertexLabels={this.state.labelsV_s}
+                        selectedEdgeLabels={this.state.labelsE_s}
+                        
+                        handleCheckToggle={this.handleCheckToggle}
+                        handleToggle={this.handleToggle}
+                        
+                        handleAddVersionCard = {this.handleAddVersionCard}
+                        handleClickVersionCard = {this.handleClickVersionCard}
+                        activeVersionCard={this.state.activeVersionCard}
+                        versionCards={this.state.versionCards}
+                    /> 
                     
                 )
                 case 'query_rwr': return(
@@ -307,6 +352,11 @@ class App extends React.Component {
 
                                 selectedNodes={this.state.nodes_s}
                                 nodeLookup={this.state.nodeLookup}
+                                
+                                handleAddVersionCard = {this.handleAddVersionCard}
+                                handleClickVersionCard = {this.handleClickVersionCard}
+                                activeVersionCard={this.state.activeVersionCard}
+                                versionCards={this.state.versionCards}
                                 
                             />
 
