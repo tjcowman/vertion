@@ -9,6 +9,7 @@ import {SelectedElementDeck}  from './selectedElementDeck.js'
 class SelectVersionsComponent extends React.Component{ 
     
     constructor(props){
+//         console.log("FF")
         super(props);
         this.state={
 //             activeCard :0,
@@ -76,6 +77,7 @@ class SelectVersionsComponent extends React.Component{
                         elementIndexes={[this.props.selectedVersions]}
                         displayLookup={[this.props.versionData]}
                         handleClickAddVersionCard={this.props.handleAddVersionCard}
+                        handleClickRemoveVersionCard={this.props.handleRemoveVersionCard}
                     />
                 </Card.Body>
                 

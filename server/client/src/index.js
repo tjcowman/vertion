@@ -1,6 +1,6 @@
 import 'bootstrap/dist/css/bootstrap.min.css';
 
-import {Tabs,Tab, Card, Navbar, Nav, Form, FormControl, Button, ListGroup} from 'react-bootstrap';
+import {Tabs,Tab, Card, Navbar, Nav, Form, FormControl, Button, ListGroup, Col} from 'react-bootstrap';
 
 import React from 'react';
 import ReactDOM from 'react-dom'; 
@@ -211,6 +211,37 @@ class App extends React.Component {
         })
     }
     
+    handleRemoveVersionCard=()=>{
+        
+        if(this.state.versionCards.length <= 1)
+            return;
+//         if(this.state.activeVersionCard = this.state.versionCards.length)
+        let activeVersionCard = Math.min(this.state.activeVersionCard, this.state.versionCards.length-2 );
+        
+        let versionCards = [...this.state.versionCards];
+        versionCards.pop();
+        let versions_s = [...this.state.versions_s];
+        versions_s.pop();
+        let nodes_s = [...this.state.nodes_s];
+        nodes_s.pop();
+        let labelsV_s =  [...this.state.labelsV_s];
+        labelsV_s.pop();
+        let labelsE_s =  [...this.state.labelsE_s];
+        labelsE_s.pop();
+         
+        this.setState({
+            activeVersionCard: activeVersionCard,
+            
+            versionCards: versionCards,
+             
+            versions_s: versions_s,
+            
+            nodes_s :  nodes_s,
+            labelsV_s : labelsV_s,
+            labelsE_s : labelsE_s,
+        })
+    }
+    
     handleClickVersionCard=(id)=>{
         this.setState({activeVersionCard: id})
     }
@@ -286,6 +317,7 @@ class App extends React.Component {
                         selectedVertexLabels={this.state.labelsV_s}
                         selectedEdgeLabels={this.state.labelsE_s}                   
                     
+                        versionCards={this.state.versionCards}
                     />
                     
                     
@@ -300,6 +332,7 @@ class App extends React.Component {
                         handleToggle={this.handleToggle}
                         
                         handleAddVersionCard = {this.handleAddVersionCard}
+                        handleRemoveVersionCard = {this.handleRemoveVersionCard}
                         handleClickVersionCard = {this.handleClickVersionCard}
                         activeVersionCard={this.state.activeVersionCard}
                         versionCards={this.state.versionCards}
@@ -316,6 +349,7 @@ class App extends React.Component {
                         handleToggle={this.handleToggle}
                         
                         handleAddVersionCard = {this.handleAddVersionCard}
+                        handleRemoveVersionCard = {this.handleRemoveVersionCard}
                         handleClickVersionCard = {this.handleClickVersionCard}
                         activeVersionCard={this.state.activeVersionCard}
                         versionCards={this.state.versionCards}
@@ -354,6 +388,7 @@ class App extends React.Component {
                                 nodeLookup={this.state.nodeLookup}
                                 
                                 handleAddVersionCard = {this.handleAddVersionCard}
+                                handleRemoveVersionCard = {this.handleRemoveVersionCard}
                                 handleClickVersionCard = {this.handleClickVersionCard}
                                 activeVersionCard={this.state.activeVersionCard}
                                 versionCards={this.state.versionCards}
@@ -365,6 +400,198 @@ class App extends React.Component {
                 
           }
          
+        
+    }
+    
+    renderMainPanel3(){
+        let d_infoPanel= (this.state.activePanel=="main");
+        let d_nodes= (this.state.activePanel=="nodes");
+        
+        return(
+            <>
+             {(d_infoPanel) ? <InfoPanel
+                        vertexLabelNames={this.state.graphData.data.labels.vertex}
+                        edgeLabelNames={this.state.graphData.data.labels.edge}
+                        selectedVersions={this.state.versions_s}  
+                        selectedVertexLabels={this.state.labelsV_s}
+                        selectedEdgeLabels={this.state.labelsE_s}                   
+                        versionCards={this.state.versionCards}
+                    /> : null}
+                    
+           { (d_nodes) ?  <SelectNodesComponent 
+                                allNodes={this.state.graphData.data.vertexData} 
+                                
+                                handleCheckToggle={this.handleCheckToggle}
+                                handleToggle={this.handleToggle}
+                                handleSelect={this.handleSelect}
+
+                                selectedNodes={this.state.nodes_s}
+                                nodeLookup={this.state.nodeLookup}
+                                
+                                handleAddVersionCard = {this.handleAddVersionCard}
+                                handleRemoveVersionCard = {this.handleRemoveVersionCard}
+                                handleClickVersionCard = {this.handleClickVersionCard}
+                                activeVersionCard={this.state.activeVersionCard}
+                                versionCards={this.state.versionCards}
+                    /> : null}
+                    </>
+        )
+    }
+    
+    renderMainPanel4(){
+        return(
+
+            <Tabs defaultActiveKey="main" id="test">
+            <Tab eventKey="main" title="main">
+            <InfoPanel
+                        vertexLabelNames={this.state.graphData.data.labels.vertex}
+                        edgeLabelNames={this.state.graphData.data.labels.edge}
+                        selectedVersions={this.state.versions_s}  
+                        selectedVertexLabels={this.state.labelsV_s}
+                        selectedEdgeLabels={this.state.labelsE_s}                   
+                        versionCards={this.state.versionCards}
+                    />
+            </Tab>
+            <Tab eventKey="nodes" title="nodes">
+            <SelectNodesComponent 
+                                allNodes={this.state.graphData.data.vertexData} 
+                                
+                                handleCheckToggle={this.handleCheckToggle}
+                                handleToggle={this.handleToggle}
+                                handleSelect={this.handleSelect}
+
+                                selectedNodes={this.state.nodes_s}
+                                nodeLookup={this.state.nodeLookup}
+                                
+                                handleAddVersionCard = {this.handleAddVersionCard}
+                                handleRemoveVersionCard = {this.handleRemoveVersionCard}
+                                handleClickVersionCard = {this.handleClickVersionCard}
+                                activeVersionCard={this.state.activeVersionCard}
+                                versionCards={this.state.versionCards}
+            />
+            </Tab>
+            </Tabs>
+        )
+    }
+    
+    renderMainPanel5(){
+        return(
+            <div className="mainContent">
+                <Tab.Container id="menu" defaultActiveKey="main" >
+                    
+                    <div className=" border-right menuContainer bg-light">
+                   
+        
+                        <div className=" text-dark sideElementHeading border-bottom">GraphView</div>
+                                
+                                <Nav.Link eventKey="main" className="text-muted sideElement" >Main</Nav.Link>
+                            
+                                <Nav.Link eventKey="versions" className="text-muted sideElement">Versions</Nav.Link>
+                                <Nav.Link eventKey="labels" className="text-muted sideElement">Labels</Nav.Link>
+                                
+                            <div className=" text-dark sideElementHeading border-bottom">Queries</div>
+                                <Nav.Link eventKey="nodes" className="text-muted sideElement">Nodes</Nav.Link>
+                                <Nav.Link eventKey="query_rwr" className="text-muted sideElement">RWR</Nav.Link>
+                                <Nav.Link eventKey="query_motif" className="text-muted sideElement">Motifs</Nav.Link>
+                                
+        
+                       
+                    </div>
+                    
+                    <div className= "displayPanel">
+                        <Tab.Content>
+                            <Tab.Pane eventKey="main">
+                                <InfoPanel
+                                vertexLabelNames={this.state.graphData.data.labels.vertex}
+                                edgeLabelNames={this.state.graphData.data.labels.edge}
+                                selectedVersions={this.state.versions_s}  
+                                selectedVertexLabels={this.state.labelsV_s}
+                                selectedEdgeLabels={this.state.labelsE_s}                   
+                            
+                                versionCards={this.state.versionCards}
+                            />
+                            </Tab.Pane>
+                            
+                            <Tab.Pane eventKey="versions">
+                                <SelectVersionsComponent 
+                                    versionData={this.state.graphData.data.versions}
+                                    versionTagDisplay={this.state.versionTagDisplay}
+                                    selectedVersions={this.state.versions_s}
+                                    handleCheckToggle={this.handleCheckToggle}
+                                    handleToggle={this.handleToggle}
+                                    
+                                    handleAddVersionCard = {this.handleAddVersionCard}
+                                    handleRemoveVersionCard = {this.handleRemoveVersionCard}
+                                    handleClickVersionCard = {this.handleClickVersionCard}
+                                    activeVersionCard={this.state.activeVersionCard}
+                                    versionCards={this.state.versionCards}
+                                />
+                            </Tab.Pane>
+                            
+                            <Tab.Pane eventKey="labels">
+                            <SelectLabelsComponent
+                        vertexLabels={this.state.graphData.data.labelNames.vertex}
+                        edgeLabels={this.state.graphData.data.labelNames.edge}
+                        selectedVertexLabels={this.state.labelsV_s}
+                        selectedEdgeLabels={this.state.labelsE_s}
+                        
+                        handleCheckToggle={this.handleCheckToggle}
+                        handleToggle={this.handleToggle}
+                        
+                        handleAddVersionCard = {this.handleAddVersionCard}
+                        handleRemoveVersionCard = {this.handleRemoveVersionCard}
+                        handleClickVersionCard = {this.handleClickVersionCard}
+                        activeVersionCard={this.state.activeVersionCard}
+                        versionCards={this.state.versionCards}
+                    /> 
+                            </Tab.Pane>
+                            <Tab.Pane eventKey="nodes">
+                            <SelectNodesComponent 
+                                allNodes={this.state.graphData.data.vertexData} 
+                                
+                                handleCheckToggle={this.handleCheckToggle}
+                                handleToggle={this.handleToggle}
+                                handleSelect={this.handleSelect}
+
+                                selectedNodes={this.state.nodes_s}
+                                nodeLookup={this.state.nodeLookup}
+                                
+                                handleAddVersionCard = {this.handleAddVersionCard}
+                                handleRemoveVersionCard = {this.handleRemoveVersionCard}
+                                handleClickVersionCard = {this.handleClickVersionCard}
+                                activeVersionCard={this.state.activeVersionCard}
+                                versionCards={this.state.versionCards}
+                                
+                            />
+                            </Tab.Pane>
+                            <Tab.Pane eventKey="query_rwr">
+                            <QueryComponentRWR
+                            selectedVersions={this.state.versions_s}  
+                            getVertexDataRow={this.getVertexDataRow} 
+                            getLabels={this.getLabels} 
+                            selectedVertexLabels={this.state.labelsV_s}
+                            selectedEdgeLabels={this.state.labelsE_s}
+                            selectedNodes={this.state.nodes_s}
+                        />
+                            </Tab.Pane>
+                            <Tab.Pane eventKey="query_motif">
+                                                 <QueryComponentMotif 
+                            selectedVersions={this.state.versions_s}  
+                            getVertexDataRow={this.getVertexDataRow}
+                            getLabels={this.getLabels} 
+                             selectedNodes={this.state.nodes_s}
+                        />
+                            </Tab.Pane>
+                            
+                            
+                        </Tab.Content>
+                        
+                    
+                    </div>
+                    
+                </Tab.Container>
+            </div>
+        );
         
     }
     
@@ -412,17 +639,17 @@ class App extends React.Component {
                 </div>
                 
              
-            <div className="mainContent" >
-                <div className=" border-right menuContainer bg-light" >  
+            {/*<div className="mainContent" >*/}
+                {/*<div className=" border-right menuContainer bg-light" >  
             
-                    {this.renderSideBar()}
+                    this.renderSideBar()
                     
-                </div>
+                </div>*/}
                 
-                <div className= "displayPanel">
-                    {this.renderMainPanel2()}
+                <div className= "displayPanel2">
+                    {this.renderMainPanel5()}
                 </div>
-            </div>
+            {/*</div>*/}
                
 
 

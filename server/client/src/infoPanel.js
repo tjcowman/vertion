@@ -6,33 +6,68 @@ import {SelectedElementDeck}  from './selectedElementDeck.js'
 
 import {Button, Card, ListGroup} from 'react-bootstrap';
 
+import './infoPanel.css';
+
+class GraphViewDisplay extends React.Component{
+    constructor(props){
+        super(props);
+        this.state = {
+            versionCardFocus: 0
+        }
+    }
+    
+    handleClickVersionCardFocus=(id)=>{
+        this.setState({
+            versionCardFocus : id
+            
+        });
+    }
+    
+    render(){
+        return(
+            <div className="graphViewContainer">
+                {this.props.versionCards.map((e,i)=>(
+                    <div key={i} 
+                    onClick={()=>(
+                        this.handleClickVersionCardFocus(i),
+                        this.props.handleDescribeClick(i)
+                    )}
+                    className={i==this.state.versionCardFocus ? "activeGraphViewElement": "graphViewElement"} ></div>
+                ))}
+            
+
+            </div>
+        );
+    }
+}
+
 class InfoPanel extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            activeCard: 0,
-            cardIds:[0,1],
-            vertexCounts: [new Array(), new Array()],
-            edgeCounts: [new Array(), new Array()],
+            vertexCounts: [],
+            edgeCounts: [],
         };
     }
     
     
-        handleDescribeClick(){
+        handleDescribeClick=(id)=>{
+//         console.log(this)
+            
         let command = { 
             cmd: 'lsv',
-            versions: [...this.props.selectedVersions[0]],
-            vertexLabels: [...this.props.selectedVertexLabels[0]],
-            edgeLabels: [...this.props.selectedEdgeLabels[0]]
+            versions: [...this.props.selectedVersions[id]],
+            vertexLabels: [...this.props.selectedVertexLabels[id]],
+            edgeLabels: [...this.props.selectedEdgeLabels[id]]
         }
          Axios.post('http://localhost:9060', JSON.stringify(command)).then((response)=>{
             console.log(response);
             
             let vertexCounts = response.data.nodes.map((e) => (
-                this.props.vertexLabelNames.bitsToNames(e.labels) + " : " + e.counts
+                this.props.vertexLabelNames.bitsToNames(e.labels) + " : " + e.count
             ));
             let edgeCounts = response.data.edges.map((e) => (
-                this.props.edgeLabelNames.bitsToNames(e.labels) + " : " + e.counts
+                this.props.edgeLabelNames.bitsToNames(e.labels) + " : " + e.count
             ));
             
             this.setState({vertexCounts: vertexCounts, edgeCounts: edgeCounts , });
@@ -42,23 +77,38 @@ class InfoPanel extends React.Component {
     
     renderVertexCounts(){
         return(
-            <>
-            <ListGroup>
-            {this.state.vertexCounts.map((e,i)=>(
-                <ListGroup.Item>{this.props.vertexLabelNames.bitsToNames(e.labels) }</ListGroup.Item>
-            ))}
-            </ListGroup></>
+            <Card>
+                <Card.Body>
+                
+                <ListGroup>
+                    {this.state.vertexCounts.map((e,i)=>(
+                        < ListGroup.Item key={i}>{e}</ListGroup.Item>
+                    ))}
+                </ListGroup>
+                
+                
+                <ListGroup>
+                    {this.state.edgeCounts.map((e,i)=>(
+                        <ListGroup.Item key={i}>{e}</ListGroup.Item>
+                    ))}
+                </ListGroup>
+                
+                </Card.Body>
+            </Card>
         );
     }
     
    
     render(){
         return(
+            console.log(this.state),
             <Card>
             <Card.Body>
-            <Button onClick={(e)=>this.handleDescribeClick()} >test</Button>
             
-            
+            <GraphViewDisplay
+                versionCards={this.props.versionCards}
+                handleDescribeClick={this.handleDescribeClick}
+            />
 
             
             

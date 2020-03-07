@@ -21,6 +21,16 @@
     overflow-y:scroll;
 }
 
+.itemHead{
+  font-weight: bold;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+    border-bottom: lightgrey solid 1px;
+    font-size: med;
+     padding: 4px;
+}
+
 .itemC{
     border: none;
     font-size: small;
@@ -28,17 +38,37 @@
 
 } 
 
-.cardBlank::before{
-   content: "+";
-/*   height:200px; */
-/*   width:200px; */
-  font-size:200px;
-  display:flex;
-/*   flex-direction:row; */
-/*   align-items:center; */
+.cardBlank{
+    /*   display:flex; */
+}
+
+.cardBlankAdd::before{
+    content: "+";
+
+    font-size:100px;
+
+    justify-content:center;
+    font-weight:bold;
+    color:lightgray;
+}
+
+
+.cardBlankAdd{
+    height:200px;
+
+}
+.cardBlankRemove::before{
+   content: "-";
+/*     height:200px; */
+  font-size:100px;
+/*   display:flex; */
+
   justify-content:center;
   font-weight:bold;
-/*   font-family:courier; */
+
   color:lightgray;
-/*     background-color: ; */
+
+}
+.cardBlankRemove{
+    height:200px;
 }

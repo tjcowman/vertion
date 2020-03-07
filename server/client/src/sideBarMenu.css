@@ -14,6 +14,11 @@
     width: calc(100% - 200px);
 }
 
+.displayPanel2{
+
+
+}
+
 .mainContent{
     position:relative;
     top:75px;

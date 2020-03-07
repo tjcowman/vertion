@@ -126,6 +126,8 @@ class SelectNodesComponent extends React.Component{
                 handleCardClick={this.handleCardClick} 
                 elementIndexes={[this.props.selectedNodes]}
                 displayLookup={[this.props.allNodes]}
+                handleClickAddVersionCard={this.props.handleAddVersionCard}
+                handleClickRemoveVersionCard={this.props.handleRemoveVersionCard}
 //                 showDiff={true}
             />
            

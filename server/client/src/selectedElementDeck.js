@@ -21,7 +21,7 @@ const  SelectedElementDeck = (props) =>{
 
                             {props.partitionHeadings.map((partition,partI) =>(
                                 <div key={partI}>
-                                    <b>{partition}</b>
+                                    <ListGroupItem className="itemHead " >{partition}</ListGroupItem>
                                     <ListGroup>
                                     {
                                         [...props.elementIndexes[partI][e]].map((ee,ii)=> (
@@ -39,9 +39,17 @@ const  SelectedElementDeck = (props) =>{
                 ))}
                 
               
-                <div className="card cardC cardBlank bg-light"
-                    onClick={()=>props.handleClickAddVersionCard()}
-                ></div>
+                <div className="card cardC  cardBlank bg-light">
+                    <div className="cardBlankAdd btn border" onClick={()=>props.handleClickAddVersionCard()}>
+                        
+                    </div>
+                    
+                    <div className="cardBlankRemove btn border" onClick={()=>props.handleClickRemoveVersionCard()}>
+                        
+                    </div>
+                
+                
+                </div>
 
                 
                 
@@ -62,7 +70,7 @@ const  SelectedElementDeck = (props) =>{
                     : ""
                 */}
                     
-                 </div>
+            </div>
            
         )
     

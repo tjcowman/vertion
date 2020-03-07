@@ -1,0 +1,19 @@
+.graphViewContainer{
+    border: 1px solid black;
+    display: flex;
+/*     overflow-x:scroll; */
+}
+
+.graphViewElement{
+    border: 1px solid black;
+    height: 75px;
+    width: 50px;
+    margin: 5px;
+}
+
+.activeGraphViewElement{
+    border: 1px solid red;
+    height: 75px;
+    width: 50px;
+    margin: 5px;
+}

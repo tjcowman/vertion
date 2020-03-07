@@ -83,6 +83,7 @@ class SelectLabelsComponent extends React.Component{
                         elementIndexes={[this.props.selectedVertexLabels,this.props.selectedEdgeLabels]}
                         displayLookup={[this.props.vertexLabels, this.props.edgeLabels]}
                         handleClickAddVersionCard={this.props.handleAddVersionCard}
+                        handleClickRemoveVersionCard={this.props.handleRemoveVersionCard}
                     />
                 
                  </Card.Body>
