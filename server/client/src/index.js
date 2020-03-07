@@ -96,17 +96,68 @@ class GraphData{
 
 }
 
+class VersionCard{
+    constructor(){
+        this.isStale = false;
+        this.versions_s = new Set();          
+        this.nodes_s =  new Set();
+        this.labelsV_s = new Set();
+        this.labelsE_s = new Set();
+    }
+    
+    toggle=(name, elementId)=>{
+
+        let ns = this[name];
+                    
+        if(this[name].has(elementId)){
+            ns.delete(elementId);
+        }
+        else{
+            ns.add(elementId);
+        }
+
+        
+        this[name] = ns;
+        this.isStale = true;
+    
+    }
+    
+    checkToggle=(name, elementId)=>{
+         return this[name].has(elementId);
+    }
+    
+}
+
+class VersionCards{
+    constructor(){
+        this.cards = [new VersionCard()];
+    }
+    
+    
+    push=()=>{
+        this.cards.push(new VersionCard());
+
+    }
+    
+    pop=()=>{
+        this.cards.pop();
+    }
+    
+}
+
 class App extends React.Component {
     constructor(props){
         super(props);
         this.state={
-            activePanel: 'main',
-            versionCards: [0],
-            activeVersionCard: 0,
             graphData: new GraphData(),
 
             serverProps : {},
             
+            versionCardsO: new VersionCards(),
+            
+            versionCards: [0],
+            staleCards: [false],
+            activeVersionCard: 0,
             versions_s : [new Set()],            
             nodes_s :  [new Set()],
             labelsV_s : [new Set()],
@@ -133,10 +184,6 @@ class App extends React.Component {
             let allVertexLabels0 = new Set(Array(response.data.labels.vertex.names.length).keys());
             let allEdgeLabels0 = new  Set(Array(response.data.labels.edge.length).keys());
             
-//             let allVertexLabels1 = new Set(Array(response.data.labels.vertex.names.length).keys());
-//             let allEdgeLabels1 = new  Set(Array(response.data.labels.edge.length).keys());
-            
-            
             let versionTagDisplay = new Map();
             response.data.versions.forEach((e) => {
                 e.tags.forEach((t) => {
@@ -149,7 +196,6 @@ class App extends React.Component {
                 
             });
             
-//             console.log(versionTagDisplay)
             
             this.setState({
                 serverProps : serverProps,
@@ -165,22 +211,12 @@ class App extends React.Component {
         
     }
     
-    
-
-    setData=(serverResponse)=>{
-        let nodeLookup = new Map();
+    markCardFresh=(cardId)=>{
+        let staleCards =[...this.state.staleCards];
+        staleCards[cardId] = false;
         
-        serverResponse.vertexData.forEach((e) =>(
-                nodeLookup.set(e.name, e.id)
-        ));
-
-        this.setState({
-            graphData: new GraphData(serverResponse),
-//             versions_s : new SelectedVersions(serverResponse.versions),
-            nodeLookup : nodeLookup
-        });
+        this.setState({staleCards: staleCards});
     }
-    
     
     handleAddVersionCard=()=>{
         console.log(this.state.versionCards)
@@ -198,17 +234,25 @@ class App extends React.Component {
         let labelsV_s =  [...this.state.labelsV_s];
         labelsV_s.push(allVertexLabels);
         let labelsE_s =  [...this.state.labelsE_s];
-         labelsE_s.push(allEdgeLabels);
+        labelsE_s.push(allEdgeLabels);
         
+        let staleCards =[...this.state.staleCards];
+        staleCards.push(false);
+         
         this.setState({
             versionCards: versionCards,
-             
+            staleCards: staleCards,
             versions_s: versions_s,
             
             nodes_s :  nodes_s,
             labelsV_s : labelsV_s,
             labelsE_s : labelsE_s,
         })
+        
+        let versionCardsO = this.state.versionCardsO;
+        versionCardsO.push();
+        
+        this.setState({versionCardsO: versionCardsO});
     }
     
     handleRemoveVersionCard=()=>{
@@ -229,9 +273,12 @@ class App extends React.Component {
         let labelsE_s =  [...this.state.labelsE_s];
         labelsE_s.pop();
          
+        let staleCards =[...this.state.staleCards];
+        staleCards.pop();
+        
         this.setState({
             activeVersionCard: activeVersionCard,
-            
+             staleCards: staleCards,
             versionCards: versionCards,
              
             versions_s: versions_s,
@@ -240,6 +287,11 @@ class App extends React.Component {
             labelsV_s : labelsV_s,
             labelsE_s : labelsE_s,
         })
+        
+        let versionCardsO = this.state.versionCardsO;
+        versionCardsO.pop();
+        
+        this.setState({versionCardsO: versionCardsO});
     }
     
     handleClickVersionCard=(id)=>{
@@ -257,7 +309,19 @@ class App extends React.Component {
             ns[cardId].add(elementId);
         }
                     
-        this.setState({[name] : ns});
+        let staleCards =[...this.state.staleCards];
+        staleCards[ cardId] = true;
+        
+        this.setState({
+            [name] : ns,
+            staleCards: staleCards,
+        });
+        
+        let versionCardsO = this.state.versionCardsO;
+        versionCardsO.cards[cardId].toggle(name,elementId);
+        
+        this.setState({versionCardsO: versionCardsO});
+        console.log("VC ", this.state.versionCardsO)
     }
     
     handleCheckToggle=(name,cardId, elementId)=>{
@@ -294,186 +358,8 @@ class App extends React.Component {
         this.setState({activePanel : name});
     }
     
-    renderSideMenu(){
-        return(
-            <Card className="versionPanel">
-                <InfoPanel isSelected={this.isSelected}  getLabels={this.getLabels}  setData={this.setData} />
-            </Card>
-        );
-        
-    }
-    
-    
 
-    renderMainPanel2(){
-       
-        
-          switch(this.state.activePanel){
-                case 'main': return (
-                    <InfoPanel
-                        vertexLabelNames={this.state.graphData.data.labels.vertex}
-                        edgeLabelNames={this.state.graphData.data.labels.edge}
-                        selectedVersions={this.state.versions_s}  
-                        selectedVertexLabels={this.state.labelsV_s}
-                        selectedEdgeLabels={this.state.labelsE_s}                   
-                    
-                        versionCards={this.state.versionCards}
-                    />
-                    
-                    
-                       
-                )
-                case 'versions': return (
-                    <SelectVersionsComponent 
-                        versionData={this.state.graphData.data.versions}
-                        versionTagDisplay={this.state.versionTagDisplay}
-                        selectedVersions={this.state.versions_s}
-                        handleCheckToggle={this.handleCheckToggle}
-                        handleToggle={this.handleToggle}
-                        
-                        handleAddVersionCard = {this.handleAddVersionCard}
-                        handleRemoveVersionCard = {this.handleRemoveVersionCard}
-                        handleClickVersionCard = {this.handleClickVersionCard}
-                        activeVersionCard={this.state.activeVersionCard}
-                        versionCards={this.state.versionCards}
-                    />
-                )
-                case 'labels': return(
-                    <SelectLabelsComponent
-                        vertexLabels={this.state.graphData.data.labelNames.vertex}
-                        edgeLabels={this.state.graphData.data.labelNames.edge}
-                        selectedVertexLabels={this.state.labelsV_s}
-                        selectedEdgeLabels={this.state.labelsE_s}
-                        
-                        handleCheckToggle={this.handleCheckToggle}
-                        handleToggle={this.handleToggle}
-                        
-                        handleAddVersionCard = {this.handleAddVersionCard}
-                        handleRemoveVersionCard = {this.handleRemoveVersionCard}
-                        handleClickVersionCard = {this.handleClickVersionCard}
-                        activeVersionCard={this.state.activeVersionCard}
-                        versionCards={this.state.versionCards}
-                    /> 
-                    
-                )
-                case 'query_rwr': return(
-                        <QueryComponentRWR
-                            selectedVersions={this.state.versions_s}  
-                            getVertexDataRow={this.getVertexDataRow} 
-                            getLabels={this.getLabels} 
-                            selectedVertexLabels={this.state.labelsV_s}
-                            selectedEdgeLabels={this.state.labelsE_s}
-                            selectedNodes={this.state.nodes_s}
-                        />
-                )
-                case 'query_motif' :return(
-                                    
-                     <QueryComponentMotif 
-                            selectedVersions={this.state.versions_s}  
-                            getVertexDataRow={this.getVertexDataRow}
-                            getLabels={this.getLabels} 
-                             selectedNodes={this.state.nodes_s}
-                        />
-                )
-                case 'nodes': return(
 
-                            <SelectNodesComponent 
-                                allNodes={this.state.graphData.data.vertexData} 
-                                
-                                handleCheckToggle={this.handleCheckToggle}
-                                handleToggle={this.handleToggle}
-                                handleSelect={this.handleSelect}
-
-                                selectedNodes={this.state.nodes_s}
-                                nodeLookup={this.state.nodeLookup}
-                                
-                                handleAddVersionCard = {this.handleAddVersionCard}
-                                handleRemoveVersionCard = {this.handleRemoveVersionCard}
-                                handleClickVersionCard = {this.handleClickVersionCard}
-                                activeVersionCard={this.state.activeVersionCard}
-                                versionCards={this.state.versionCards}
-                                
-                            />
-
-                              )
-                    
-                
-          }
-         
-        
-    }
-    
-    renderMainPanel3(){
-        let d_infoPanel= (this.state.activePanel=="main");
-        let d_nodes= (this.state.activePanel=="nodes");
-        
-        return(
-            <>
-             {(d_infoPanel) ? <InfoPanel
-                        vertexLabelNames={this.state.graphData.data.labels.vertex}
-                        edgeLabelNames={this.state.graphData.data.labels.edge}
-                        selectedVersions={this.state.versions_s}  
-                        selectedVertexLabels={this.state.labelsV_s}
-                        selectedEdgeLabels={this.state.labelsE_s}                   
-                        versionCards={this.state.versionCards}
-                    /> : null}
-                    
-           { (d_nodes) ?  <SelectNodesComponent 
-                                allNodes={this.state.graphData.data.vertexData} 
-                                
-                                handleCheckToggle={this.handleCheckToggle}
-                                handleToggle={this.handleToggle}
-                                handleSelect={this.handleSelect}
-
-                                selectedNodes={this.state.nodes_s}
-                                nodeLookup={this.state.nodeLookup}
-                                
-                                handleAddVersionCard = {this.handleAddVersionCard}
-                                handleRemoveVersionCard = {this.handleRemoveVersionCard}
-                                handleClickVersionCard = {this.handleClickVersionCard}
-                                activeVersionCard={this.state.activeVersionCard}
-                                versionCards={this.state.versionCards}
-                    /> : null}
-                    </>
-        )
-    }
-    
-    renderMainPanel4(){
-        return(
-
-            <Tabs defaultActiveKey="main" id="test">
-            <Tab eventKey="main" title="main">
-            <InfoPanel
-                        vertexLabelNames={this.state.graphData.data.labels.vertex}
-                        edgeLabelNames={this.state.graphData.data.labels.edge}
-                        selectedVersions={this.state.versions_s}  
-                        selectedVertexLabels={this.state.labelsV_s}
-                        selectedEdgeLabels={this.state.labelsE_s}                   
-                        versionCards={this.state.versionCards}
-                    />
-            </Tab>
-            <Tab eventKey="nodes" title="nodes">
-            <SelectNodesComponent 
-                                allNodes={this.state.graphData.data.vertexData} 
-                                
-                                handleCheckToggle={this.handleCheckToggle}
-                                handleToggle={this.handleToggle}
-                                handleSelect={this.handleSelect}
-
-                                selectedNodes={this.state.nodes_s}
-                                nodeLookup={this.state.nodeLookup}
-                                
-                                handleAddVersionCard = {this.handleAddVersionCard}
-                                handleRemoveVersionCard = {this.handleRemoveVersionCard}
-                                handleClickVersionCard = {this.handleClickVersionCard}
-                                activeVersionCard={this.state.activeVersionCard}
-                                versionCards={this.state.versionCards}
-            />
-            </Tab>
-            </Tabs>
-        )
-    }
-    
     renderMainPanel5(){
         return(
             <div className="mainContent">
@@ -484,15 +370,14 @@ class App extends React.Component {
         
                         <div className=" text-dark sideElementHeading border-bottom">GraphView</div>
                                 
-                                <Nav.Link eventKey="main" className="text-muted sideElement" >Main</Nav.Link>
+                            <Nav.Link eventKey="main" className="text-muted sideElement" >Main</Nav.Link>
+                            <Nav.Link eventKey="versions" className="text-muted sideElement">Versions</Nav.Link>
+                            <Nav.Link eventKey="labels" className="text-muted sideElement">Labels</Nav.Link>
                             
-                                <Nav.Link eventKey="versions" className="text-muted sideElement">Versions</Nav.Link>
-                                <Nav.Link eventKey="labels" className="text-muted sideElement">Labels</Nav.Link>
-                                
-                            <div className=" text-dark sideElementHeading border-bottom">Queries</div>
-                                <Nav.Link eventKey="nodes" className="text-muted sideElement">Nodes</Nav.Link>
-                                <Nav.Link eventKey="query_rwr" className="text-muted sideElement">RWR</Nav.Link>
-                                <Nav.Link eventKey="query_motif" className="text-muted sideElement">Motifs</Nav.Link>
+                        <div className=" text-dark sideElementHeading border-bottom">Queries</div>
+                            <Nav.Link eventKey="nodes" className="text-muted sideElement">Nodes</Nav.Link>
+                            <Nav.Link eventKey="query_rwr" className="text-muted sideElement">RWR</Nav.Link>
+                            <Nav.Link eventKey="query_motif" className="text-muted sideElement">Motifs</Nav.Link>
                                 
         
                        
@@ -507,7 +392,11 @@ class App extends React.Component {
                                 selectedVersions={this.state.versions_s}  
                                 selectedVertexLabels={this.state.labelsV_s}
                                 selectedEdgeLabels={this.state.labelsE_s}                   
-                            
+                                staleCards={this.state.staleCards}
+                                markCardFresh={this.markCardFresh}
+                                
+                                 activeVersionCard={this.state.activeVersionCard}
+                                 handleClickVersionCard = {this.handleClickVersionCard}
                                 versionCards={this.state.versionCards}
                             />
                             </Tab.Pane>
@@ -529,58 +418,58 @@ class App extends React.Component {
                             </Tab.Pane>
                             
                             <Tab.Pane eventKey="labels">
-                            <SelectLabelsComponent
-                        vertexLabels={this.state.graphData.data.labelNames.vertex}
-                        edgeLabels={this.state.graphData.data.labelNames.edge}
-                        selectedVertexLabels={this.state.labelsV_s}
-                        selectedEdgeLabels={this.state.labelsE_s}
-                        
-                        handleCheckToggle={this.handleCheckToggle}
-                        handleToggle={this.handleToggle}
-                        
-                        handleAddVersionCard = {this.handleAddVersionCard}
-                        handleRemoveVersionCard = {this.handleRemoveVersionCard}
-                        handleClickVersionCard = {this.handleClickVersionCard}
-                        activeVersionCard={this.state.activeVersionCard}
-                        versionCards={this.state.versionCards}
-                    /> 
+                                <SelectLabelsComponent
+                                    vertexLabels={this.state.graphData.data.labelNames.vertex}
+                                    edgeLabels={this.state.graphData.data.labelNames.edge}
+                                    selectedVertexLabels={this.state.labelsV_s}
+                                    selectedEdgeLabels={this.state.labelsE_s}
+                                    
+                                    handleCheckToggle={this.handleCheckToggle}
+                                    handleToggle={this.handleToggle}
+                                    
+                                    handleAddVersionCard = {this.handleAddVersionCard}
+                                    handleRemoveVersionCard = {this.handleRemoveVersionCard}
+                                    handleClickVersionCard = {this.handleClickVersionCard}
+                                    activeVersionCard={this.state.activeVersionCard}
+                                    versionCards={this.state.versionCards}
+                                /> 
                             </Tab.Pane>
                             <Tab.Pane eventKey="nodes">
-                            <SelectNodesComponent 
-                                allNodes={this.state.graphData.data.vertexData} 
-                                
-                                handleCheckToggle={this.handleCheckToggle}
-                                handleToggle={this.handleToggle}
-                                handleSelect={this.handleSelect}
+                                <SelectNodesComponent 
+                                    allNodes={this.state.graphData.data.vertexData} 
+                                    
+                                    handleCheckToggle={this.handleCheckToggle}
+                                    handleToggle={this.handleToggle}
+                                    handleSelect={this.handleSelect}
 
-                                selectedNodes={this.state.nodes_s}
-                                nodeLookup={this.state.nodeLookup}
-                                
-                                handleAddVersionCard = {this.handleAddVersionCard}
-                                handleRemoveVersionCard = {this.handleRemoveVersionCard}
-                                handleClickVersionCard = {this.handleClickVersionCard}
-                                activeVersionCard={this.state.activeVersionCard}
-                                versionCards={this.state.versionCards}
-                                
-                            />
+                                    selectedNodes={this.state.nodes_s}
+                                    nodeLookup={this.state.nodeLookup}
+                                    
+                                    handleAddVersionCard = {this.handleAddVersionCard}
+                                    handleRemoveVersionCard = {this.handleRemoveVersionCard}
+                                    handleClickVersionCard = {this.handleClickVersionCard}
+                                    activeVersionCard={this.state.activeVersionCard}
+                                    versionCards={this.state.versionCards}
+                                    
+                                />
                             </Tab.Pane>
                             <Tab.Pane eventKey="query_rwr">
-                            <QueryComponentRWR
-                            selectedVersions={this.state.versions_s}  
-                            getVertexDataRow={this.getVertexDataRow} 
-                            getLabels={this.getLabels} 
-                            selectedVertexLabels={this.state.labelsV_s}
-                            selectedEdgeLabels={this.state.labelsE_s}
-                            selectedNodes={this.state.nodes_s}
-                        />
+                                <QueryComponentRWR
+                                    selectedVersions={this.state.versions_s}  
+                                    getVertexDataRow={this.getVertexDataRow} 
+                                    getLabels={this.getLabels} 
+                                    selectedVertexLabels={this.state.labelsV_s}
+                                    selectedEdgeLabels={this.state.labelsE_s}
+                                    selectedNodes={this.state.nodes_s}
+                                />
                             </Tab.Pane>
                             <Tab.Pane eventKey="query_motif">
-                                                 <QueryComponentMotif 
-                            selectedVersions={this.state.versions_s}  
-                            getVertexDataRow={this.getVertexDataRow}
-                            getLabels={this.getLabels} 
-                             selectedNodes={this.state.nodes_s}
-                        />
+                                <QueryComponentMotif 
+                                    selectedVersions={this.state.versions_s}  
+                                    getVertexDataRow={this.getVertexDataRow}
+                                    getLabels={this.getLabels} 
+                                    selectedNodes={this.state.nodes_s}
+                                />
                             </Tab.Pane>
                             
                             
@@ -595,39 +484,7 @@ class App extends React.Component {
         
     }
     
-    renderSideBar(){
-        return(
-                        
-            
-                <ListGroup>
-                    <ListGroup.Item className=" text-dark sideElementHeading border-bottom">
-                        GraphView
-                    </ListGroup.Item >
-                     <ListGroup.Item onClick={(e)=>this.handleSideMenuClick("main")} className=" btn text-muted sideElement">
-                        Main
-                    </ListGroup.Item>
-                    <ListGroup.Item   onClick={(e)=>this.handleSideMenuClick("versions")} className=" btn text-muted sideElement">
-                        Versions
-                    </ListGroup.Item>
-                    <ListGroup.Item  onClick={(e)=>this.handleSideMenuClick("labels")} className="btn text-muted sideElement">
-                        Labels
-                    </ListGroup.Item>
-                    <ListGroup.Item className=" text-dark sideElementHeading border-bottom">
-                        Queries
-                    </ListGroup.Item>
-                    <ListGroup.Item  onClick={(e)=>this.handleSideMenuClick("nodes")} className="btn text-muted sideElement">
-                        Nodes
-                    </ListGroup.Item>
-                    <ListGroup.Item  onClick={(e)=>this.handleSideMenuClick("query_rwr")} className="btn text-muted sideElement">
-                        RWR
-                    </ListGroup.Item>
-                    <ListGroup.Item  onClick={(e)=>this.handleSideMenuClick("query_motif")} className="btn text-muted sideElement">
-                        Motifs
-                    </ListGroup.Item>
-                </ListGroup>
-          
-        );
-    }
+
     
     render(){
 //         console.log("RE", this.state.graphData.vertexData)
@@ -635,22 +492,12 @@ class App extends React.Component {
             <div> 
                
                 <div className= "fixed-top border-bottom titleBar bg-dark">
-
                 </div>
                 
-             
-            {/*<div className="mainContent" >*/}
-                {/*<div className=" border-right menuContainer bg-light" >  
-            
-                    this.renderSideBar()
-                    
-                </div>*/}
-                
+     
                 <div className= "displayPanel2">
                     {this.renderMainPanel5()}
                 </div>
-            {/*</div>*/}
-               
 
 
             </div> 

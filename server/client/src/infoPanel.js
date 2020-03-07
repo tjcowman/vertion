@@ -11,12 +11,17 @@ import './infoPanel.css';
 class GraphViewDisplay extends React.Component{
     constructor(props){
         super(props);
-        this.state = {
-            versionCardFocus: 0
-        }
+//         this.state = {
+//             versionCardFocus: 0
+//         }
     }
     
     handleClickVersionCardFocus=(id)=>{
+        if(this.props.staleCards[id]){
+            this.props.handleDescribeClick(id);
+            this.props.markCardFresh(id);
+        }
+        
         this.setState({
             versionCardFocus : id
             
@@ -26,13 +31,13 @@ class GraphViewDisplay extends React.Component{
     render(){
         return(
             <div className="graphViewContainer">
+            {console.log(this.props)},
                 {this.props.versionCards.map((e,i)=>(
                     <div key={i} 
                     onClick={()=>(
-                        this.handleClickVersionCardFocus(i),
-                        this.props.handleDescribeClick(i)
+                        this.handleClickVersionCardFocus(i)
                     )}
-                    className={i==this.state.versionCardFocus ? "activeGraphViewElement": "graphViewElement"} ></div>
+                    className={i==this.props.activeVersionCard ? "activeGraphViewElement": "graphViewElement"} ></div>
                 ))}
             
 
@@ -44,14 +49,15 @@ class GraphViewDisplay extends React.Component{
 class InfoPanel extends React.Component {
     constructor(props) {
         super(props);
+        //This should probably be elevated too
         this.state = {
-            vertexCounts: [],
-            edgeCounts: [],
+            vertexCounts: [[]],
+            edgeCounts: [[]],
         };
     }
     
     
-        handleDescribeClick=(id)=>{
+    handleDescribeClick=(id)=>{
 //         console.log(this)
             
         let command = { 
@@ -63,12 +69,17 @@ class InfoPanel extends React.Component {
          Axios.post('http://localhost:9060', JSON.stringify(command)).then((response)=>{
             console.log(response);
             
-            let vertexCounts = response.data.nodes.map((e) => (
+            let vertexCountsU = response.data.nodes.map((e) => (
                 this.props.vertexLabelNames.bitsToNames(e.labels) + " : " + e.count
             ));
-            let edgeCounts = response.data.edges.map((e) => (
+            let edgeCountsU = response.data.edges.map((e) => (
                 this.props.edgeLabelNames.bitsToNames(e.labels) + " : " + e.count
             ));
+            
+            let vertexCounts = [...this.state.vertexCounts];
+            vertexCounts[id] = vertexCountsU;
+            let edgeCounts = [...this.state.edgeCounts];
+            edgeCounts[id] = edgeCountsU;
             
             this.setState({vertexCounts: vertexCounts, edgeCounts: edgeCounts , });
         });
@@ -79,20 +90,20 @@ class InfoPanel extends React.Component {
         return(
             <Card>
                 <Card.Body>
-                
+                {/*
                 <ListGroup>
-                    {this.state.vertexCounts.map((e,i)=>(
+                    {this.state.vertexCounts[this.props.activeVersionCard].map((e,i)=>(
                         < ListGroup.Item key={i}>{e}</ListGroup.Item>
                     ))}
                 </ListGroup>
                 
                 
                 <ListGroup>
-                    {this.state.edgeCounts.map((e,i)=>(
+                    {this.state.edgeCounts[this.props.activeVersionCard].map((e,i)=>(
                         <ListGroup.Item key={i}>{e}</ListGroup.Item>
                     ))}
                 </ListGroup>
-                
+                */}
                 </Card.Body>
             </Card>
         );
@@ -106,8 +117,12 @@ class InfoPanel extends React.Component {
             <Card.Body>
             
             <GraphViewDisplay
+                staleCards = {this.props.staleCards}
                 versionCards={this.props.versionCards}
+                 activeVersionCard={this.props.activeVersionCard}
+                 handleClickVersionCard = {this.props.handleClickVersionCard}
                 handleDescribeClick={this.handleDescribeClick}
+                markCardFresh={this.props.markCardFresh}
             />
 
             
