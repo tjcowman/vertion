@@ -8,16 +8,14 @@ class SelectLabelsComponent extends React.Component{
     constructor(props){
         super(props);
         this.state={
-//             activeCard :0,
-//             cardIds: [0,1]
+
         }
     }
     
     
     handleCardClick=(cardId)=>{
         this.props.handleClickVersionCard(cardId);
-//         this.setState({activeCard: cardId});
-//         console.log(this.state.activeCard)
+
     }
     
     render(){
@@ -33,7 +31,7 @@ class SelectLabelsComponent extends React.Component{
                                 <button  key={i}
                                     value={e.name} 
                                     name={i} 
-                                    className={this.props.selectedVertexLabels[this.props.activeVersionCard].has(i) ? "active btn btn-outline-secondary m-1 btn-sm vName " : "btn btn-outline-secondary m-1 btn-sm vName"}
+                                    className={this.props.versionCardsO.cards[this.props.activeVersionCard]["labelsV_s"].has(i) ? "active btn btn-outline-secondary m-1 btn-sm vName " : "btn btn-outline-secondary m-1 btn-sm vName"}
                                     onClick={(event) =>
 //                                         this.props.toggleSelectVersion(this.state.activeCard,i)
                                             this.props.handleToggle("labelsV_s",this.props.activeVersionCard,i)
@@ -58,7 +56,7 @@ class SelectLabelsComponent extends React.Component{
                                 <button  key={i}
                                     value={e.name} 
                                     name={i} 
-                                    className={this.props.selectedEdgeLabels[this.props.activeVersionCard].has(i) ? "active btn btn-outline-secondary m-1 btn-sm vName " : "btn btn-outline-secondary m-1 btn-sm vName"}
+                                    className={this.props.versionCardsO.cards[this.props.activeVersionCard]["labelsE_s"].has(i) ? "active btn btn-outline-secondary m-1 btn-sm vName " : "btn btn-outline-secondary m-1 btn-sm vName"}
                                     onClick={(event) =>
 //                                         this.props.toggleSelectVersion(this.state.activeCard,i)
                                          this.props.handleToggle("labelsE_s",this.props.activeVersionCard,i)
@@ -77,11 +75,12 @@ class SelectLabelsComponent extends React.Component{
                 <Card.Body>
 
                     <SelectedElementDeck activeCard={this.props.activeVersionCard} 
-                    partitionHeadings={["Vertex", "Edge"]}
-                        cardIds={this.props.versionCards} 
-                        handleCardClick={this.handleCardClick}
-                        elementIndexes={[this.props.selectedVertexLabels,this.props.selectedEdgeLabels]}
+                        displayKeys={["labelsV_s","labelsE_s"]}
+                        versionCardsO={this.props.versionCardsO}
+                        partitionHeadings={["Vertex", "Edge"]}
                         displayLookup={[this.props.vertexLabels, this.props.edgeLabels]}
+               
+                        handleCardClick={this.handleCardClick}
                         handleClickAddVersionCard={this.props.handleAddVersionCard}
                         handleClickRemoveVersionCard={this.props.handleRemoveVersionCard}
                     />

@@ -95,7 +95,7 @@ class SelectNodesComponent extends React.Component{
                                 rowClasses="nodeSelectItem" 
                                 selectRow={{
                                     mode: 'checkbox',  
-                                    selected: [...this.props.selectedNodes[this.props.activeVersionCard]],
+                                    selected:  [...this.props.versionCardsO.cards[this.props.activeVersionCard]["nodes_s"]], //[...this.props.selectedNodes[this.props.activeVersionCard]],
                                     clickToSelect: true, 
                                     hideSelectAll: true,
                                     onSelect: (row, isSelect, rowIndex,e) => {
@@ -121,10 +121,15 @@ class SelectNodesComponent extends React.Component{
         return (
 
             <SelectedElementDeck activeCard={this.props.activeVersionCard} 
-            partitionHeadings={[""]}
-                cardIds={this.props.versionCards} 
+            
+                versionCardsO={this.props.versionCardsO}
+                displayKeys={["nodes_s"]}
+                partitionHeadings={[""]}
+            
+
+
                 handleCardClick={this.handleCardClick} 
-                elementIndexes={[this.props.selectedNodes]}
+
                 displayLookup={[this.props.allNodes]}
                 handleClickAddVersionCard={this.props.handleAddVersionCard}
                 handleClickRemoveVersionCard={this.props.handleRemoveVersionCard}

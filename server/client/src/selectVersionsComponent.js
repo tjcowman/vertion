@@ -9,19 +9,14 @@ import {SelectedElementDeck}  from './selectedElementDeck.js'
 class SelectVersionsComponent extends React.Component{ 
     
     constructor(props){
-//         console.log("FF")
         super(props);
         this.state={
-//             activeCard :0,
-//             cardIds: [0,1]
         }
     }
     
     
     handleCardClick=(cardId)=>{
         this.props.handleClickVersionCard(cardId);
-//         this.setState({activeCard: cardId});
-
     }
          
          
@@ -70,12 +65,14 @@ class SelectVersionsComponent extends React.Component{
             
                
                 <Card.Body>
-                    <SelectedElementDeck activeCard={this.props.activeVersionCard} 
-                        cardIds={this.props.versionCards} 
+               
+                    <SelectedElementDeck activeCard={this.props.activeVersionCard}
+                        versionCardsO={this.props.versionCardsO}
+                        displayKeys={["versions_s"]}
                         partitionHeadings={[""]}
-                        handleCardClick={this.handleCardClick} 
-                        elementIndexes={[this.props.selectedVersions]}
                         displayLookup={[this.props.versionData]}
+                        
+                        handleCardClick={this.handleCardClick} 
                         handleClickAddVersionCard={this.props.handleAddVersionCard}
                         handleClickRemoveVersionCard={this.props.handleRemoveVersionCard}
                     />

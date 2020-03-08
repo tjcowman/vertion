@@ -74,7 +74,7 @@ class GraphData{
             
         }
         
-// console.log(serverResponse)
+
         if(typeof serverResponse !== 'undefined'){
             this.data.labels.vertex = new LabelSet(serverResponse.labels.vertex.names);
             this.data.labels.edge = new LabelSet(serverResponse.labels.edge);
@@ -87,13 +87,35 @@ class GraphData{
                 edge : serverResponse.labels.edge.map((e,i)=>({index : i, name : e}))
             }
             
-            
-//              console.log("TH", this)
+
         }
 
     }
   
 
+}
+
+//Holds the plaintext representations of each element index 
+class ElementNames{
+    constructor(serverResponse){
+        this.versions = [];
+        this.vertexes = [];
+        this.labelsV = new LabelSet();
+        this.labelsE = new LabelSet();
+        
+        
+        if(typeof serverResponse !== 'undefined'){
+            this.versions = serverResponse.data.versions.map((e) => ({name:e.name, tags:e.tags}));
+            this.vertexes = serverResponse.data.vertexData.map((e) => ({name: e.name, labels: e.labels}));
+            this.labelsV = new LabelSet(serverResponse.data.labels.vertex.names);
+            this.labelsE = new LabelSet(serverResponse.data.labels.edge);
+            //Convert the vertex label bits to plaintext
+            this.vertexes.forEach((e) => (e.labels = this.labelsE.bitsToNames(e.labels)));
+        }
+    }
+    
+    
+    
 }
 
 class VersionCard{
@@ -154,14 +176,12 @@ class App extends React.Component {
             serverProps : {},
             
             versionCardsO: new VersionCards(),
+            elementNames: new ElementNames(),
             
             versionCards: [0],
             staleCards: [false],
             activeVersionCard: 0,
-            versions_s : [new Set()],            
-            nodes_s :  [new Set()],
-            labelsV_s : [new Set()],
-            labelsE_s : [new Set()],
+
             
             
             nodeLookup: new Map(),
@@ -171,10 +191,10 @@ class App extends React.Component {
         var date = new Date();
          Axios.get('http://localhost:9060/ls', date.getTime()).then((response)=>{
              console.log("lsResponse", response)
-             
+          
             let nodeLookup = new Map();
             
-//             console.log(response.serverProp)
+
             let serverProps = JSON.parse(response.data.serverProps);
             
             response.data.vertexData.forEach((e) =>(
@@ -201,10 +221,9 @@ class App extends React.Component {
                 serverProps : serverProps,
                 versionTagDisplay: versionTagDisplay,
                 graphData: new GraphData(response.data),
-                labelsV_s : [allVertexLabels0],
-                labelsE_s : [allEdgeLabels0],
-                nodeLookup : nodeLookup
-                //Array(response.data.labels.vertex.names.length).keys()
+                nodeLookup : nodeLookup,
+                elementNames: new ElementNames(response)
+
             }, () =>{console.log("initstate", this.state)})
 
          })
@@ -219,36 +238,7 @@ class App extends React.Component {
     }
     
     handleAddVersionCard=()=>{
-        console.log(this.state.versionCards)
-        let versionCards = [...this.state.versionCards]
-        versionCards.push(this.state.versionCards.length);
-        
-        let allVertexLabels = new Set(Array(this.state.graphData.data.labels.vertex.names.length).keys());
-        let allEdgeLabels = new Set(Array(this.state.graphData.data.labels.edge.names.length).keys());
-//         Array(response.data.labels.edge.names.length).keys()
-        
-        let versions_s = [...this.state.versions_s];
-        versions_s.push(new Set());
-        let nodes_s = [...this.state.nodes_s];
-        nodes_s.push(new Set());
-        let labelsV_s =  [...this.state.labelsV_s];
-        labelsV_s.push(allVertexLabels);
-        let labelsE_s =  [...this.state.labelsE_s];
-        labelsE_s.push(allEdgeLabels);
-        
-        let staleCards =[...this.state.staleCards];
-        staleCards.push(false);
-         
-        this.setState({
-            versionCards: versionCards,
-            staleCards: staleCards,
-            versions_s: versions_s,
-            
-            nodes_s :  nodes_s,
-            labelsV_s : labelsV_s,
-            labelsE_s : labelsE_s,
-        })
-        
+
         let versionCardsO = this.state.versionCardsO;
         versionCardsO.push();
         
@@ -259,35 +249,7 @@ class App extends React.Component {
         
         if(this.state.versionCards.length <= 1)
             return;
-//         if(this.state.activeVersionCard = this.state.versionCards.length)
-        let activeVersionCard = Math.min(this.state.activeVersionCard, this.state.versionCards.length-2 );
-        
-        let versionCards = [...this.state.versionCards];
-        versionCards.pop();
-        let versions_s = [...this.state.versions_s];
-        versions_s.pop();
-        let nodes_s = [...this.state.nodes_s];
-        nodes_s.pop();
-        let labelsV_s =  [...this.state.labelsV_s];
-        labelsV_s.pop();
-        let labelsE_s =  [...this.state.labelsE_s];
-        labelsE_s.pop();
-         
-        let staleCards =[...this.state.staleCards];
-        staleCards.pop();
-        
-        this.setState({
-            activeVersionCard: activeVersionCard,
-             staleCards: staleCards,
-            versionCards: versionCards,
-             
-            versions_s: versions_s,
-            
-            nodes_s :  nodes_s,
-            labelsV_s : labelsV_s,
-            labelsE_s : labelsE_s,
-        })
-        
+
         let versionCardsO = this.state.versionCardsO;
         versionCardsO.pop();
         
@@ -299,24 +261,7 @@ class App extends React.Component {
     }
 
     handleToggle=(name, cardId, elementId)=>{
-//         console.log(this.state[name])
-        let ns = this.state[name];
-                    
-        if(this.state[name][cardId].has(elementId)){
-            ns[cardId].delete(elementId);
-        }
-        else{
-            ns[cardId].add(elementId);
-        }
-                    
-        let staleCards =[...this.state.staleCards];
-        staleCards[ cardId] = true;
-        
-        this.setState({
-            [name] : ns,
-            staleCards: staleCards,
-        });
-        
+
         let versionCardsO = this.state.versionCardsO;
         versionCardsO.cards[cardId].toggle(name,elementId);
         
@@ -325,23 +270,11 @@ class App extends React.Component {
     }
     
     handleCheckToggle=(name,cardId, elementId)=>{
-         return this.state[name][cardId].has(elementId);
+        return this.state.versionCardsO.cards[cardId][name].has(elementId);
+//          return this.state[name][cardId].has(elementId);
     }
     
-    selectLabels=(set, versionIds)=>{
-//         console.log("S")
-        let newCounts = this.state.versions_n;
-        newCounts[set] = newCounts[set] + versionIds.length;
-        
-        this.setState(prevState => {
-             versions_s : versionIds.forEach(prevState.versions_s[set].add, prevState.versions_s[set])
-            
-        });
-        
-        this.setState({ versions_n : newCounts});
-    }
-   
-    
+
     
     getLabels = () => {
         return [this.state.graphData.data.labels.vertex, this.state.graphData.data.labels.edge]
@@ -351,13 +284,6 @@ class App extends React.Component {
     getVertexDataRow=(rowIndex)=>{
         return this.state.graphData.data.vertexData[rowIndex];
     }
-
-    
-    handleSideMenuClick=(name)=>{
-
-        this.setState({activePanel : name});
-    }
-    
 
 
     renderMainPanel5(){
@@ -389,14 +315,12 @@ class App extends React.Component {
                                 <InfoPanel
                                 vertexLabelNames={this.state.graphData.data.labels.vertex}
                                 edgeLabelNames={this.state.graphData.data.labels.edge}
-                                selectedVersions={this.state.versions_s}  
-                                selectedVertexLabels={this.state.labelsV_s}
-                                selectedEdgeLabels={this.state.labelsE_s}                   
+                                   
                                 staleCards={this.state.staleCards}
                                 markCardFresh={this.markCardFresh}
                                 
-                                 activeVersionCard={this.state.activeVersionCard}
-                                 handleClickVersionCard = {this.handleClickVersionCard}
+                                activeVersionCard={this.state.activeVersionCard}
+                                handleClickVersionCard = {this.handleClickVersionCard}
                                 versionCards={this.state.versionCards}
                             />
                             </Tab.Pane>
@@ -405,7 +329,7 @@ class App extends React.Component {
                                 <SelectVersionsComponent 
                                     versionData={this.state.graphData.data.versions}
                                     versionTagDisplay={this.state.versionTagDisplay}
-                                    selectedVersions={this.state.versions_s}
+
                                     handleCheckToggle={this.handleCheckToggle}
                                     handleToggle={this.handleToggle}
                                     
@@ -413,10 +337,13 @@ class App extends React.Component {
                                     handleRemoveVersionCard = {this.handleRemoveVersionCard}
                                     handleClickVersionCard = {this.handleClickVersionCard}
                                     activeVersionCard={this.state.activeVersionCard}
-                                    versionCards={this.state.versionCards}
+                                    
+                                    
+                                    versionCardsO={this.state.versionCardsO}
+                                    elementNames = {this.state.elementNames}
                                 />
                             </Tab.Pane>
-                            
+                   
                             <Tab.Pane eventKey="labels">
                                 <SelectLabelsComponent
                                     vertexLabels={this.state.graphData.data.labelNames.vertex}
@@ -431,9 +358,11 @@ class App extends React.Component {
                                     handleRemoveVersionCard = {this.handleRemoveVersionCard}
                                     handleClickVersionCard = {this.handleClickVersionCard}
                                     activeVersionCard={this.state.activeVersionCard}
-                                    versionCards={this.state.versionCards}
+                                   
+                                    versionCardsO={this.state.versionCardsO}
                                 /> 
                             </Tab.Pane>
+                                     
                             <Tab.Pane eventKey="nodes">
                                 <SelectNodesComponent 
                                     allNodes={this.state.graphData.data.vertexData} 
@@ -442,7 +371,7 @@ class App extends React.Component {
                                     handleToggle={this.handleToggle}
                                     handleSelect={this.handleSelect}
 
-                                    selectedNodes={this.state.nodes_s}
+
                                     nodeLookup={this.state.nodeLookup}
                                     
                                     handleAddVersionCard = {this.handleAddVersionCard}
@@ -451,8 +380,12 @@ class App extends React.Component {
                                     activeVersionCard={this.state.activeVersionCard}
                                     versionCards={this.state.versionCards}
                                     
+                                    versionCardsO={this.state.versionCardsO}
+                                    
                                 />
+                                
                             </Tab.Pane>
+                        
                             <Tab.Pane eventKey="query_rwr">
                                 <QueryComponentRWR
                                     selectedVersions={this.state.versions_s}  
@@ -463,6 +396,7 @@ class App extends React.Component {
                                     selectedNodes={this.state.nodes_s}
                                 />
                             </Tab.Pane>
+                                {/*
                             <Tab.Pane eventKey="query_motif">
                                 <QueryComponentMotif 
                                     selectedVersions={this.state.versions_s}  
@@ -471,7 +405,7 @@ class App extends React.Component {
                                     selectedNodes={this.state.nodes_s}
                                 />
                             </Tab.Pane>
-                            
+                            */}
                             
                         </Tab.Content>
                         
