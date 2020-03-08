@@ -97,8 +97,10 @@ class QueryComponentRWR extends React.Component{
   handleSubmit=(event)=>{
 
     try{
-        let versions = [...this.props.selectedVersions[0]];
-        console.log("VR", versions)
+//         console.log("VRB", this)
+        //let versions = [...this.props.selectedVersions[0]];
+        let versions = [...this.props.versionCardsO.cards[this.props.activeVersionCard].versions_s];
+//         console.log("VR", versions)
         if(versions.length === 0)
         {
              this.setState({result:  {nodes:[{"row":null, "id":null, "value":null}], edges: [] } });
@@ -109,14 +111,16 @@ class QueryComponentRWR extends React.Component{
         let epsilon = (1/(Math.pow(10,this.state.epsilon)));
         let selectedNodes = [];
          console.log("ep", epsilon)
-        this.props.selectedNodes[0].forEach((v1,v2) => (selectedNodes.push({i:v1, v:1})));
+        //this.props.selectedNodes[0].forEach((v1,v2) => (selectedNodes.push({i:v1, v:1})));
+       this.props.versionCardsO.cards[this.props.activeVersionCard].nodes_s.forEach((v1,v2) => (selectedNodes.push({i:v1, v:1})));
+        
          console.log("SN", selectedNodes);
 
 //         let command = {cmd:"rwr", versions:versions, alpha:Number(this.state.alpha), epsilon:Number(epsilon), topk:Number(this.state.topk), source:selectedNodes, mode:"el"};
         let command = {cmd:"rwr2", versions:versions, alpha:Number(this.state.alpha), epsilon:Number(epsilon), 
             topk:Number(this.state.topk), source:selectedNodes, mode:"el",
-            vertexLabels: [...this.props.selectedVertexLabels[0]],
-            edgeLabels: [...this.props.selectedEdgeLabels[0]]
+            vertexLabels:  [...this.props.versionCardsO.cards[this.props.activeVersionCard].labelsV_s],
+            edgeLabels:  [...this.props.versionCardsO.cards[this.props.activeVersionCard].labelsE_s]
         }; 
 //         console.log("cmd", command)
         
@@ -125,14 +129,17 @@ class QueryComponentRWR extends React.Component{
 //          console.log("cmd",response)
          
             response.data.nodes.forEach((e,i) => {
-                let labelBits = this.props.getVertexDataRow(e["id"])["labels"];
-                                
+//                 let labelBits = this.props.getVertexDataRow(e["id"])["labels"];
+//                  let labelBits = this.props.elementNames 
+                
+                
                 e["row"]=i;  
 
-                e["name"]=this.props.getVertexDataRow(e["id"])["name"];
-
-                e["labels"] = this.props.getLabels()[0].bitsToNames(labelBits);
-
+//                 e["name"]=this.props.getVertexDataRow(e["id"])["name"];
+                e.name = this.props.elementNames.vertexes[e["id"]].name; 
+                
+//                 e["labels"] = this.props.getLabels()[0].bitsToNames(labelBits);
+                e.labels=this.props.elementNames.vertexes[e["id"]].labelsPlainText; 
             });
             
             

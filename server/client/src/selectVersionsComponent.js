@@ -70,7 +70,7 @@ class SelectVersionsComponent extends React.Component{
                         versionCardsO={this.props.versionCardsO}
                         displayKeys={["versions_s"]}
                         partitionHeadings={[""]}
-                        displayLookup={[this.props.versionData]}
+                        displayLookup={[this.props.elementNames.versions]}
                         
                         handleCardClick={this.handleCardClick} 
                         handleClickAddVersionCard={this.props.handleAddVersionCard}

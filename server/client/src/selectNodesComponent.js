@@ -18,7 +18,7 @@ function getColumns(){
             text: "name",
         },
         {
-            dataField: "labelsNames",
+            dataField: "labelsPlainText",
             text: "labels",
         },     
     ]   
@@ -33,26 +33,18 @@ class SelectNodesComponent extends React.Component{
     constructor(props){
         super(props)
         this.state={
-//             activeCard :0,
-//             cardIds: [0,1],
-//             
-//             
-            
             batchText: ""
         }
     }
     
     handleCardClick=(cardId)=>{
-//         this.setState({activeCard: cardId});
         this.props.handleClickVersionCard(cardId);
-//         console.log(this.state.activeCard)
     }
     
     handleBatchInput=(event)=>{
         this.setState({
             batchText : event.target.value
         })
-//         console.log(this.state.batchText)
     }
     
     handleBatchInputClick=(event)=>{
@@ -82,7 +74,7 @@ class SelectNodesComponent extends React.Component{
                 
                     <ToolkitProvider
                         keyField='id' 
-                        data={ this.props.allNodes} 
+                        data={ this.props.elementNames.vertexes} 
                         columns={getColumns()}  
                         search
                     >
@@ -130,7 +122,7 @@ class SelectNodesComponent extends React.Component{
 
                 handleCardClick={this.handleCardClick} 
 
-                displayLookup={[this.props.allNodes]}
+                displayLookup={[ this.props.elementNames.vertexes]}
                 handleClickAddVersionCard={this.props.handleAddVersionCard}
                 handleClickRemoveVersionCard={this.props.handleRemoveVersionCard}
 //                 showDiff={true}
