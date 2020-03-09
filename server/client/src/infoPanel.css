@@ -1,26 +1,40 @@
 .graphViewContainer{
-    border: 1px solid black;
+/*     border: 1px solid black; */
     display: flex;
-/*     overflow-x:scroll; */
+    overflow-x:scroll;
+    
 }
 
-.graphViewElement{
-    border: 1px solid black;
+.graphViewElementBase{
+/*     float: left; */
+flex: 0 0 auto;
+    font-size: 20px;
+    text-align: center;
+    
+    line-height: 60px;
+/*     color: grey; */
+/*     background-color: lightgrey;  */
+/*     border: 1px solid black; */
     height: 75px;
     width: 50px;
     margin: 5px;
 }
 
 .activeGraphViewElement{
-    border: 1px solid blue;
-    height: 75px;
-    width: 50px;
-    margin: 5px;
+/*     border: 1px solid blue; */
+
 }
 
 .staleGraphViewElement{
-    border: 1px solid red;
-    height: 75px;
-    width: 50px;
-    margin: 5px;
+/*     border: 1px solid red; */
+
+}
+
+.gveHeader{
+    height: 15px;
+/*     background-color: red; */
+}
+
+.gveBody{
+    
 }

@@ -312,14 +312,14 @@ class App extends React.Component {
         
                         <div className=" text-dark sideElementHeading border-bottom">GraphView</div>
                                 
-                            <Nav.Link eventKey="main" className="text-muted sideElement" >Main</Nav.Link>
-                            <Nav.Link eventKey="versions" className="text-muted sideElement">Versions</Nav.Link>
-                            <Nav.Link eventKey="labels" className="text-muted sideElement">Labels</Nav.Link>
+                            <Nav.Link eventKey="main" className="sideElement" >Main</Nav.Link>
+                            <Nav.Link eventKey="versions" className=" sideElement">Versions</Nav.Link>
+                            <Nav.Link eventKey="labels" className=" sideElement">Labels</Nav.Link>
                             
                         <div className=" text-dark sideElementHeading border-bottom">Queries</div>
-                            <Nav.Link eventKey="nodes" className="text-muted sideElement">Nodes</Nav.Link>
-                            <Nav.Link eventKey="query_rwr" className="text-muted sideElement">RWR</Nav.Link>
-                            <Nav.Link eventKey="query_motif" className="text-muted sideElement">Motifs</Nav.Link>
+                            <Nav.Link eventKey="nodes" className="sideElement">Nodes</Nav.Link>
+                            <Nav.Link eventKey="query_rwr" className=" sideElement">RWR</Nav.Link>
+                            <Nav.Link eventKey="query_motif" className=" sideElement">Motifs</Nav.Link>
                                 
         
                        

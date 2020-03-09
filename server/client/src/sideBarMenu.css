@@ -44,9 +44,18 @@
     text-align: left;
     background-color: transparent; 
 /*     font-size: small; */
-/*     color: black; */
+    color: grey;
     padding : 4px; 
 /*     32px; */
+}
+
+.sideElement:hover{
+/*     background-color:red; */
+    color: black;
+}
+
+.sideElement:focus{
+    color: rgb(36,36,36);
 }
 
 .sideElementHeading{

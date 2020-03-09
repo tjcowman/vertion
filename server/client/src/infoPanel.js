@@ -17,18 +17,24 @@ class GraphViewDisplay extends React.Component{
     
     render(){
         return(
-            <div className="graphViewContainer">
-            {console.log(this.props)},
+            <div className="graphViewContainer border">
+            
                 {this.props.versionCardsO.cards.map((e,i)=>(
                     <div key={i} 
                     onClick={()=>(
                         this.props.handleClickVersionCard(i)
                     )}
                     className={e.isStale ? 
-                        "staleGraphViewElement"
-                        : i == this.props.activeVersionCard ? "activeGraphViewElement": "graphViewElement"
+                        "  border border-warning graphViewElementBase staleGraphViewElement"
+                        : i == this.props.activeVersionCard ? " border border-primary graphViewElementBase activeGraphViewElement": " border  graphViewElementBase"
                         
-                    } ></div>
+                    } >
+                        <div className="border bg-light  gveHeader">
+                        </div>
+                        <div className=" text-secondary gveBody">
+                        {i}
+                        </div>
+                    </div>
                 ))}
             
 
@@ -114,6 +120,9 @@ class InfoPanel extends React.Component {
             console.log("rendering main", this.props),
             <Card>
                 <Card.Body>
+                <Card>
+                <Card.Header>Integrated Networks</Card.Header>
+              
                 
                     <GraphViewDisplay
                         versionCardsO={this.props.versionCardsO}
@@ -121,9 +130,11 @@ class InfoPanel extends React.Component {
                         handleClickVersionCard = {this.handleUpdate}
 
                     />
-
-                    
-                    
+              
+                </Card>
+                </Card.Body>
+                
+                <Card.Body>
                     {this.renderVertexCounts()}
                 </Card.Body>
             </Card>

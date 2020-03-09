@@ -69,7 +69,7 @@ class SelectVersionsComponent extends React.Component{
                     <SelectedElementDeck activeCard={this.props.activeVersionCard}
                         versionCardsO={this.props.versionCardsO}
                         displayKeys={["versions_s"]}
-                        partitionHeadings={[""]}
+                        partitionHeadings={["Versions"]}
                         displayLookup={[this.props.elementNames.versions]}
                         
                         handleCardClick={this.handleCardClick} 
