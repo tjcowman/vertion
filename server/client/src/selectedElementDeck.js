@@ -9,9 +9,7 @@ const  SelectedElementDeck = (props) =>{
      return(
 
                 
-           <div className="border deckContainer">
-            {console.log("VSLD", props.versionCardsO)}   
-                  {console.log("VSLD", props.versionCardsO.cards)}   
+           <div className="border deckContainer"> 
                   
                 {props.versionCardsO.cards.map((cardO,cardI)=> (
                     

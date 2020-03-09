@@ -11,33 +11,24 @@ import './infoPanel.css';
 class GraphViewDisplay extends React.Component{
     constructor(props){
         super(props);
-//         this.state = {
-//             versionCardFocus: 0
-//         }
     }
     
-    handleClickVersionCardFocus=(id)=>{
-        if(this.props.staleCards[id]){
-            this.props.handleDescribeClick(id);
-            this.props.markCardFresh(id);
-        }
-        
-        this.setState({
-            versionCardFocus : id
-            
-        });
-    }
+
     
     render(){
         return(
             <div className="graphViewContainer">
             {console.log(this.props)},
-                {this.props.versionCards.map((e,i)=>(
+                {this.props.versionCardsO.cards.map((e,i)=>(
                     <div key={i} 
                     onClick={()=>(
-                        this.handleClickVersionCardFocus(i)
+                        this.props.handleClickVersionCard(i)
                     )}
-                    className={i==this.props.activeVersionCard ? "activeGraphViewElement": "graphViewElement"} ></div>
+                    className={e.isStale ? 
+                        "staleGraphViewElement"
+                        : i == this.props.activeVersionCard ? "activeGraphViewElement": "graphViewElement"
+                        
+                    } ></div>
                 ))}
             
 
@@ -49,61 +40,69 @@ class GraphViewDisplay extends React.Component{
 class InfoPanel extends React.Component {
     constructor(props) {
         super(props);
-        //This should probably be elevated too
-        this.state = {
-            vertexCounts: [[]],
-            edgeCounts: [[]],
-        };
+
     }
     
-    
-    handleDescribeClick=(id)=>{
-//         console.log(this)
+    handleUpdate=(id)=>{
+
+        if(this.props.versionCardsO.cards[id].isStale){
+            let command = { 
+                cmd: 'lsv',
+                versions:  [...this.props.versionCardsO.cards[this.props.activeVersionCard].versions_s],//[...this.props.selectedVersions[id]]
+                vertexLabels: [...this.props.versionCardsO.cards[this.props.activeVersionCard].labelsV_s],
+                edgeLabels: [...this.props.versionCardsO.cards[this.props.activeVersionCard].labelsE_s],
+            }
+            console.log("command",command)
             
-        let command = { 
-            cmd: 'lsv',
-            versions: [...this.props.selectedVersions[id]],
-            vertexLabels: [...this.props.selectedVertexLabels[id]],
-            edgeLabels: [...this.props.selectedEdgeLabels[id]]
+            Axios.post('http://localhost:9060', JSON.stringify(command)).then((response)=>{
+                console.log("DR", response);
+                
+                //nodes : {label: , count: }
+                let nodes = response.data.nodes.map((e) => ({
+     
+                    labels : this.props.elementNames.labelsV.bitsToNamesFlat(e.labels).join(", "),
+                    count : e.count
+                }));
+                
+                let edges =  response.data.edges.map((e) => ({
+                    labels : this.props.elementNames.labelsE.bitsToNamesFlat(e.labels).join(", "),
+                    count : e.count
+                }));
+                
+                let stats = {nodes: nodes, edges: edges};
+                this.props.handleUpdateStats(id, stats);
+
+            });
+       
+            
         }
-         Axios.post('http://localhost:9060', JSON.stringify(command)).then((response)=>{
-            console.log(response);
             
-            let vertexCountsU = response.data.nodes.map((e) => (
-                this.props.vertexLabelNames.bitsToNames(e.labels) + " : " + e.count
-            ));
-            let edgeCountsU = response.data.edges.map((e) => (
-                this.props.edgeLabelNames.bitsToNames(e.labels) + " : " + e.count
-            ));
             
-            let vertexCounts = [...this.state.vertexCounts];
-            vertexCounts[id] = vertexCountsU;
-            let edgeCounts = [...this.state.edgeCounts];
-            edgeCounts[id] = edgeCountsU;
             
-            this.setState({vertexCounts: vertexCounts, edgeCounts: edgeCounts , });
-        });
+        this.props.handleClickVersionCard(id);
     }
+    
+
 
     
     renderVertexCounts(){
         return(
             <Card>
                 <Card.Body>
-                {/*
+                
                 <ListGroup>
-                    {this.state.vertexCounts[this.props.activeVersionCard].map((e,i)=>(
-                        < ListGroup.Item key={i}>{e}</ListGroup.Item>
+                    {this.props.versionCardsO.cards[this.props.activeVersionCard].stats.nodes.map((e,i)=>(
+                        < ListGroup.Item key={i}>{e.labels + " : " + e.count }</ListGroup.Item>
                     ))}
                 </ListGroup>
                 
-                
+        
                 <ListGroup>
-                    {this.state.edgeCounts[this.props.activeVersionCard].map((e,i)=>(
-                        <ListGroup.Item key={i}>{e}</ListGroup.Item>
+                    {this.props.versionCardsO.cards[this.props.activeVersionCard].stats.edges.map((e,i)=>(
+                        <ListGroup.Item key={i}>{e.labels + " : " + e.count}</ListGroup.Item>
                     ))}
                 </ListGroup>
-                */}
+     
                 </Card.Body>
             </Card>
         );
@@ -112,23 +111,21 @@ class InfoPanel extends React.Component {
    
     render(){
         return(
-            console.log(this.state),
+            console.log("rendering main", this.props),
             <Card>
-            <Card.Body>
-            
-            <GraphViewDisplay
-                staleCards = {this.props.staleCards}
-                versionCards={this.props.versionCards}
-                 activeVersionCard={this.props.activeVersionCard}
-                 handleClickVersionCard = {this.props.handleClickVersionCard}
-                handleDescribeClick={this.handleDescribeClick}
-                markCardFresh={this.props.markCardFresh}
-            />
+                <Card.Body>
+                
+                    <GraphViewDisplay
+                        versionCardsO={this.props.versionCardsO}
+                        activeVersionCard={this.props.activeVersionCard}
+                        handleClickVersionCard = {this.handleUpdate}
 
-            
-            
-            {this.renderVertexCounts()}
-            </Card.Body>
+                    />
+
+                    
+                    
+                    {this.renderVertexCounts()}
+                </Card.Body>
             </Card>
            
              

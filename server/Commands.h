@@ -184,7 +184,7 @@ namespace Commands
         
         
         
-        json ret;
+        json ret{{"nodes",json::array()}, {"edges",json::array()}};
         
         std::vector<typename GT::VersionIndex> versions = args["versions"].get<std::vector<typename GT::VersionIndex>>();
         if(versions.size() == 0)

@@ -23,9 +23,11 @@ import './sideBarMenu.css';
 class LabelSet{
     constructor(names){
         this.names = []
+        
         if(typeof names != 'undefined'){
             this.names = names.map((e)=>({name:e}));
         }
+        
         console.log("TDN", this.names);
 //         this.urls = 
     }
@@ -54,6 +56,9 @@ class LabelSet{
         return this.arrayToNames(this.bitsToArray(labelBits));
     }
   
+    bitsToNamesFlat(labelBits){
+        return this.bitsToNames(labelBits).map((e)=>(e.name));
+    }
 }
 
 
@@ -77,22 +82,6 @@ class GraphData{
             vertexData: []
             
         }
-        
-
-//         if(typeof serverResponse !== 'undefined'){
-//             this.data.labels.vertex = new LabelSet(serverResponse.labels.vertex.names);
-//             this.data.labels.edge = new LabelSet(serverResponse.labels.edge);
-//             this.data.versions = serverResponse.versions;
-//             this.data.vertexData = serverResponse.vertexData;
-//             
-//             this.data.vertexData.forEach((e) => e.labelsNames =  this.data.labels.vertex.bitsToNames(e.labels));
-//             this.data.labelNames = {
-//                 vertex : serverResponse.labels.vertex.names.map((e,i)=>({index : i, name : e})),
-//                 edge : serverResponse.labels.edge.map((e,i)=>({index : i, name : e}))
-//             }
-//             
-// 
-//         }
 
     }
   
@@ -134,6 +123,15 @@ class VersionCard{
         this.nodes_s =  new Set();
         this.labelsV_s = new Set();
         this.labelsE_s = new Set();
+        
+        this.stats = {
+            nodes: [
+                
+            ],
+            edges: [
+                
+            ]
+        };
     }
     
     toggle=(name, elementId)=>{
@@ -188,7 +186,7 @@ class App extends React.Component {
             elementNames: new ElementNames(),
             
             //Combine in versionCards?
-            versionCards: [0],
+           
             staleCards: [false],
             activeVersionCard: 0,
 
@@ -239,12 +237,7 @@ class App extends React.Component {
         
     }
     
-    markCardFresh=(cardId)=>{
-        let staleCards =[...this.state.staleCards];
-        staleCards[cardId] = false;
-        
-        this.setState({staleCards: staleCards});
-    }
+
     
     handleAddVersionCard=()=>{
 
@@ -287,6 +280,17 @@ class App extends React.Component {
     }
     
 
+    handleUpdateStats=(cardId, stats)=>{
+        
+        console.log("HUSS", stats,this.state)
+        let versionCardsO = this.state.versionCardsO;
+        console.log("VCUS", this.state.versionCardsO, versionCardsO)
+        versionCardsO.cards[cardId].stats = stats;
+        versionCardsO.cards[cardId].isStale=false;
+        
+        //I think this handles making sure it doesnt set stale false with old selection values
+        this.setState((prevState) =>({versionCardsO: versionCardsO}));
+    }
     
     getLabels = () => {
         return [this.state.graphData.data.labels.vertex, this.state.graphData.data.labels.edge]
@@ -325,15 +329,13 @@ class App extends React.Component {
                         <Tab.Content>
                             <Tab.Pane eventKey="main">
                                 <InfoPanel
-                                    vertexLabelNames={this.state.graphData.data.labels.vertex}
-                                    edgeLabelNames={this.state.graphData.data.labels.edge}
-                                    
-                                    staleCards={this.state.staleCards}
-                                    markCardFresh={this.markCardFresh}
-                                    
                                     activeVersionCard={this.state.activeVersionCard}
                                     handleClickVersionCard = {this.handleClickVersionCard}
-                                    versionCards={this.state.versionCards}
+                                    handleUpdateStats= {this.handleUpdateStats}
+                    
+                                    
+                                    versionCardsO={this.state.versionCardsO}
+                                    elementNames = {this.state.elementNames}
                             />
                             </Tab.Pane>
                             

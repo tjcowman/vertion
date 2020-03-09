@@ -12,6 +12,13 @@
 }
 
 .activeGraphViewElement{
+    border: 1px solid blue;
+    height: 75px;
+    width: 50px;
+    margin: 5px;
+}
+
+.staleGraphViewElement{
     border: 1px solid red;
     height: 75px;
     width: 50px;
