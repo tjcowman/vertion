@@ -78,6 +78,7 @@ class HelloHandler : public Http::Handler
         void onRequest(const Http::Request& request, Http::ResponseWriter response) override
         {
             std::cout<<"Request: " + request.body()<<std::endl;
+// //               std::cout<<*viewCache_<<std::endl;
             std::cout<<eTag<<std::endl;
             CommandRunner<GraphType::GD> CR(*graph_, *viewCache_);
             if (request.resource() == "/ls") 
@@ -125,6 +126,8 @@ class HelloHandler : public Http::Handler
                 response.headers().add<Http::Header::ContentType>("application/json");
                 response.send(Http::Code::Ok, queryResponse.dump());
             }
+            
+          
         }
 };
 
@@ -134,9 +137,12 @@ ViewCache<GraphType::GD>* HelloHandler::viewCache_;
 
 struct Args
 {
-    int port=-1;
-    std::string graph="";
-    std::string mode="";
+    int port = -1;
+    std::string graph = "";
+    std::string mode = "";
+    int cacheSize = 10; 
+    
+    int threads = 1;
 
 };
 
@@ -148,7 +154,10 @@ int main(int argc, char* argv[] )
         ARG(port,stoi)
         ARG(graph,)
 
+        ARG(cacheSize, stoi)
         ARG(mode,)
+        
+        ARG(threads, stoi)
 
     );
      
@@ -163,7 +172,7 @@ int main(int argc, char* argv[] )
     IO.read_serial(args.graph);
     
     HelloHandler::graph_ = &G;
-    ViewCache<GraphType::GD> VC(G);
+    ViewCache<GraphType::GD> VC(G, args.cacheSize);
     HelloHandler::viewCache_ = &VC;
 //     Http::listenAndServe<HelloHandler>(Address("*:"+std::to_string(args.port)));
     
@@ -171,7 +180,7 @@ int main(int argc, char* argv[] )
     auto server = std::make_shared<Http::Endpoint>(Address("*:"+std::to_string(args.port)));
     auto opts = Http::Endpoint::options()
 //       .maxPayload(m_max_payload)
-      .threads(2)
+      .threads(args.threads)
       .flags(Tcp::Options::ReuseAddr);
     
     server->init(opts);

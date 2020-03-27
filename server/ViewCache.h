@@ -11,54 +11,85 @@ template<class GT>
 class ViewCache
 {
     public:
-        ViewCache(const VGraph<GT>& graph);
+        ViewCache(const VGraph<GT>& graph, int cacheSize=10);
+        
+        friend std::ostream& operator<<(std::ostream& os, const ViewCache& viewCache)
+        {
+            for(const auto e : viewCache.accessHeap_)
+            {
+                os<<e.first<<"\t"<<e.second<<"\n";
+            }
+            
+            return os;
+        }
         
         
         IntegratedViewer<GT>& lookup(const std::vector<typename GT::VersionIndex>& versions, const VertexLabel<GT>& nodeLabels, const EdgeLabel<GT>& edgeLabels);
         
-//         size_t generate_uid(const std::vector<typename GT::VersionIndex>& versions, const VertexLabel<GT>& nodeLabels, const EdgeLabel<GT>& edgeLabels);
+
         std::string generate_key(const std::vector<typename GT::VersionIndex>& versions, const VertexLabel<GT>& nodeLabels, const EdgeLabel<GT>& edgeLabels);
         
     private:
         
+        int cacheSize_;
         const VGraph<GT>* graph_;
         std::map<std::string, IntegratedViewer<GT>> views_;
-        std::vector< std::pair<uint32_t, time_t>> accessHeap_;
+        std::vector< std::pair<time_t, std::string>> accessHeap_;
 };
 
 template<class GT>
-ViewCache<GT>::ViewCache(const VGraph<GT>& graph)
+ViewCache<GT>::ViewCache(const VGraph<GT>& graph, int cacheSize)
 {
+    cacheSize_ = cacheSize;
     views_ = std::map<std::string, IntegratedViewer<GT>>();
     graph_= &graph;
 }
 
+
+//Used when a version is queried while it exists, always increases the timestamp, thus can bubble up the larger of its children recursively after updating 
+// bubbleDown( std::vector< std::pair<time_t, std::string>> accessHeap)
+// {
+//     
+// }
+
 template<class GT>
 IntegratedViewer<GT>& ViewCache<GT>::lookup(const std::vector<typename GT::VersionIndex>& versions, const VertexLabel<GT>& nodeLabels, const EdgeLabel<GT>& edgeLabels)
 {
-//     std::cout<<graph_->size()<<std::endl;
-//     const IntegratedViewer<GT>&  
     //Check if the view exists
     std::string key= generate_key(versions, nodeLabels, edgeLabels);
-//     std::cout<<"key "<<key<<std::endl;
     auto v = views_.find(key);
-//     std::cout<<"find"<<std::endl;
-    if(v != views_.end())
-    {
-//         std::cout<<"found"<<std::endl;
-        return v->second;
-    }
-    else
+
+    
+
+    if(v == views_.end())
     {
         IntegratedViewer<GT> view(*graph_); 
-//          std::cout<<"cnstr"<<std::endl;
         view.buildView(versions, nodeLabels,edgeLabels);
-//          std::cout<<"builtView"<<std::endl;
-        auto nv = views_.insert(std::make_pair(key,view));
-//          std::cout<<"inserted"<<std::endl;
+        v = views_.insert(std::make_pair(key,view)).first;
+    
+    
+        //update accessHeap
+        accessHeap_.push_back(std::make_pair(time(NULL), key)); 
+        std::push_heap(accessHeap_.begin(), accessHeap_.end(), [](const auto& lhs, const auto& rhs){return lhs.first > rhs.first;});
         
-        return nv.first->second;
+        //if cache full, remove oldest
+        std::cout<<views_.size()<<" : "<<cacheSize_<<std::endl;
+        if(views_.size() > cacheSize_)
+        {
+            std::string removeKey = accessHeap_.front().second;
+            std::pop_heap(accessHeap_.begin(), accessHeap_.end(), [](const auto& lhs, const auto& rhs){return lhs.first > rhs.first;});
+            accessHeap_.pop_back();
+            views_.erase(views_.find(removeKey));
+        }
     }
+    //TODO: If already in heap, need to update the access time 
+    else{
+        //Currently just removes the oldest added, ie NOT LRU
+    }
+    
+    
+//     std::cout<<*this<<std::endl;
+    return v->second;
     
     
 }
@@ -74,13 +105,3 @@ std::string ViewCache<GT>::generate_key(const std::vector<typename GT::VersionIn
     return s;
 }
 
-// template<class GT>
-// size_t ViewCache<GT>::generate_uid(const std::vector<typename GT::VersionIndex>& versions, const VertexLabel<GT>& nodeLabels, const EdgeLabel<GT>& edgeLabels)
-// {
-//     std::string s;
-//     for(const auto& e : versions)
-//         s.append(std::to_string(e));
-//     s.append(std::to_string(nodeLabels.getBits().to_ulong()));
-//     s.append(std::to_string(edgeLabels.getBits().to_ulong()));
-//     return std::hash<std::string>{}(s);
-// }

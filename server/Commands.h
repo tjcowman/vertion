@@ -139,7 +139,7 @@ namespace Commands
         std::vector<VertexS<GT>> source  = (args["source"]);
         
         
-        
+        std::cout<<"RWR RUN"<<std::endl;
 //         IntegratedViewer<GT> IV(graph);
 //         IV.buildView(versions, VertexLab(vertexLabels), EdgeLab(edgeLabels));
         IntegratedViewer<GT> IV = viewCache.lookup(versions, VertexLab(vertexLabels), EdgeLab(edgeLabels)) ;
