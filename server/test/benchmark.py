@@ -55,7 +55,7 @@ def main():
     versionSize = 3
     threads = list()
  
-    for i in range(0,10):
+    for i in range(0,40):
         req = requestArgs
         req["versions"] = sample(versionPool,versionSize)
         #req["source"] = nodeToJson(sample(sourcePool,1))
@@ -65,7 +65,7 @@ def main():
         threads.append(time)
         time.start()
         #print(time)
-
+    print("queries sent")
 
 
 if __name__ == "__main__":

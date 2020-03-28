@@ -77,6 +77,14 @@ class HelloHandler : public Http::Handler
         
         void onRequest(const Http::Request& request, Http::ResponseWriter response) override
         {
+            #pragma omp critical
+            {
+//                 ++viewCache_->activeCount;
+                if(viewCache_->full())
+                    viewCache_->clean();
+            }
+            
+            
             std::cout<<"Request: " + request.body()<<std::endl;
 // //               std::cout<<*viewCache_<<std::endl;
             std::cout<<eTag<<std::endl;
@@ -135,6 +143,7 @@ std::string HelloHandler::eTag;
 const Graph* HelloHandler::graph_;
 ViewCache<GraphType::GD>* HelloHandler::viewCache_;
 
+
 struct Args
 {
     int port = -1;
@@ -154,7 +163,7 @@ int main(int argc, char* argv[] )
         ARG(port,stoi)
         ARG(graph,)
 
-        ARG(cacheSize, stoi)
+        ARG(cacheSize, stoi) //Needs to be > threads for the server so in use views dont get deleted
         ARG(mode,)
         
         ARG(threads, stoi)

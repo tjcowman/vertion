@@ -174,6 +174,7 @@ namespace Commands
             }
         }
         
+        viewCache.lookupDone(versions, VertexLab(vertexLabels), EdgeLab(edgeLabels)) ;
         std::cout<<"Query Finished"<<std::endl;
         return retVal;
     }
