@@ -44,8 +44,8 @@ class ViewCache
         
         IntegratedViewer<GT>& lookup(const std::vector<typename GT::VersionIndex>& versions, const VertexLabel<GT>& nodeLabels, const EdgeLabel<GT>& edgeLabels);
         //TODO: Set up a better way to track number of users of version
-        void lookupDone(const std::vector<typename GT::VersionIndex>& versions, const VertexLabel<GT>& nodeLabels, const EdgeLabel<GT>& edgeLabels);
-        
+        void lockView(const std::vector<typename GT::VersionIndex>& versions, const VertexLabel<GT>& nodeLabels, const EdgeLabel<GT>& edgeLabels);
+        void unlockView(const std::vector<typename GT::VersionIndex>& versions, const VertexLabel<GT>& nodeLabels, const EdgeLabel<GT>& edgeLabels);
         
 
         std::string generate_key(const std::vector<typename GT::VersionIndex>& versions, const VertexLabel<GT>& nodeLabels, const EdgeLabel<GT>& edgeLabels);
@@ -59,6 +59,7 @@ class ViewCache
 //         std::map<std::string, IntegratedViewer<GT>> views_;
         
         std::unordered_map<std::string, Entry<GT>> views_;
+        std::unordered_map<std::string, int> viewUsers_;
         
         std::vector< std::pair<time_t, std::string>> accessHeap_;
 };
@@ -69,6 +70,7 @@ ViewCache<GT>::ViewCache(const VGraph<GT>& graph, int cacheSize)
     activeCount = 0;
     cacheSize_ = cacheSize;
     views_ = std::unordered_map<std::string, Entry<GT>>();
+    viewUsers_ = std::unordered_map<std::string, int>();
     graph_= &graph;
 }
 
@@ -85,7 +87,8 @@ void ViewCache<GT>::clean()
 //     for(const auto& e : views_)
     for(auto it=views_.begin(); it!=views_.end() ;++it)
     {
-        if (it->second.users_ == 0)
+        //if (it->second.users_ == 0)
+        if(viewUsers_.find(it->first) == viewUsers_.end())
             views_.erase(it);
 //             views_.erase(e);
     }
@@ -133,58 +136,42 @@ IntegratedViewer<GT>& ViewCache<GT>::lookup(const std::vector<typename GT::Versi
 }
 
 template<class GT>
-void ViewCache<GT>::lookupDone(const std::vector<typename GT::VersionIndex>& versions, const VertexLabel<GT>& nodeLabels, const EdgeLabel<GT>& edgeLabels)
+void ViewCache<GT>::lockView(const std::vector<typename GT::VersionIndex>& versions, const VertexLabel<GT>& nodeLabels, const EdgeLabel<GT>& edgeLabels)
 {
     #pragma omp critical
     {
         std::string key= generate_key(versions, nodeLabels, edgeLabels);
-        auto v = views_.find(key);
-         --v->second.users_;
+        auto v = viewUsers_.find(key);
+        
+        if(v == viewUsers_.end())
+        {
+            viewUsers_.insert(std::make_pair(key, 1));
+        }
+        else
+        {
+            ++v->second;
+        }
+        
+         
     }
 }
 
-// template<class GT>
-// IntegratedViewer<GT>& ViewCache<GT>::lookup(const std::vector<typename GT::VersionIndex>& versions, const VertexLabel<GT>& nodeLabels, const EdgeLabel<GT>& edgeLabels)
-// {
-//     //Check if the view exists
-// 
-//         std::string key= generate_key(versions, nodeLabels, edgeLabels);
-//         auto v = views_.find(key);
-// 
-//         
-// 
-//         if(v == views_.end())
-//         {
-//             IntegratedViewer<GT> view(*graph_); 
-//             view.buildView(versions, nodeLabels,edgeLabels);
-//             v = views_.insert(std::make_pair(key,view)).first;
-//         
-//         
-//             //update accessHeap
-//             accessHeap_.push_back(std::make_pair(time(NULL), key)); 
-//             std::push_heap(accessHeap_.begin(), accessHeap_.end(), [](const auto& lhs, const auto& rhs){return lhs.first > rhs.first;});
-//             
-//             //if cache full, remove oldest
-//             std::cout<<views_.size()<<" : "<<cacheSize_<<std::endl;
-//             if(views_.size() > cacheSize_)
-//             {
-//                 std::string removeKey = accessHeap_.front().second;
-//                 std::pop_heap(accessHeap_.begin(), accessHeap_.end(), [](const auto& lhs, const auto& rhs){return lhs.first > rhs.first;});
-//                 accessHeap_.pop_back();
-//                 views_.erase(views_.find(removeKey));
-//             }
-//         }
-//         //TODO: If already in heap, need to update the access time 
-//         else{
-//             //Currently just removes the oldest added, ie NOT LRU
-//         }
-//         
-//         
-//     //     std::cout<<*this<<std::endl;
-//         return v->second;
-//     
-//     
-// }
+template<class GT>
+void ViewCache<GT>::unlockView(const std::vector<typename GT::VersionIndex>& versions, const VertexLabel<GT>& nodeLabels, const EdgeLabel<GT>& edgeLabels)
+{
+    #pragma omp critical
+    {
+        std::string key= generate_key(versions, nodeLabels, edgeLabels);
+        auto v = viewUsers_.find(key);
+         
+        
+        --v->second;
+        
+        if(v->second == 0)
+           viewUsers_.erase(v);
+    }
+}
+
 
 template<class GT>
 std::string ViewCache<GT>::generate_key(const std::vector<typename GT::VersionIndex>& versions, const VertexLabel<GT>& nodeLabels, const EdgeLabel<GT>& edgeLabels)

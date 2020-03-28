@@ -77,12 +77,7 @@ class HelloHandler : public Http::Handler
         
         void onRequest(const Http::Request& request, Http::ResponseWriter response) override
         {
-            #pragma omp critical
-            {
-//                 ++viewCache_->activeCount;
-                if(viewCache_->full())
-                    viewCache_->clean();
-            }
+
             
             
             std::cout<<"Request: " + request.body()<<std::endl;
@@ -126,13 +121,36 @@ class HelloHandler : public Http::Handler
             }  
             else    
             {
-                
                 json queryString = json::parse(request.body());
+                std::vector< GraphType::GD::VersionIndex> versions = queryString["versions"].template get<std::vector<GraphType::GD::VersionIndex>>();
+                std::vector<GraphType::GD::Index> vertexLabels = queryString["vertexLabels"].template get<std::vector<GraphType::GD::Index>>();
+                std::vector<GraphType::GD::Index> edgeLabels = queryString["edgeLabels"].template get<std::vector<GraphType::GD::Index>>();    
+                
+                #pragma omp critical
+                {
+                        
+                    viewCache_->lockView(versions, VertexLab(vertexLabels), EdgeLab(edgeLabels)) ;
+             
+
+                    if(viewCache_->full())
+                        viewCache_->clean();
+                }
+                
+                
+             
                 json queryResponse = CR.run(queryString);
+                
+                #pragma omp critical
+                {
+                    viewCache_->unlockView(versions, VertexLab(vertexLabels), EdgeLab(edgeLabels)) ;
+                }
+                
                 
                 response.headers().add<Http::Header::AccessControlAllowOrigin>("*");
                 response.headers().add<Http::Header::ContentType>("application/json");
                 response.send(Http::Code::Ok, queryResponse.dump());
+                
+
             }
             
           
