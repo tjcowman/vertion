@@ -50,7 +50,7 @@ class ViewCache
 
         std::string generate_key(const std::vector<typename GT::VersionIndex>& versions, const VertexLabel<GT>& nodeLabels, const EdgeLabel<GT>& edgeLabels);
          int activeCount;
-    private:
+//     private:
         
        
         
@@ -58,8 +58,8 @@ class ViewCache
         const VGraph<GT>* graph_;
 //         std::map<std::string, IntegratedViewer<GT>> views_;
         
-        std::unordered_map<std::string, Entry<GT>> views_;
-        std::unordered_map<std::string, int> viewUsers_;
+        std::map<std::string, Entry<GT>> views_;
+        std::map<std::string, int> viewUsers_;
         
         std::vector< std::pair<time_t, std::string>> accessHeap_;
 };
@@ -69,15 +69,15 @@ ViewCache<GT>::ViewCache(const VGraph<GT>& graph, int cacheSize)
 {
     activeCount = 0;
     cacheSize_ = cacheSize;
-    views_ = std::unordered_map<std::string, Entry<GT>>();
-    viewUsers_ = std::unordered_map<std::string, int>();
+    views_ = std::map<std::string, Entry<GT>>();
+    viewUsers_ = std::map<std::string, int>();
     graph_= &graph;
 }
 
 template<class GT>
 bool ViewCache<GT>::full()const
 {
-    return views_.size() >= cacheSize_;
+    return viewUsers_.size() >= cacheSize_;
 }
 
 template<class GT>
@@ -87,9 +87,13 @@ void ViewCache<GT>::clean()
 //     for(const auto& e : views_)
     for(auto it=views_.begin(); it!=views_.end() ;++it)
     {
+        auto numUsers = viewUsers_.find(it->first);
         //if (it->second.users_ == 0)
-        if(viewUsers_.find(it->first) == viewUsers_.end())
+        if(numUsers->second ==0)
+        {
             views_.erase(it);
+            viewUsers_.erase(numUsers);
+        }
 //             views_.erase(e);
     }
     
@@ -106,8 +110,7 @@ void ViewCache<GT>::clean()
 template<class GT>
 IntegratedViewer<GT>& ViewCache<GT>::lookup(const std::vector<typename GT::VersionIndex>& versions, const VertexLabel<GT>& nodeLabels, const EdgeLabel<GT>& edgeLabels)
 {
-    for(const auto& e : views_)
-        e.second.print();
+
     
     //Check if the view exists
     #pragma omp critical
@@ -127,9 +130,12 @@ IntegratedViewer<GT>& ViewCache<GT>::lookup(const std::vector<typename GT::Versi
         else
         {
             //Increment users count
-            ++v->second.users_;
+//             ++v->second.users_;
         }
 
+            for(const auto& e : views_)
+//         e.second.print();
+        
         return v->second.view_;
     }
     
@@ -138,7 +144,7 @@ IntegratedViewer<GT>& ViewCache<GT>::lookup(const std::vector<typename GT::Versi
 template<class GT>
 void ViewCache<GT>::lockView(const std::vector<typename GT::VersionIndex>& versions, const VertexLabel<GT>& nodeLabels, const EdgeLabel<GT>& edgeLabels)
 {
-    #pragma omp critical
+//     #pragma omp critical
     {
         std::string key= generate_key(versions, nodeLabels, edgeLabels);
         auto v = viewUsers_.find(key);
@@ -159,7 +165,7 @@ void ViewCache<GT>::lockView(const std::vector<typename GT::VersionIndex>& versi
 template<class GT>
 void ViewCache<GT>::unlockView(const std::vector<typename GT::VersionIndex>& versions, const VertexLabel<GT>& nodeLabels, const EdgeLabel<GT>& edgeLabels)
 {
-    #pragma omp critical
+//     #pragma omp critical
     {
         std::string key= generate_key(versions, nodeLabels, edgeLabels);
         auto v = viewUsers_.find(key);
@@ -168,7 +174,11 @@ void ViewCache<GT>::unlockView(const std::vector<typename GT::VersionIndex>& ver
         --v->second;
         
         if(v->second == 0)
-           viewUsers_.erase(v);
+        {
+//             viewUsers_.erase(v);
+//             auto v = views_.find(key);
+//             views_.erase(key);
+        }
     }
 }
 

@@ -74,6 +74,8 @@ class HelloHandler : public Http::Handler
         HTTP_PROTOTYPE(HelloHandler)
         static const Graph* graph_;
         static ViewCache<GraphType::GD>* viewCache_;
+        static int activeComputes_;
+        static int maxActiveComputes_;
         
         void onRequest(const Http::Request& request, Http::ResponseWriter response) override
         {
@@ -130,26 +132,40 @@ class HelloHandler : public Http::Handler
                 {
                         
                     viewCache_->lockView(versions, VertexLab(vertexLabels), EdgeLab(edgeLabels)) ;
-             
+                    ++activeComputes_;
 
-                    if(viewCache_->full())
-                        viewCache_->clean();
+//                     if(viewCache_->full())
+//                     {
+//                         std::cout<<"FULL"<<std::endl;
+// //                         sleep(5);
+//                         viewCache_->clean();
+//                     }
+//                      while(activeComputes_>maxActiveComputes_){/*usleep(5000);*/
+
+//                     }
+//                     if(viewCache_->full())
+//                         viewCache_->clean();
                 }
                 
+//                 while(viewCache_->full()){usleep(5000);}
+               
                 
              
                 json queryResponse = CR.run(queryString);
                 
-                #pragma omp critical
-                {
-                    viewCache_->unlockView(versions, VertexLab(vertexLabels), EdgeLab(edgeLabels)) ;
-                }
+            
                 
                 
                 response.headers().add<Http::Header::AccessControlAllowOrigin>("*");
                 response.headers().add<Http::Header::ContentType>("application/json");
                 response.send(Http::Code::Ok, queryResponse.dump());
                 
+                #pragma omp critical
+                {
+                    viewCache_->unlockView(versions, VertexLab(vertexLabels), EdgeLab(edgeLabels)) ;
+                    --activeComputes_;
+                }
+                std::cout<<"unlocked"<<std::endl;
 
             }
             
@@ -160,7 +176,8 @@ class HelloHandler : public Http::Handler
 std::string HelloHandler::eTag;
 const Graph* HelloHandler::graph_;
 ViewCache<GraphType::GD>* HelloHandler::viewCache_;
-
+int HelloHandler::activeComputes_;
+int HelloHandler::maxActiveComputes_;
 
 struct Args
 {
@@ -188,6 +205,8 @@ int main(int argc, char* argv[] )
 
     );
      
+     
+     
     Http::Header::Registry::instance().registerHeader<Http::Header::ETag>();
     Http::Header::Registry::instance().registerHeader<Http::Header::IfNoneMatch>();
     
@@ -201,6 +220,8 @@ int main(int argc, char* argv[] )
     HelloHandler::graph_ = &G;
     ViewCache<GraphType::GD> VC(G, args.cacheSize);
     HelloHandler::viewCache_ = &VC;
+    HelloHandler::activeComputes_ = 0;
+    HelloHandler::maxActiveComputes_ = args.threads;
 //     Http::listenAndServe<HelloHandler>(Address("*:"+std::to_string(args.port)));
     
     
@@ -209,11 +230,37 @@ int main(int argc, char* argv[] )
 //       .maxPayload(m_max_payload)
       .threads(args.threads)
       .flags(Tcp::Options::ReuseAddr);
+//       .backlog(5);
     
     server->init(opts);
     server->setHandler(Http::make_handler<HelloHandler>());
-    server->serveThreaded();
     
+// #pragma omp sections
+    {
+//         #pragma omp section
+        {
+        
+            server->serveThreaded();
+        }
+        
+//           #pragma omp section
+        {
+            while(true)
+            {
+                sleep(1);
+                std::cout<<"CLEAN CHECK B" << HelloHandler::viewCache_->views_.size()<<" : "<<HelloHandler::viewCache_->viewUsers_.size()<<std::endl;
+                if (HelloHandler::viewCache_->full())
+                {
+        //             #pragma omp critical
+                    {
+                    HelloHandler::viewCache_->clean();
+                    }
+                }
+                std::cout<<"CLEAN CHECK A" << HelloHandler::viewCache_->views_.size()<<" : "<<HelloHandler::viewCache_->viewUsers_.size()<<std::endl;
+            }
+        }
+    
+    }
     while(true)
     {
         std::string input;

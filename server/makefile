@@ -1,11 +1,14 @@
 CC = clang++-8  
 CF = -std=c++17 -O3 -Wfatal-errors  
-INC = -I../src/lib -I../src/lib-graph -I../pistache/src -L/usr/local/lib
+INC = -I../src/lib -I../src/lib-graph -I../pistache/src -L/usr/local/lib -lpthread
 
 BINDIR := bin
 
 server: | $(BINDIR)
 	$(CC) $(INC) $(CF) server.cpp -o $(BINDIR)/server   -I/usr/local/include/ -L/usr/local/lib/ -lpistache 
+
+server2: | $(BINDIR)
+	$(CC) $(INC) $(CF)  server2.cpp -o $(BINDIR)/server2    -I/usr/local/include/ -L/usr/local/lib/  
 
 client: | $(BINDIR)
 	$(CC) $(INC) $(CF) client.cpp -o $(BINDIR)/client

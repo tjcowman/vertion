@@ -2,6 +2,8 @@
 
 import requests
 import time
+from time import sleep
+import random
 from random import sample 
 import threading
 
@@ -10,7 +12,7 @@ import threading
     #vertexLabels:  [...this.props.versionCardsO.cards[this.props.activeVersionCard].labelsV_s],
     #edgeLabels:  [...this.props.versionCardsO.cards[this.props.activeVersionCard].labelsE_s]
 #}; 
-
+#random.seed(900)
 
 url = 'http://localhost:9060'
 
@@ -30,7 +32,7 @@ requestArgs = {
     "source" : [],
     "alpha" : .15,
     "epsilon" : 1e-12,
-    "topk" : 10    
+    "topk" : 1   
 };
 
 
@@ -55,12 +57,14 @@ def main():
     versionSize = 3
     threads = list()
  
-    for i in range(0,40):
+    for i in range(0,3):
+        #sleep(.00001)
         req = requestArgs
         req["versions"] = sample(versionPool,versionSize)
         #req["source"] = nodeToJson(sample(sourcePool,1))
         req["source"] = list(map(lambda x: nodeToJson(x),sample(sourcePool,1)))
         #time = runIter(requestArgs)
+        print(requestArgs)
         time = threading.Thread(target=runIter, args=(requestArgs,))
         threads.append(time)
         time.start()
