@@ -31,7 +31,7 @@ using json = nlohmann::json;
 #define MAX_CON 2048
 
 
-#define BUFFER_SIZE 4096
+#define BUFFER_SIZE 64
 #define WBUFFER_SIZE 4096
 
 
@@ -57,29 +57,17 @@ int getContentLength(std::string header)
     {
         std::string line;
         getline(ss,line);
-//         ss>>line;
-        
-        
-//         std::cout<<"LINE: "<<line<<std::endl;
-        //Didn't find header element
- 
-        
-        
-        
+
         auto delim = line.find(':');
         
         //No delimiter, possibly first line
         if(delim == std::string::npos)
             continue;
         
-//         for(auto it=line.begin(); it != delim; ++it)
         for(size_t i=0; i<delim; ++i)
             line[i]=std::tolower(line[i]);
         
-        std::cout<<line<<std::endl;
-        
-//         std::string_view(line).substr(0, delim);
-//         std::cout<<"comparing> "<<std::string_view(line).substr(0, (delim-1))<<std::endl;
+
         if( std::string_view(line).substr(0, (delim)) == "content-length")
             return stoi(line.substr(delim+1));
         
@@ -106,6 +94,7 @@ std::pair<std::string,std::string> readHttp(int sockfd)
         if(n < 0){  
             perror("Read Error:");
         }  
+        r_buffer.data()[n] ='\0';
         
         header += std::string(r_buffer.data());
         
@@ -122,51 +111,19 @@ std::pair<std::string,std::string> readHttp(int sockfd)
              
              break;
          }   
-         
-         
-         
-         //Now read rest of body
-             
-//             header += std::string(r_buffer.data());
-//         else
-//         {
-//             header += std::string(r_buffer.begin(), it); //get up to beginning of body delim
-//             break;
-//         }
+
     }
     
+    int contentLength = getContentLength(header);
+//     std::cout<<contentLength<<std::endl;
+//     std::cout<<header<<std::endl;
     
-    return std::make_pair(header, body);
-}
-
-void *serverInstance(void *args)
-{
-    InstanceArgs argsE = *((InstanceArgs*)args);
-
-    int sockfd= ((struct InstanceArgs*)args)->sockfd;// *(int*)sockfd;
-    std::cout<<"FD "<<sockfd<<std::endl;
-    const Graph* G = ((struct InstanceArgs*)args)->G;
-     ViewCache<GraphType::GD>* VC =  ((struct InstanceArgs*)args)->VC;
-    
-    CommandRunner<GraphType::GD> CR(*G, *VC);
-//     bool extract = ((struct InstanceArgs*)args)->extract;
-    
-    
-    char w_buffer[WBUFFER_SIZE];
-//     char r_buffer[BUFFER_SIZE];
-
-    
-    auto req = readHttp(sockfd);
-    std::cout<<req.first<<std::endl;
-    
-    int contentLength = getContentLength(req.first);
-    
-    
+    //Get rest of body
     while(true)
     {
-         std::array<char,BUFFER_SIZE> r_buffer;
-        int receivedLength=req.second.size();
-        std::cout<<"RL "<<receivedLength<<std::endl;
+        std::array<char,BUFFER_SIZE> r_buffer;
+        int receivedLength=body.size();
+      
         if (receivedLength == contentLength)
             break;
         
@@ -174,70 +131,100 @@ void *serverInstance(void *args)
         if(n < 0){  
             perror("Read Error:");
         }  
+        r_buffer.data()[n] ='\0';
         
-        req.second += std::string(r_buffer.data());
+//         std::cout<<"READ "<<std::string(r_buffer.data())<<std::endl;
+        body += std::string(r_buffer.data());
     }
     
     
-//     while(true)
-//     {
-//         std::vector<std::string> query;
-        
-//         bzero(r_buffer,BUFFER_SIZE);
-//         bzero(w_buffer,BUFFER_SIZE);
+    
+    return std::make_pair(header, body);
+}
 
-//         std::string requestRB;
-//         while(true)
-//         {
-// //             int n = read(sockfd, r_buffer, BUFFER_SIZE-1);
-// //             std::cout<<"READ "<<n<<" bytes"<<std::endl;
-//             if(n < 0){  
-//                 perror("Read Error:");
-//             }  
+//TODO rename to query or somethign like that
+void *serverInstance(void *args)
+{
+    InstanceArgs argsE = *((InstanceArgs*)args);
+    int sockfd= ((struct InstanceArgs*)args)->sockfd;// *(int*)sockfd;
+    const Graph* G = ((struct InstanceArgs*)args)->G;
+    ViewCache<GraphType::GD>* VC =  ((struct InstanceArgs*)args)->VC;
+    CommandRunner<GraphType::GD> CR(*G, *VC);
 
+    auto req = readHttp(sockfd);
+
+    json queryString = json::parse(req.second);
+    std::vector< GraphType::GD::VersionIndex> versions = queryString["versions"].template get<std::vector<GraphType::GD::VersionIndex>>();
+    std::vector<GraphType::GD::Index> vertexLabels = queryString["vertexLabels"].template get<std::vector<GraphType::GD::Index>>();
+    std::vector<GraphType::GD::Index> edgeLabels = queryString["edgeLabels"].template get<std::vector<GraphType::GD::Index>>();    
             
-//         std::string request(r_buffer);
-//         std::cout<<"RPT : "<<request<<std::endl;
-//         std::cout<<"R : "<<request.substr(request.find("\r\n\r\n"))<<std::endl;
-        
-//         json queryString = json::parse(request.substr(request.find("\r\n\r\n")+4));
-//         std::vector< GraphType::GD::VersionIndex> versions = queryString["versions"].template get<std::vector<GraphType::GD::VersionIndex>>();
-//         std::vector<GraphType::GD::Index> vertexLabels = queryString["vertexLabels"].template get<std::vector<GraphType::GD::Index>>();
-//         std::vector<GraphType::GD::Index> edgeLabels = queryString["edgeLabels"].template get<std::vector<GraphType::GD::Index>>();    
-                
-      
+    
              
-//         json queryResponse ;//= CR.run(queryString);
-                
-            
+    json queryResponse = CR.run(queryString);
                 
 
-            
-            
-        
-        
-        
-        Response R;
+    auto RF =  Response().formatResponse(queryResponse.dump());
+    
 
-//         std::cout<<"HERE"<<std::endl;
-        auto RF =  R.formatResponse("D"); //queryResponse.dump());
-        
-        
-//         std::cout<<"HERE2"<<std::endl;
-//         RF.addSegment()
-//         std::cout<<RF.c_str()<<std::endl;
-        strcpy( w_buffer, RF.c_str()); // RF.c_str()
-        
-        
-        int n = write(sockfd, w_buffer, BUFFER_SIZE-1);
-        if(n < 0){  
-            perror("Write Error:");
-        }  
+
+    
+ 
+    int n = write(sockfd, RF.c_str(), RF.size()-1);
+    if(n < 0){  
+        perror("Write Error:");
+    }  
     
     close(sockfd);
     return (0);
-//     }
 
+}
+
+void* basicHandler(int sockfd, const Graph& G,  ViewCache<GraphType::GD>& VC, std::string queryString)
+{
+    json query = json::parse(queryString);
+    
+    CommandRunner<GraphType::GD> CR(G, VC);
+
+//     std::vector< GraphType::GD::VersionIndex> versions = query["versions"].template get<std::vector<GraphType::GD::VersionIndex>>();
+//     std::vector<GraphType::GD::Index> vertexLabels = query["vertexLabels"].template get<std::vector<GraphType::GD::Index>>();
+//     std::vector<GraphType::GD::Index> edgeLabels = query["edgeLabels"].template get<std::vector<GraphType::GD::Index>>();    
+            
+    
+             
+    json queryResponse = CR.run(query);
+                
+
+    auto RF =  Response().formatResponse(queryResponse.dump());
+ 
+    int n = write(sockfd, RF.c_str(), RF.size()-1);
+    if(n < 0){  
+        perror("Write Error:");
+    }  
+    
+    close(sockfd);
+    return (0);
+}
+
+
+// void *handleInit_ls(void *args)
+// {
+//     
+// }
+
+
+void* handlerDispatch(void* args)
+{
+    int sockfd = ((struct InstanceArgs*)args)->sockfd;
+    auto req = readHttp(sockfd);
+     
+    
+    //Special case
+    
+    //Default
+    const Graph* G = ((struct InstanceArgs*)args)->G;
+    ViewCache<GraphType::GD>* VC =  ((struct InstanceArgs*)args)->VC;
+    return basicHandler(sockfd, *G, *VC, req.second);
+//     return serverInstance(args);
 }
 
 int startServer_hgraph(int portNumber, int threads, const Graph* G,  ViewCache<GraphType::GD>* VC)
@@ -276,7 +263,9 @@ int startServer_hgraph(int portNumber, int threads, const Graph* G,  ViewCache<G
         args->VC = VC;
         //{newsockfd,G};
         
-        if( pthread_create(&thread_id[i], NULL, serverInstance,  (void*)args) != 0 )
+//         if( pthread_create(&thread_id[i], NULL, serverInstance,  (void*)args) != 0 )
+    
+        if( pthread_create(&thread_id[i], NULL, handlerDispatch,  (void*)args) != 0 )
            printf("Failed to create thread\n");
         
             //Once n threads have been created wait until they all finish
@@ -314,12 +303,7 @@ struct Args
 
 int main(int argc, char* argv[] )
 {
-//     int port = -1;
-//     std::string graph = "";
-//     std::string mode = "";
-//     int cacheSize = 10; 
-//     
-//     int threads = 1;
+
     
      ARGLOOP(,
         ARG(port,stoi)

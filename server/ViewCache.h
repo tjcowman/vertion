@@ -133,7 +133,7 @@ IntegratedViewer<GT>& ViewCache<GT>::lookup(const std::vector<typename GT::Versi
 //             ++v->second.users_;
         }
 
-            for(const auto& e : views_)
+//             for(const auto& e : views_)
 //         e.second.print();
         
         return v->second.view_;

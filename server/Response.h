@@ -9,17 +9,6 @@ using std::string;
 using std::vector;
 using std::stringstream;
 
-#define SEGMENTTOKEN "\n#\n"
-
-
-//Will consist of triggered updates followed by primary response
-//Reponse sections will be seperated by \n SEGMENTTOKEN \n first line of segment will contain segment info
-
-struct ResponseSegment
-{
-    string header;
-    string data;
-};
 
 class Response
 {
@@ -27,71 +16,71 @@ class Response
     public:
         Response();
         
-        //void setHttpHeader(size_t payload);
+        Response& cacheable();
+        Response& addHeader(std::string header);
+
         
-        void addSegment(ResponseSegment s);
-        void setBody(std::string s);
         
-        
-        string formatResponse(std::string body);
+        std::string formatResponse(std::string body);
         
     private:
         
         size_t calculatePayloadSize();
         
+        std::vector<std::string> headers_;
+        
         string httpHeader_;
-        vector<ResponseSegment> responseSegments_;
+        
         
 };
 
 
+
+//Default headers
 Response::Response()
 {
-    
+    headers_ = {
+        "HTTP/1.1 200 OK",
+        "Access-Control-Allow-Origin: *",
+        "Content-Type: application/json"
+    };
 }
 
-void Response::addSegment(ResponseSegment s)
+Response& Response::addHeader(std::string header)
 {
-    responseSegments_.push_back(s);
+    headers_.push_back(header);
+    return *this;
 }
+
+Response& Response::cacheable()
+{
+//     headers_.push_back();
+//     return *this;
+}
+
 
 string Response::formatResponse(std::string body)
 {
     stringstream outstream;
+    
+    for(const auto& e: headers_)
+        outstream<<e<<"\r\n";
+    outstream<<"Content-Length: " <<body.size()
+        <<"\r\n\r\n"
+        <<body;
+/*    
     outstream << "HTTP/1.1 200 OK\r\n"
-        <<"Access-Control-Allow-Origin: *\r\n"
-        << "Content-Length: " <<calculatePayloadSize()
+        << "Access-Control-Allow-Origin: *\r\n"
+        << "Content-Type: application/json\r\n"
+        << "Content-Length: " <<body.size()
         << "\r\n\r\n"<<
-        body;
+        body;*/
     
-    //outstream << SEGMENTTOKEN;
-    //for(ResponseSegment seg : responseSegments_)
-//     for(int i=0; i< responseSegments_.size()-1; ++i)
-//     {
-//         outstream << responseSegments_[i].header << "\n" << responseSegments_[i].data << SEGMENTTOKEN;
-//     }
-//     outstream << responseSegments_[responseSegments_.size()-1].header << "\n" << responseSegments_[responseSegments_.size()-1].data;
-    
-    
+
     return outstream.str();
 }
 
 
-void setBody(std::string s)
-{
-        
-}
-
-//TODO: only +3 for the current token used, +1 for header newline
-size_t Response::calculatePayloadSize()
-{
-    size_t s = (responseSegments_.size()-1)*3;
-    for(ResponseSegment seg : responseSegments_)
-    {
-        s += (seg.header.size() + seg.data.size())+1 ;
-    }
-    return s;
-}
 
 
 

@@ -32,7 +32,7 @@ requestArgs = {
     "source" : [],
     "alpha" : .15,
     "epsilon" : 1e-12,
-    "topk" : 1   
+    "topk" : 5 
 };
 
 
@@ -49,6 +49,8 @@ def runIter(requestArgs):
     
     tt = time.perf_counter() - ts
     
+    
+    print(r.content)
     print(tt)
     return tt
 
@@ -57,7 +59,7 @@ def main():
     versionSize = 3
     threads = list()
  
-    for i in range(0,3):
+    for i in range(0,1):
         #sleep(.00001)
         req = requestArgs
         req["versions"] = sample(versionPool,versionSize)
