@@ -2,6 +2,8 @@
 
 #define BUFFER_SIZE 1024
 
+#include <sstream>
+
 class Http
 {
     
@@ -56,7 +58,7 @@ void Http::send(int socketFD, const std::string& body)
 {
 
 //     
-    stringstream outstream;
+    std::stringstream outstream;
     outstream<<status_<<"\r\n";
     for(const auto& e: headers_)
         outstream<<e.first<<": "<<e.second<<"\r\n";
@@ -80,7 +82,7 @@ void Http::send(int socketFD, const std::string& body)
     {
         int n = write(socketFD, &buf[written], toWrite);        
         
-//         std::cout<<written<< " / "<<toWrite<<" : "<<n<<std::endl;
+// //         std::cout<<written<< " / "<<toWrite<<" : "<<n<<std::endl;
         
         if(n < 0){  
             perror("Write Error:");
@@ -157,7 +159,7 @@ void Http::rec(int socketFD)
     }
     
     body_ = body;
-    std::cout<<body<<std::endl;
+   // std::cout<<body<<std::endl;
     
 }
 

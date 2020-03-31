@@ -16,7 +16,7 @@
 #include "CommandRunner.h"
 #include "ViewCache.h"
 
-#include "Response.h"
+// #include "Response.h"
 #include "Http.h"
 
 #include <nlohmann/json.hpp>
@@ -32,9 +32,6 @@ using json = nlohmann::json;
 #define MAX_CON 2048
 
 
-#define BUFFER_SIZE 1024
-#define WBUFFER_SIZE 4096
-
 
 
 //TODO: Make simple http classes for request and response
@@ -42,7 +39,7 @@ using json = nlohmann::json;
 //Used to allow caching until server brough back
 //TODO: Make this more robust
 std::string eTag = "\""+std::to_string(rand() % 1000000)+"\"";
-
+pthread_mutex_t lock;
 
 struct InstanceArgs{
     int sockfd;
@@ -55,16 +52,23 @@ void basicHandler(int sockfd, const CommandRunner<GraphType::GD>& CR, const Http
 {
     json query = json::parse(req.getBody());
     
-//     CommandRunner<GraphType::GD> CR(G, VC);
 
-//     std::vector< GraphType::GD::VersionIndex> versions = query["versions"].template get<std::vector<GraphType::GD::VersionIndex>>();
-//     std::vector<GraphType::GD::Index> vertexLabels = query["vertexLabels"].template get<std::vector<GraphType::GD::Index>>();
-//     std::vector<GraphType::GD::Index> edgeLabels = query["edgeLabels"].template get<std::vector<GraphType::GD::Index>>();    
+
+    std::vector< GraphType::GD::VersionIndex> versions = query["versions"].template get<std::vector<GraphType::GD::VersionIndex>>();
+    std::vector<GraphType::GD::Index> vertexLabels = query["vertexLabels"].template get<std::vector<GraphType::GD::Index>>();
+    std::vector<GraphType::GD::Index> edgeLabels = query["edgeLabels"].template get<std::vector<GraphType::GD::Index>>();    
             
-    
+    pthread_mutex_lock(&lock);
+    CR.viewCache_->lockView(versions, VertexLab(vertexLabels), EdgeLab(edgeLabels)) ;
+    pthread_mutex_unlock(&lock);
              
     json queryResponse = CR.run(query);
                 
+    pthread_mutex_lock(&lock);
+    CR.viewCache_->unlockView(versions, VertexLab(vertexLabels), EdgeLab(edgeLabels)) ;
+    pthread_mutex_unlock(&lock);
+    
+    
     Http res;
     res.setStatus("HTTP/1.1 200 OK");
     res.setHeaders({
@@ -149,7 +153,7 @@ void* handlerDispatch(void* args)
 //     
 //     
     std::string uri=  req.getURI();//getResource(req.first);
-    std::cout<<"URI = :"<<uri<<std::endl;
+//     std::cout<<"URI = :"<<uri<<std::endl;
     
     CommandRunner<GraphType::GD> CR(*G, *VC);
     
@@ -215,51 +219,63 @@ int startServer_hgraph(int portNumber, int threads, const Graph* G,  ViewCache<G
     
     int sockfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (sockfd < 0) 
-        std::cout<<"ERROR opening socket";
+        std::cerr<<"ERROR opening socket";
+    
+    int reuse=1;
+    if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(int)) < 0)
+        std::cerr<<"setsockopt(SO_REUSEADDR) failed"<<std::endl;
     
     
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_addr.s_addr = INADDR_ANY;
     serv_addr.sin_port = htons(portNumber);
+
     if (bind(sockfd, (struct sockaddr *) &serv_addr,
         sizeof(serv_addr)) < 0) 
         std::cout<<"ERROR on binding";
-    listen(sockfd,50);
+    listen(sockfd,1024);
     clilen = sizeof(cli_addr);
     
-
+std::cout<<"threads "<<threads<<std::endl;
   
-    pthread_t thread_id[MAX_CON];
+    pthread_t thread_id[threads];
     int i = 0;
+
     while(true)
     {
         int newsockfd = accept(sockfd,(struct sockaddr *) &cli_addr, &clilen);
         if (newsockfd < 0) 
             std::cout<<"ERROR on accept";
-    
+        
+        
         InstanceArgs* args = new InstanceArgs;
         args->sockfd = newsockfd;
         args->G = G;
         args->VC = VC;
-        //{newsockfd,G};
-        
-//         if( pthread_create(&thread_id[i], NULL, serverInstance,  (void*)args) != 0 )
+
     
         if( pthread_create(&thread_id[i], NULL, handlerDispatch,  (void*)args) != 0 )
            printf("Failed to create thread\n");
         
-            //Once n threads have been created wait until they all finish
-            if( i >= (threads))
+        ++i;
+        
+//         std::cout<<"i "<<i<<std::endl;
+        //Once n threads have been created wait until they all finish
+        if( i >= (threads))
+        {
+            i = 0;
+
+            while(i < threads)
             {
-                i = 0;
+                pthread_join(thread_id[i++],NULL);
 
-                while(i < threads)
-                {
-                    pthread_join(thread_id[i++],NULL);
-
-                }
-                i = 0;
             }
+            //Run a viewCache Cleanup
+            pthread_mutex_lock(&lock);
+            VC->clean();
+            pthread_mutex_unlock(&lock);
+            i = 0;
+        }
 
     }
   
@@ -294,6 +310,12 @@ int main(int argc, char* argv[] )
         
         ARG(threads, stoi)
     );
+     
+     if(args.cacheSize<args.threads)
+     {
+         args.cacheSize = args.threads;
+        std::cout<<"[warn] cacheSize increased to "<<args.cacheSize<<std::endl;
+     }
     
      
     Graph G(Context::undirected);
@@ -301,7 +323,7 @@ int main(int argc, char* argv[] )
     IO.read_serial(args.graph);
     ViewCache<GraphType::GD> VC(G, args.cacheSize);
     
-    std::cout<<G.size()<<std::endl;
+//     std::cout<<G.size()<<std::endl;
     startServer_hgraph(args.port, args.threads, &G, &VC);
 
 

@@ -50,7 +50,7 @@ class ViewCache
 
         std::string generate_key(const std::vector<typename GT::VersionIndex>& versions, const VertexLabel<GT>& nodeLabels, const EdgeLabel<GT>& edgeLabels);
          int activeCount;
-//     private:
+    private:
         
        
         
@@ -83,20 +83,29 @@ bool ViewCache<GT>::full()const
 template<class GT>
 void ViewCache<GT>::clean()
 {
-//     sleep(10);
-//     for(const auto& e : views_)
-    for(auto it=views_.begin(); it!=views_.end() ;++it)
+    std::cout<<"SB "<<views_.size()<<std::endl;
+//     #pragma omp critical
     {
-        auto numUsers = viewUsers_.find(it->first);
-        //if (it->second.users_ == 0)
-        if(numUsers->second ==0)
+        if(views_.size()>cacheSize_)
         {
-            views_.erase(it);
-            viewUsers_.erase(numUsers);
+        //     sleep(10);
+        //     for(const auto& e : views_)
+            for(auto it=views_.begin(); it!=views_.end() ;++it)
+            {
+                auto numUsers = viewUsers_.find(it->first);
+                //if (it->second.users_ == 0)
+                if(numUsers->second ==0)
+                {
+                    //THE ORDER OF ERASE SEEMS TO MATTER?!
+                    viewUsers_.erase(numUsers);
+                    views_.erase(it);
+                    
+                }
+        //             views_.erase(e);
+            }
         }
-//             views_.erase(e);
     }
-    
+    std::cout<<"SA "<<views_.size()<<std::endl;
 }
 
 //Used when a version is queried while it exists, always increases the timestamp, thus can bubble up the larger of its children recursively after updating 
@@ -113,8 +122,10 @@ IntegratedViewer<GT>& ViewCache<GT>::lookup(const std::vector<typename GT::Versi
 
     
     //Check if the view exists
-    #pragma omp critical
+//     #pragma omp critical
     {
+//         std::cout<<"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"<<std::endl;
+        
         std::string key= generate_key(versions, nodeLabels, edgeLabels);
         auto v = views_.find(key);
 
@@ -146,6 +157,8 @@ void ViewCache<GT>::lockView(const std::vector<typename GT::VersionIndex>& versi
 {
 //     #pragma omp critical
     {
+//         std::cout<<"BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"<<std::endl;
+        
         std::string key= generate_key(versions, nodeLabels, edgeLabels);
         auto v = viewUsers_.find(key);
         
@@ -167,18 +180,20 @@ void ViewCache<GT>::unlockView(const std::vector<typename GT::VersionIndex>& ver
 {
 //     #pragma omp critical
     {
+//         std::cout<<"CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"<<std::endl;
         std::string key= generate_key(versions, nodeLabels, edgeLabels);
-        auto v = viewUsers_.find(key);
+       auto v = viewUsers_.find(key);
+//          auto v = viewUsers_.at(key);
          
         
         --v->second;
         
-        if(v->second == 0)
-        {
-//             viewUsers_.erase(v);
-//             auto v = views_.find(key);
-//             views_.erase(key);
-        }
+//         if(v->second == 0)
+//         {
+// //             viewUsers_.erase(v);
+// //             auto v = views_.find(key);
+// //             views_.erase(key);
+//         }
     }
 }
 

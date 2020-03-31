@@ -33,7 +33,7 @@ class CommandRunner
         
         json run(const json& command)const;
         
-    private:
+//     private:
         const VGraph<GT>* graph_;
         ViewCache<GT>* viewCache_;
         
@@ -49,7 +49,7 @@ CommandRunner<GT>::CommandRunner(const VGraph<GT>& graph, ViewCache<GT>& viewCac
 template<class GT>
 json CommandRunner<GT>::run(const json& command)const
 {
-    std::cout<<command<<std::endl;
+//     std::cout<<command<<std::endl;
     
     if(command["cmd"] == "ls")
         return Commands::ls<GT>(*graph_, command);

@@ -248,7 +248,7 @@ int main(int argc, char* argv[] )
             while(true)
             {
                 sleep(1);
-                std::cout<<"CLEAN CHECK B" << HelloHandler::viewCache_->views_.size()<<" : "<<HelloHandler::viewCache_->viewUsers_.size()<<std::endl;
+//                 std::cout<<"CLEAN CHECK B" << HelloHandler::viewCache_->views_.size()<<" : "<<HelloHandler::viewCache_->viewUsers_.size()<<std::endl;
                 if (HelloHandler::viewCache_->full())
                 {
         //             #pragma omp critical
@@ -256,7 +256,7 @@ int main(int argc, char* argv[] )
                     HelloHandler::viewCache_->clean();
                     }
                 }
-                std::cout<<"CLEAN CHECK A" << HelloHandler::viewCache_->views_.size()<<" : "<<HelloHandler::viewCache_->viewUsers_.size()<<std::endl;
+//                 std::cout<<"CLEAN CHECK A" << HelloHandler::viewCache_->views_.size()<<" : "<<HelloHandler::viewCache_->viewUsers_.size()<<std::endl;
             }
         }
     

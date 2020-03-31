@@ -12,7 +12,7 @@ import threading
     #vertexLabels:  [...this.props.versionCardsO.cards[this.props.activeVersionCard].labelsV_s],
     #edgeLabels:  [...this.props.versionCardsO.cards[this.props.activeVersionCard].labelsE_s]
 #}; 
-#random.seed(900)
+random.seed(900)
 
 url = 'http://localhost:9060'
 
@@ -50,23 +50,23 @@ def runIter(requestArgs):
     tt = time.perf_counter() - ts
     
     
-    print(r.content)
+    #print(r.content)
     print(tt)
     return tt
 
 def main():
  
-    versionSize = 3
+    versionSize = 2
     threads = list()
  
-    for i in range(0,1):
+    for i in range(256):
         #sleep(.00001)
         req = requestArgs
         req["versions"] = sample(versionPool,versionSize)
         #req["source"] = nodeToJson(sample(sourcePool,1))
         req["source"] = list(map(lambda x: nodeToJson(x),sample(sourcePool,1)))
         #time = runIter(requestArgs)
-        print(requestArgs)
+        #print(requestArgs)
         time = threading.Thread(target=runIter, args=(requestArgs,))
         threads.append(time)
         time.start()
