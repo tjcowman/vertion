@@ -80,7 +80,7 @@ void Http::send(int socketFD, const std::string& body)
     {
         int n = write(socketFD, &buf[written], toWrite);        
         
-        std::cout<<written<< " / "<<toWrite<<" : "<<n<<std::endl;
+//         std::cout<<written<< " / "<<toWrite<<" : "<<n<<std::endl;
         
         if(n < 0){  
             perror("Write Error:");
@@ -91,25 +91,7 @@ void Http::send(int socketFD, const std::string& body)
         if(written == toWrite)
             break;
     }
-    //Send the body content
-    
-//     int sent=0
-//     while(sent < totalSize)
-//     {
-//         
-//     }
-    
-    
-//      n = write(socketFD, b1.c_str(), b1.size()-1);
-//     if(n < 0){  
-//         perror("Write Error:");
-//     } 
-//       
-//      n = write(socketFD, b2.c_str(), b2.size()-1);
-//     if(n < 0){  
-//         perror("Write Error:");
-//     } 
-    
+
 }
 
 void Http::rec(int socketFD)
@@ -145,6 +127,7 @@ void Http::rec(int socketFD)
 
     }
     
+//     std::cout<<header<<std::endl;
     //parse headers
     parseHeaders(header);
     
@@ -154,7 +137,7 @@ void Http::rec(int socketFD)
     
     
     int contentLength = stoi(it->second);//getContentLength(header);
-
+//     std::cout<<"GOT CONTENT LENGTH ="<<contentLength<<std::endl;
     //Get rest of body
     while(true)
     {
@@ -174,6 +157,8 @@ void Http::rec(int socketFD)
     }
     
     body_ = body;
+    std::cout<<body<<std::endl;
+    
 }
 
 
@@ -213,7 +198,9 @@ void Http::parseHeaders(std::string& header)
     while(true)
     {
         std::string line;
+        
         getline(ss,line);
+//         std::cout<<"parsing "<<line<<std::endl;
 
         auto delim = line.find(':');
         
@@ -221,19 +208,30 @@ void Http::parseHeaders(std::string& header)
         if(delim == std::string::npos)
             continue;
         
+        
+//         std::string key = ;
+//         std::string value = ;
+        
         for(size_t i=0; i<delim; ++i)
             line[i]=std::tolower(line[i]);
         
         
+        auto value = std::string_view(line).substr(delim+1);
+        
+//          std::string_view value(line);
+//          value.substr(value.begin());
+        
+        //Find the trailing and leading whitespace on the header value
+        auto vb = value.find_first_not_of(' ');
+        auto ve = value.find_last_not_of(' ');
+//         
         headers_.insert(std::make_pair(
             std::string_view(line).substr(0, (delim)),
-            std::string_view(line).substr((delim+1))
+            value.substr(vb,ve-vb+1)
         ));
         
 
-//         if( std::string_view(line).substr(0, (delim)) == "content-length")
-//             return stoi(line.substr(delim+1));
-        
+
         
         if(ss.eof())
             return;

@@ -41,7 +41,7 @@ using json = nlohmann::json;
 
 //Used to allow caching until server brough back
 //TODO: Make this more robust
-std::string eTag = std::to_string(rand() % 1000000);
+std::string eTag = "\""+std::to_string(rand() % 1000000)+"\"";
 
 
 struct InstanceArgs{
@@ -88,8 +88,8 @@ void handleInit_ls(int sockfd, const CommandRunner<GraphType::GD>& CR)
     res.setHeaders({
         {"Access-Control-Allow-Origin","*"},
         {"Content-Type", "application/json"},
-        {"ETag", "\""+eTag+"\""},
-        {"Cache-Control", "max-age=0"}
+        {"ETag", eTag},
+        {"Cache-Control", "max-age=20"}
     });
     
     json queryString = {{"cmd" ,"ls"}};
@@ -142,27 +142,37 @@ void* handlerDispatch(void* args)
     req.rec(sockfd);
     
     
-    for(const auto& e : req.getHeaders())
-        std::cout<<e.first<<" | "<<e.second<<std::endl;
-        
-    std::cout<<req.getBody()<<std::endl;
-    
-    
+//     for(const auto& e : req.getHeaders())
+//         std::cout<<e.first<<" | "<<e.second<<std::endl;
+//         
+//     std::cout<<req.getBody()<<std::endl;
+//     
+//     
     std::string uri=  req.getURI();//getResource(req.first);
+    std::cout<<"URI = :"<<uri<<std::endl;
     
     CommandRunner<GraphType::GD> CR(*G, *VC);
     
     //Get resouce requested
-    
+    //std
     //Special cases ex:cacheable ls
-    if(uri=="ls")
+    if(uri=="/ls")
     {
 //         Response R;
 //         R.addHeader("ETag: " + eTag);
         
+//         for(const auto& ee : req.getHeaders())
+//             std::cout<<"<"<<ee.first<<">"<<" "<<"<"<<ee.second<<">"<<std::endl; 
+        
         
         //Check the Etag and match
         auto it = req.getHeaders().find("if-none-match"); //keys stored as lowercase
+        
+//         if(it != req.getHeaders().end())
+//         {
+//             std::cout<<"<"<<it->first<<">"<<" : "<<"<"<<it->second<<">"<<" ::: "<<"<"<<eTag<<">"<<std::endl;
+//         }
+        
         if(it != req.getHeaders().end() && it->second == eTag  )
         {
             Http res;
