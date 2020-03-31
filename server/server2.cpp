@@ -17,6 +17,7 @@
 #include "ViewCache.h"
 
 #include "Response.h"
+#include "Http.h"
 
 #include <nlohmann/json.hpp>
 
@@ -31,159 +32,30 @@ using json = nlohmann::json;
 #define MAX_CON 2048
 
 
-#define BUFFER_SIZE 64
+#define BUFFER_SIZE 1024
 #define WBUFFER_SIZE 4096
 
 
 
+//TODO: Make simple http classes for request and response
 
+//Used to allow caching until server brough back
+//TODO: Make this more robust
+std::string eTag = std::to_string(rand() % 1000000);
 
 
 struct InstanceArgs{
     int sockfd;
     const Graph* G;
-//     std::string payload;
     ViewCache<GraphType::GD>* VC;
-    
 };
 
-int getContentLength(std::string header)
+
+void basicHandler(int sockfd, const CommandRunner<GraphType::GD>& CR, const Http& req)
 {
-// //     std::cout<<"HEADER " <<header<<std::endl;
-    std::stringstream ss(header);
-//     ss>>header;
+    json query = json::parse(req.getBody());
     
-    while(true)
-    {
-        std::string line;
-        getline(ss,line);
-
-        auto delim = line.find(':');
-        
-        //No delimiter, possibly first line
-        if(delim == std::string::npos)
-            continue;
-        
-        for(size_t i=0; i<delim; ++i)
-            line[i]=std::tolower(line[i]);
-        
-
-        if( std::string_view(line).substr(0, (delim)) == "content-length")
-            return stoi(line.substr(delim+1));
-        
-        
-        if(ss.eof())
-            return -1;
-
-    }
-    
-//     auto it = header.find("");
-}
-
-std::pair<std::string,std::string> readHttp(int sockfd)
-{
-    std::string header;
-    std::string body;
-    
-    auto headerDelim = {'\r','\n','\r','\n'};
-    
-    while(true)
-    {
-        std::array<char,BUFFER_SIZE> r_buffer;//[BUFFER_SIZE];
-        int n = read(sockfd, r_buffer.data(), BUFFER_SIZE-1);
-        if(n < 0){  
-            perror("Read Error:");
-        }  
-        r_buffer.data()[n] ='\0';
-        
-        header += std::string(r_buffer.data());
-        
-        //look for the  "\r\n\r\n" sequence
-//         auto it = std::search(header.begin(), header.end(),  headerDelim.begin(), headerDelim.end());
-        auto it = header.find("\r\n\r\n");
-        
-         if(it != std::string::npos)//Entire header read
-         {
-             //if some of body read, move to correct location
-             
-             body = header.substr(it+4);
-             header.resize(it);
-             
-             break;
-         }   
-
-    }
-    
-    int contentLength = getContentLength(header);
-//     std::cout<<contentLength<<std::endl;
-//     std::cout<<header<<std::endl;
-    
-    //Get rest of body
-    while(true)
-    {
-        std::array<char,BUFFER_SIZE> r_buffer;
-        int receivedLength=body.size();
-      
-        if (receivedLength == contentLength)
-            break;
-        
-        int n = read(sockfd, r_buffer.data(), BUFFER_SIZE-1);
-        if(n < 0){  
-            perror("Read Error:");
-        }  
-        r_buffer.data()[n] ='\0';
-        
-//         std::cout<<"READ "<<std::string(r_buffer.data())<<std::endl;
-        body += std::string(r_buffer.data());
-    }
-    
-    
-    
-    return std::make_pair(header, body);
-}
-
-//TODO rename to query or somethign like that
-void *serverInstance(void *args)
-{
-    InstanceArgs argsE = *((InstanceArgs*)args);
-    int sockfd= ((struct InstanceArgs*)args)->sockfd;// *(int*)sockfd;
-    const Graph* G = ((struct InstanceArgs*)args)->G;
-    ViewCache<GraphType::GD>* VC =  ((struct InstanceArgs*)args)->VC;
-    CommandRunner<GraphType::GD> CR(*G, *VC);
-
-    auto req = readHttp(sockfd);
-
-    json queryString = json::parse(req.second);
-    std::vector< GraphType::GD::VersionIndex> versions = queryString["versions"].template get<std::vector<GraphType::GD::VersionIndex>>();
-    std::vector<GraphType::GD::Index> vertexLabels = queryString["vertexLabels"].template get<std::vector<GraphType::GD::Index>>();
-    std::vector<GraphType::GD::Index> edgeLabels = queryString["edgeLabels"].template get<std::vector<GraphType::GD::Index>>();    
-            
-    
-             
-    json queryResponse = CR.run(queryString);
-                
-
-    auto RF =  Response().formatResponse(queryResponse.dump());
-    
-
-
-    
- 
-    int n = write(sockfd, RF.c_str(), RF.size()-1);
-    if(n < 0){  
-        perror("Write Error:");
-    }  
-    
-    close(sockfd);
-    return (0);
-
-}
-
-void* basicHandler(int sockfd, const Graph& G,  ViewCache<GraphType::GD>& VC, std::string queryString)
-{
-    json query = json::parse(queryString);
-    
-    CommandRunner<GraphType::GD> CR(G, VC);
+//     CommandRunner<GraphType::GD> CR(G, VC);
 
 //     std::vector< GraphType::GD::VersionIndex> versions = query["versions"].template get<std::vector<GraphType::GD::VersionIndex>>();
 //     std::vector<GraphType::GD::Index> vertexLabels = query["vertexLabels"].template get<std::vector<GraphType::GD::Index>>();
@@ -193,38 +65,136 @@ void* basicHandler(int sockfd, const Graph& G,  ViewCache<GraphType::GD>& VC, st
              
     json queryResponse = CR.run(query);
                 
-
-    auto RF =  Response().formatResponse(queryResponse.dump());
- 
-    int n = write(sockfd, RF.c_str(), RF.size()-1);
-    if(n < 0){  
-        perror("Write Error:");
-    }  
+    Http res;
+    res.setStatus("HTTP/1.1 200 OK");
+    res.setHeaders({
+        {"Access-Control-Allow-Origin","*"},
+        {"Content-Type", "application/json"}
+    });
     
-    close(sockfd);
-    return (0);
+    res.send(sockfd, queryResponse.dump());
+    
+    
+
+//     close(sockfd);
+//     return NULL;
 }
 
 
-// void *handleInit_ls(void *args)
-// {
-//     
-// }
+void handleInit_ls(int sockfd, const CommandRunner<GraphType::GD>& CR)
+{
+    Http res;
+    res.setStatus("HTTP/1.1 200 OK");
+    res.setHeaders({
+        {"Access-Control-Allow-Origin","*"},
+        {"Content-Type", "application/json"},
+        {"ETag", "\""+eTag+"\""},
+        {"Cache-Control", "max-age=0"}
+    });
+    
+    json queryString = {{"cmd" ,"ls"}};
+    json queryResponse = CR.run(queryString);
+    
+//     std::cout<<queryResponse.dump()<<std::endl;
+    
+    res.send(sockfd, queryResponse.dump());
+
+//     response.headers().add<Http::Header::ETag>(eTag);
+// 
+//         
+//     if( !request.headers().has<Http::Header::IfNoneMatch>() ||
+//         !(request.headers().get<Http::Header::IfNoneMatch>()->value() == eTag)
+//     )
+//     {
+//         std::cout<<"has "<<request.headers().has<Http::Header::IfNoneMatch>()<<std::endl;
+//         if(request.headers().has<Http::Header::IfNoneMatch>())
+//             std::cout<<request.headers().get<Http::Header::IfNoneMatch>()->value()<<std::endl;
+    
+//     Response R;
+    
+    
+    //Check the etag
+//     if()
+//     {
+//         R.addHeader("ETag: " + eTag);
+//         
+//         json queryString = {{"cmd" ,"ls"}};
+//         json queryResponse = CR.run(queryString);
+//         response.send(Http::Code::Ok, queryResponse.dump());
+//     }
+//     else
+//     {
+//         response.send(Http::Code::Not_Modified, "");
+//     }
+}
 
 
 void* handlerDispatch(void* args)
 {
     int sockfd = ((struct InstanceArgs*)args)->sockfd;
-    auto req = readHttp(sockfd);
-     
-    
-    //Special case
-    
-    //Default
     const Graph* G = ((struct InstanceArgs*)args)->G;
     ViewCache<GraphType::GD>* VC =  ((struct InstanceArgs*)args)->VC;
-    return basicHandler(sockfd, *G, *VC, req.second);
-//     return serverInstance(args);
+    
+//     auto req = readHttp(sockfd);
+    
+    
+    Http req;
+    req.rec(sockfd);
+    
+    
+    for(const auto& e : req.getHeaders())
+        std::cout<<e.first<<" | "<<e.second<<std::endl;
+        
+    std::cout<<req.getBody()<<std::endl;
+    
+    
+    std::string uri=  req.getURI();//getResource(req.first);
+    
+    CommandRunner<GraphType::GD> CR(*G, *VC);
+    
+    //Get resouce requested
+    
+    //Special cases ex:cacheable ls
+    if(uri=="ls")
+    {
+//         Response R;
+//         R.addHeader("ETag: " + eTag);
+        
+        
+        //Check the Etag and match
+        auto it = req.getHeaders().find("if-none-match"); //keys stored as lowercase
+        if(it != req.getHeaders().end() && it->second == eTag  )
+        {
+            Http res;
+            res.setStatus("HTTP/1.1 304 Not Modified");
+            res.setHeaders({
+                {"Access-Control-Allow-Origin","*"},
+                {"Content-Type", "application/json"}
+            });
+            res.send(sockfd, "");
+        }
+        else
+        {
+            handleInit_ls(sockfd, CR);
+        }
+        
+
+
+            
+        
+    }
+    else //Default
+    {
+    
+    
+       
+
+        basicHandler(sockfd, CR, req);
+    }
+    
+    close(sockfd);
+    return (0);
+
 }
 
 int startServer_hgraph(int portNumber, int threads, const Graph* G,  ViewCache<GraphType::GD>* VC)
