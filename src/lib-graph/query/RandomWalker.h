@@ -243,12 +243,23 @@ Walk<GT> RandomWalker<GT>::walk(typename  GT::Calc alpha, typename  GT::Calc eps
     for(typename GT::Index i=0; i<result.second.size(); ++i)
         retVal.push_back(VertexHP<GT>(i, result.second[i]));
 
+
+    std::stringstream ss;
+    ss<<"[" 
+    <<"{\"alpha\": "<<alpha<<"},"
+    <<"{\"epsilon\": " <<epsilon<<"},"
+    <<"{\"iter\": " <<result.first<<"}"
+    <<"]";
+    
+//     return ss.str();
+    
+//     std::string header = std::string("[") 
+//     +"{\"alpha\": " + std::to_string(alpha) + "},"
+//     + "{\"epsilon\": " + std::to_string(epsilon) + "},"
+//     + "{\"iter\": " + std::to_string(result.first) +"}"
+//     + "]";
 //     
-    std::string header = std::string("PageRank Result; ") 
-    + "alpha " + std::to_string(alpha) + "; "
-    + "epsilon " + std::to_string(epsilon) + "; "
-//     + "version " + std::to_string(version) + "; "
-    + "convergence " + std::to_string(result.first) + "; ";
+    
 // 
-     return retVal.setHeader(header);
+     return retVal.setHeader(ss.str());
 }

@@ -5,6 +5,7 @@
 #include <nlohmann/json.hpp>
 
 #include <algorithm>
+#include <chrono>
 using json = nlohmann::json;
 
 template<class GT>
@@ -143,15 +144,23 @@ namespace Commands
 //         std::cout<<"RWR RUN"<<std::endl;
 //         IntegratedViewer<GT> IV(graph);
 //         IV.buildView(versions, VertexLab(vertexLabels), EdgeLab(edgeLabels));
+        auto start = std::chrono::high_resolution_clock::now();
         IntegratedViewer<GT> IV = viewCache.lookup(versions, VertexLab(vertexLabels), EdgeLab(edgeLabels)) ;
+        auto duration = std::chrono::high_resolution_clock::now() - start;
+        long long tIntegrateUs = std::chrono::duration_cast<std::chrono::microseconds>(duration).count();
+        
 //         std::cout<<"finished lookup"<<std::endl;
 //         retVal["viewHash"] = viewCache.generate_uid(versions, VertexLab(vertexLabels), EdgeLab(edgeLabels));
         
         RandomWalker<GT> RW(IV);
+       
         typename RandomWalker<GT>::Args_Walk args_walk{args["alpha"], args["epsilon"], GraphList<VertexS<GT>>()};
-        
-
+     
+        start = std::chrono::high_resolution_clock::now();
         auto res = RW.walk(GraphList<VertexS<GT>>(source), args_walk);
+        duration = std::chrono::high_resolution_clock::now() - start;
+        long long tcomputeUs = std::chrono::duration_cast<std::chrono::microseconds>(duration).count();
+        
         res.sort(Sort::valueDec);
         res.resize(std::min(size_t(args["topk"]), res.size()));
         
@@ -177,6 +186,12 @@ namespace Commands
         
 //         viewCache.lookupDone(versions, VertexLab(vertexLabels), EdgeLab(edgeLabels)) ;
 //         std::cout<<args<<"Query Finished"<<std::endl;
+        
+        //Populate the debug info
+        retVal["debug"]["rwr"] = json::parse(res.getHeader()); //Json formatted string
+        retVal["debug"]["timing"] = {{"integrate",tIntegrateUs}, {"compute",tcomputeUs}};
+        
+        
         return retVal;
     }
     
