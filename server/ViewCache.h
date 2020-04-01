@@ -20,6 +20,14 @@ struct Entry
     }
 };
 
+struct TrackerEntry
+{
+    std::string key_;
+    int numActive_;
+    time_t lastUsed_;
+};
+
+
 //TODO: MAKE THIS THREAD SAFE
 template<class GT>
 class ViewCache
@@ -59,7 +67,9 @@ class ViewCache
 //         std::map<std::string, IntegratedViewer<GT>> views_;
         
         std::map<std::string, Entry<GT>> views_;
-        std::map<std::string, int> viewUsers_;
+        std::map<std::string, TrackerEntry> users_;
+        
+//         std::map<std::string, int> viewUsers_;
         
         std::vector< std::pair<time_t, std::string>> accessHeap_;
 };
@@ -70,42 +80,66 @@ ViewCache<GT>::ViewCache(const VGraph<GT>& graph, int cacheSize)
     activeCount = 0;
     cacheSize_ = cacheSize;
     views_ = std::map<std::string, Entry<GT>>();
-    viewUsers_ = std::map<std::string, int>();
+//     viewUsers_ = std::map<std::string, int>();
     graph_= &graph;
 }
 
 template<class GT>
 bool ViewCache<GT>::full()const
 {
-    return viewUsers_.size() >= cacheSize_;
+//     return viewUsers_.size() >= cacheSize_;
 }
 
 template<class GT>
 void ViewCache<GT>::clean()
 {
-    std::cout<<"SB "<<views_.size()<<std::endl;
-//     #pragma omp critical
+//     std::cout<<"SB "<<views_.size()<<std::endl;
+    std::vector<TrackerEntry> viewsToRemove;
+    
+    
+    if(views_.size()>cacheSize_)
     {
-        if(views_.size()>cacheSize_)
+        for(const auto& e : users_)
+            viewsToRemove.push_back(e.second);
+        
+        std::sort(viewsToRemove.begin(), viewsToRemove.end(), [](const auto& lhs, const auto& rhs){return lhs.lastUsed_<rhs.lastUsed_;});
+        
+        for(int i=0; i<viewsToRemove.size()/2; ++i)
         {
-        //     sleep(10);
-        //     for(const auto& e : views_)
-            for(auto it=views_.begin(); it!=views_.end() ;++it)
+            if(viewsToRemove[i].numActive_==0)
             {
-                auto numUsers = viewUsers_.find(it->first);
-                //if (it->second.users_ == 0)
-                if(numUsers->second ==0)
-                {
-                    //THE ORDER OF ERASE SEEMS TO MATTER?!
-                    viewUsers_.erase(numUsers);
-                    views_.erase(it);
-                    
-                }
-        //             views_.erase(e);
+                users_.erase(viewsToRemove[i].key_);
+                views_.erase(viewsToRemove[i].key_);
             }
         }
     }
-    std::cout<<"SA "<<views_.size()<<std::endl;
+    
+
+//     #pragma omp critical
+//     {
+//         if(views_.size()>cacheSize_)
+//         {
+//         //     sleep(10);
+//         //     for(const auto& e : views_)
+//             for(auto it=views_.begin(); it!=views_.end() ;++it)
+//             {
+//                   auto numUsers = viewUsers_.find(it->first);
+//                   auto numUsersV = viewUsers_.at(it->first);
+//                 std::cout<<it->first<<" : "<<numUsersV<<std::endl;
+//               
+//                 //if (it->second.users_ == 0)
+//                 if(numUsers->second ==0)
+//                 {
+//                     //THE ORDER OF ERASE SEEMS TO MATTER?!
+//                     viewUsers_.erase(numUsers);
+//                     views_.erase(it);
+//                     
+//                 }
+//         //             views_.erase(e);
+//             }
+//         }
+//     }
+//     std::cout<<"SA "<<views_.size()<<std::endl;
 }
 
 //Used when a version is queried while it exists, always increases the timestamp, thus can bubble up the larger of its children recursively after updating 
@@ -155,20 +189,23 @@ IntegratedViewer<GT>& ViewCache<GT>::lookup(const std::vector<typename GT::Versi
 template<class GT>
 void ViewCache<GT>::lockView(const std::vector<typename GT::VersionIndex>& versions, const VertexLabel<GT>& nodeLabels, const EdgeLabel<GT>& edgeLabels)
 {
+
+    
 //     #pragma omp critical
     {
 //         std::cout<<"BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"<<std::endl;
         
         std::string key= generate_key(versions, nodeLabels, edgeLabels);
-        auto v = viewUsers_.find(key);
+        auto v = users_.find(key);
         
-        if(v == viewUsers_.end())
+        if(v == users_.end())
         {
-            viewUsers_.insert(std::make_pair(key, 1));
+            users_.insert(std::make_pair(key, TrackerEntry{key, 1,time(NULL)}));
         }
         else
         {
-            ++v->second;
+            users_[key] = {key, users_[key].numActive_+1, time(NULL)};
+//             ++v->second;
         }
         
          
@@ -182,11 +219,11 @@ void ViewCache<GT>::unlockView(const std::vector<typename GT::VersionIndex>& ver
     {
 //         std::cout<<"CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"<<std::endl;
         std::string key= generate_key(versions, nodeLabels, edgeLabels);
-       auto v = viewUsers_.find(key);
+       auto v = users_.find(key);
 //          auto v = viewUsers_.at(key);
          
-        
-        --v->second;
+         users_[key].numActive_-=1;
+        //--v->second;
         
 //         if(v->second == 0)
 //         {

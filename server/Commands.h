@@ -23,6 +23,7 @@ namespace Commands
         json ret;
         
         auto jsArr = json::array();
+        
 
         //Version data
         for(typename GT::VersionIndex i=0; i< graph.size().versions_; ++i)
@@ -94,7 +95,7 @@ namespace Commands
         typename RandomWalker<GT>::Args_Walk args_walk{args["alpha"], args["epsilon"], GraphList<VertexS<GT>>()};
         
 
-        std::cout<<args["source"]<<std::endl;
+//         std::cout<<args["source"]<<std::endl;
         std::vector<VertexS<GT>> source  = (args["source"]);
         std::cout<<GraphList<VertexS<GT>>(source);
         std::cout<<source.size()<<std::endl;
@@ -125,7 +126,7 @@ namespace Commands
 
         }
         
-        std::cout<<"Query Finished"<<std::endl;
+//         std::cout<<"Query Finished"<<std::endl;
         return retVal;
     }
     
@@ -138,7 +139,7 @@ namespace Commands
         std::vector<typename GT::Index> edgeLabels = args["edgeLabels"].get<std::vector<typename GT::Index>>();
         std::vector<VertexS<GT>> source  = (args["source"]);
         
-        
+//         std::cout<<args<<std::endl;
 //         std::cout<<"RWR RUN"<<std::endl;
 //         IntegratedViewer<GT> IV(graph);
 //         IV.buildView(versions, VertexLab(vertexLabels), EdgeLab(edgeLabels));
@@ -175,7 +176,7 @@ namespace Commands
         }
         
 //         viewCache.lookupDone(versions, VertexLab(vertexLabels), EdgeLab(edgeLabels)) ;
-        std::cout<<"Query Finished"<<std::endl;
+//         std::cout<<args<<"Query Finished"<<std::endl;
         return retVal;
     }
     

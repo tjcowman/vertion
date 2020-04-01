@@ -6,7 +6,7 @@ from time import sleep
 import random
 from random import sample 
 import threading
-
+import copy
 #let command = {cmd:"rwr2", versions:versions, alpha:Number(this.state.alpha), epsilon:Number(epsilon), 
     #topk:Number(this.state.topk), source:selectedNodes, mode:"el",
     #vertexLabels:  [...this.props.versionCardsO.cards[this.props.activeVersionCard].labelsV_s],
@@ -61,7 +61,7 @@ def main():
  
     for i in range(256):
         #sleep(.00001)
-        req = requestArgs
+        req = copy.deepcopy(requestArgs)
         req["versions"] = sample(versionPool,versionSize)
         #req["source"] = nodeToJson(sample(sourcePool,1))
         req["source"] = list(map(lambda x: nodeToJson(x),sample(sourcePool,1)))

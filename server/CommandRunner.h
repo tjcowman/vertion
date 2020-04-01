@@ -17,8 +17,8 @@ template<class GT>
 void from_json(const json& j, VertexS<GT>& v)
 {
 //     std::cout<<"HI"<<std::endl;
-    std::cout<<j<<std::endl;
-    std::cout<<j["i"]<<" "<<j["v"]<<std::endl;
+//     std::cout<<j<<std::endl;
+//     std::cout<<j["i"]<<" "<<j["v"]<<std::endl;
     
     j["i"].get_to(v.index_);
     j["v"].get_to(v.value_);

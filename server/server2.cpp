@@ -29,7 +29,7 @@ namespace fs = std::experimental::filesystem;
 using json = nlohmann::json;
 
 
-#define MAX_CON 2048
+//#define MAX_CON 2048
 
 
 
@@ -233,10 +233,10 @@ int startServer_hgraph(int portNumber, int threads, const Graph* G,  ViewCache<G
     if (bind(sockfd, (struct sockaddr *) &serv_addr,
         sizeof(serv_addr)) < 0) 
         std::cout<<"ERROR on binding";
-    listen(sockfd,1024);
+    listen(sockfd,50);
     clilen = sizeof(cli_addr);
     
-std::cout<<"threads "<<threads<<std::endl;
+// std::cout<<"threads "<<threads<<std::endl;
   
     pthread_t thread_id[threads];
     int i = 0;
@@ -245,7 +245,7 @@ std::cout<<"threads "<<threads<<std::endl;
     {
         int newsockfd = accept(sockfd,(struct sockaddr *) &cli_addr, &clilen);
         if (newsockfd < 0) 
-            std::cout<<"ERROR on accept";
+            std::cout<<"ERROR on accept"<<std::endl;
         
         
         InstanceArgs* args = new InstanceArgs;
@@ -255,11 +255,12 @@ std::cout<<"threads "<<threads<<std::endl;
 
     
         if( pthread_create(&thread_id[i], NULL, handlerDispatch,  (void*)args) != 0 )
-           printf("Failed to create thread\n");
+            std::cout<<"Failed to create thread"<<std::endl;
+           //printf("Failed to create thread\n");
         
         ++i;
         
-//         std::cout<<"i "<<i<<std::endl;
+//          std::cout<<"i "<<i<<std::endl;
         //Once n threads have been created wait until they all finish
         if( i >= (threads))
         {
@@ -272,7 +273,11 @@ std::cout<<"threads "<<threads<<std::endl;
             }
             //Run a viewCache Cleanup
             pthread_mutex_lock(&lock);
+// std::cout<<"cleanb"<<std::endl;
+//sleep(1);
             VC->clean();
+            
+//             std::cout<<"cleana"<<std::endl;
             pthread_mutex_unlock(&lock);
             i = 0;
         }
@@ -323,7 +328,7 @@ int main(int argc, char* argv[] )
     IO.read_serial(args.graph);
     ViewCache<GraphType::GD> VC(G, args.cacheSize);
     
-//     std::cout<<G.size()<<std::endl;
+     std::cout<<G.size()<<std::endl;
     startServer_hgraph(args.port, args.threads, &G, &VC);
 
 
