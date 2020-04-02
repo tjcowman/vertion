@@ -318,7 +318,7 @@ int main(int argc, char* argv[] )
      
      if(args.cacheSize<args.threads)
      {
-         args.cacheSize = args.threads;
+         args.cacheSize = args.threads+1; //TODO: BUG?: Cache size needs to be > 2xnum of possible threads
         std::cout<<"[warn] cacheSize increased to "<<args.cacheSize<<std::endl;
      }
     

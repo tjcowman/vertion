@@ -239,7 +239,9 @@ template<class GT>
 std::string ViewCache<GT>::generate_key(const std::vector<typename GT::VersionIndex>& versions, const VertexLabel<GT>& nodeLabels, const EdgeLabel<GT>& edgeLabels)
 {
     std::string s;
-    for(const auto& e : versions)
+    auto tmp = versions;
+    std::sort(tmp.begin(),tmp.end());
+    for(const auto& e : tmp)
         s.append(std::to_string(e));
     s.append(std::to_string(nodeLabels.getBits().to_ulong()));
     s.append(std::to_string(edgeLabels.getBits().to_ulong()));

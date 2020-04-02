@@ -191,6 +191,10 @@ namespace Commands
         retVal["debug"]["rwr"] = json::parse(res.getHeader()); //Json formatted string
         retVal["debug"]["timing"] = {{"integrate",tIntegrateUs}, {"compute",tcomputeUs}};
         
+        auto viewSize = IV.size();
+        retVal["debug"]["rwr"]["nodes"] = viewSize.first; 
+        retVal["debug"]["rwr"]["edges"] = viewSize.second;
+        
         
         return retVal;
     }

@@ -16,6 +16,9 @@ class IntegratedViewer
     public:
         IntegratedViewer(const VGraph<GT>& graph);
         
+        //returns size as a pair of numnodes and numedges
+        std::pair<size_t, size_t> size()const;
+        
         void clear();
         
         void describe(std::ostream& os);
@@ -79,6 +82,12 @@ void IntegratedViewer<GT>::describe(std::ostream& os)
     for(const auto& e : IA_)
         std::cout<<e<<" ";
     std::cout<<std::endl;
+}
+
+template<class GT>
+std::pair<size_t, size_t> IntegratedViewer<GT>::size()const
+{
+    return std::make_pair(IA_.size(), A_.size());
 }
 
 template<class GT>
