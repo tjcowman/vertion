@@ -245,12 +245,13 @@ Walk<GT> RandomWalker<GT>::walk(typename  GT::Calc alpha, typename  GT::Calc eps
 
 
     std::stringstream ss;
-    ss<<"[" 
-    <<"{\"alpha\": "<<alpha<<"},"
-    <<"{\"epsilon\": " <<epsilon<<"},"
-    <<"{\"iter\": " <<result.first<<"}"
-    <<"]";
+    ss<<"{" 
+    <<"\"alpha\": "<<alpha<<", "
+    <<"\"epsilon\": " <<epsilon<<", "
+    <<"\"iter\": " <<result.first<<""
+    <<"}";
     
+//     std::cout<<ss.str()<<std::endl;
 //     return ss.str();
     
 //     std::string header = std::string("[") 

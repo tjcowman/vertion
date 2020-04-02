@@ -8,6 +8,7 @@ from random import sample
 import threading
 import copy
 import argparse
+import json
 #let command = {cmd:"rwr2", versions:versions, alpha:Number(this.state.alpha), epsilon:Number(epsilon), 
     #topk:Number(this.state.topk), source:selectedNodes, mode:"el",
     #vertexLabels:  [...this.props.versionCardsO.cards[this.props.activeVersionCard].labelsV_s],
@@ -28,7 +29,7 @@ random.seed(900)
 
 url = 'http://localhost:9060'
 versionPool = range(1,26)
-sourcePool = range(1,1000)
+sourcePool = range(1,100000)
 
 
 
@@ -60,7 +61,7 @@ def generateQuery():
     req["source"] = list(map(lambda x: nodeToJson(x),sample(sourcePool,1)))
     
     
-    return str(req).replace(" ", "").replace("\'","\"")
+    return  str(req["versions"]), str(req["source"]), str(req).replace(" ", "").replace("\'","\"")
     
 
 
@@ -68,21 +69,29 @@ def generateQuery():
 def sendQuery():
     ts = time.perf_counter()
     
-    r = requests.post(url, generateQuery())
+    ver, src,  Q = generateQuery()
+    r = requests.post(url, Q)
     
     timeTaken = time.perf_counter() - ts
     
+    #print(r.content.decode('UTF-8'))
     #parse the returned data for 
-    stats = r.json();
+    stats = json.loads(r.content) 
     
-    print(stats)
-    
+
     with open(args.out, "a") as out:
-        out.write(str(timeTaken) + "\n")
+        out.write(str(timeTaken) + "\t")
+        out.write(args.ver + "\t" + args.conn + "\t" + ver + "\t" + src + "\t")
+        out.write(str(stats["debug"]['rwr']["iter"]) + "\t" + str(stats["debug"]['timing']["compute"]) + "\t" + str(stats["debug"]['timing']["integrate"]) + "\n")
+        
 
 
 
 def main():
+    
+    with open(args.out, "a") as out:
+        out.write('\t'.join(["pytime", "Versions", "Connections", "VersionsL", "Source", "Iterations", "Compute Time", "Integrate Time"]) + "\n")
+    
     threads = list()
  
     for i in range(0, int(args.conn)):
