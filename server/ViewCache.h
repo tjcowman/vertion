@@ -128,7 +128,11 @@ IntegratedViewer<GT>& ViewCache<GT>::lookup(const std::vector<typename GT::Versi
     std::string key= generate_key(versions, nodeLabels, edgeLabels);
     IntegratedViewer<GT> viewProspective(*graph_); 
     
+    pthread_mutex_lock(&lock);
     auto v = views_.find(key);
+    pthread_mutex_unlock(&lock);
+    
+    
     if(v == views_.end())
         viewProspective.buildView(versions, nodeLabels,edgeLabels); 
             

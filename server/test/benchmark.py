@@ -12,19 +12,16 @@ import argparse
 import json
 import math
 import numpy as npr
-#let command = {cmd:"rwr2", versions:versions, alpha:Number(this.state.alpha), epsilon:Number(epsilon), 
-    #topk:Number(this.state.topk), source:selectedNodes, mode:"el",
-    #vertexLabels:  [...this.props.versionCardsO.cards[this.props.activeVersionCard].labelsV_s],
-    #edgeLabels:  [...this.props.versionCardsO.cards[this.props.activeVersionCard].labelsE_s]
-#}; 
+
 
 parser = argparse.ArgumentParser()
 
+parser.add_argument('--replicates', required=True)
 
-parser.add_argument('--conn', required=True)
-parser.add_argument('--ver', required=True)
+parser.add_argument('--connections', required=True)
+parser.add_argument('--versions', required=True)
 parser.add_argument('--out', required=True)
-parser.add_argument('--sigmaOpNorm', required=True)
+parser.add_argument('--sigmaOpNorms', required=True)
 
 args = parser.parse_args()
 
@@ -39,31 +36,57 @@ random.shuffle(versionPool)
 
 sourcePool = range(1,100000)
 
-#normProbs = list(range(len(versionPool)))
+#normProbs= npr.zeros(len(versionPool))
+#mu = len(normProbs)/2
+#sigma = float(args.sigmaOpNorm)*len(versionPool)
 
-normProbs= npr.zeros(len(versionPool))
-mu = len(normProbs)/2
-sigma = float(args.sigmaOpNorm)*len(versionPool)
+#print("Real Sigma",sigma)
 
-print("Real Sigma",sigma)
-
-def norm(x):
+def norm(x, sigma, mu):
     e1 = 1/(sigma*math.sqrt(2*math.pi))
     ep = pow(math.e, (-.5 * pow(((x-mu)/sigma),2 )))
     return e1* ep
 
 
 
-for i in range(len(normProbs)):
-    #print(i)
-    normProbs[i] = norm(i+1)
-    #round(norm(i),6)
+#for i in range(len(normProbs)):
+    ##print(i)
+    #normProbs[i] = norm(i+1)
+    ##round(norm(i),6)
 
 
-normProbs /= normProbs.sum()
+#normProbs /= normProbs.sum()
 
-print(versionPool)
-print(normProbs)
+
+
+def generateProbs(sigmaOpNorm):
+    
+    normProbs= npr.zeros(len(versionPool))
+
+    mu = len(normProbs)/2
+    sigma = float(sigmaOpNorm)*len(versionPool)
+
+
+
+    for i in range(len(normProbs)):
+        normProbs[i] = norm(i+1, sigma, mu)
+    
+    normProbs /= normProbs.sum()
+    
+    print(normProbs)
+    
+    return(normProbs)
+
+
+
+#normProbs /= normProbs.sum()
+
+
+#print(versionPool)
+
+
+
+
 
 requestArgsDefault = {
     "versions" : [1],
@@ -87,12 +110,12 @@ def nodeToJson(index):
         "v" : 1
     }
 
-def generateQuery():
+def generateQuery(normProbs, numVersions):
     req = copy.deepcopy(requestArgsDefault)
     
     #print(npr.random.choice(versionPool, int(args.ver), normProbs))
     
-    req["versions"] = list(npr.random.choice(versionPool, int(args.ver), p=normProbs, replace=False))
+    req["versions"] = list(npr.random.choice(versionPool, numVersions, p=normProbs, replace=False))
     #req["source"] = list(map(lambda x: nodeToJson(x),sample(sourcePool,1)))
     
     
@@ -101,28 +124,38 @@ def generateQuery():
 
 
 
-def sendQuery():
+def sendQuery(repId, thrId, sigmaOpNorm, numVersions, numConnections ):
     ts = time.perf_counter()
     
-    ver, src,  Q = generateQuery()
+    normProbs = generateProbs(sigmaOpNorm)
     
-    print(Q)
+    ver, src,  Q = generateQuery(normProbs, numVersions)
     
-    r = requests.post(url, Q)
+    #print(Q)
     
-    timeTaken = time.perf_counter() - ts
-    
-    #print(r.content.decode('UTF-8'))
-    #parse the returned data for 
-    stats = json.loads(r.content) 
-    
-
-    with open(args.out, "a") as out:
-        out.write(args.sigmaOpNorm + "\t")
-        out.write(str(timeTaken) + "\t" + str(stats["debug"]['rwr']['nodes']) + "\t" + str(stats["debug"]['rwr']['edges']))
-        out.write(args.ver + "\t" + args.conn + "\t" + ver + "\t" + src + "\t")
-        out.write(str(stats["debug"]['rwr']["iter"]) + "\t" + str(stats["debug"]['timing']["compute"]) + "\t" + str(stats["debug"]['timing']["integrate"]) + "\n")
+    try:
+        r = requests.post(url, Q)
+    except Exception as e:
+        with open(args.out, "a") as out:
+            out.write('\t'.join(["FAIL", str(repId), str(thrId), str(sigmaOpNorm),
+                                 str(0), str(0), str(0), 
+                                 str(numVersions), str(numConnections) , ver, src,
+                                 str(0), str(0), str(0)
+                                ]) + "\n")
+            
+    else:
+        timeTaken = time.perf_counter() - ts
         
+
+        stats = json.loads(r.content) 
+        
+
+        with open(args.out, "a") as out:
+            out.write('\t'.join(["SUCC", str(repId), str(thrId), str(sigmaOpNorm),
+                                 str(timeTaken), str(stats["debug"]['rwr']['nodes']), str(stats["debug"]['rwr']['edges']),
+                                 str(numVersions), str(numConnections) , ver, src, 
+                                 str(stats["debug"]['rwr']["iter"]), str(stats["debug"]['timing']["compute"]), str(stats["debug"]['timing']["integrate"]),
+                                ]) + "\n")
 
 
 
@@ -131,37 +164,31 @@ def main():
     #write header if blank
     with open(args.out, "a") as out:
         if os.path.getsize(args.out) == 0:
-            out.write('\t'.join(["SigmaNorm", "pytime", "Nodes", "Edges", "Versions", "Connections", "VersionsL", "Source", "Iterations", "Compute Time", "Integrate Time"]) + "\n")
+            out.write('\t'.join(["State", "RepId" ,"SigmaNorm", "pytime", "Nodes", "Edges", "Versions", "Connections", "VersionsL", "Source", "Iterations", "Compute Time", "Integrate Time"]) + "\n")
     
     threads = list()
  
-    for i in range(0, int(args.conn)):
-        #print(generateQuery())
-        #sendQuery()
-        results = threading.Thread(target=sendQuery)
-        threads.append(results)
-        results.start()
  
+    sigmaOpNorms = list(map(lambda x : float(x),str.split(args.sigmaOpNorms, ',')))
+    #print(sigmaOpNorms)
+    versions = list(map(lambda x : int(x),str.split(args.versions, ',')))
+    connections = list(map(lambda x : int(x),str.split(args.connections, ',')))
+    #conns = 
+ 
+    for rep in range(0, int(args.replicates)):
+        for v in versions:
+            for c in connections:
+                for s in sigmaOpNorms:
     
-    for t in threads:
-        t.join()
+                    for i in range(0, c):
+                        results = threading.Thread(target=sendQuery(rep, i, s, v, c))
+                        threads.append(results)
+                        results.start()
+                
+                    
+                    for t in threads:
+                        t.join()
         
-    #versionSize = 2
-    #threads = list()
- 
-    #for i in range(256):
-        ##sleep(.00001)
-        #req = copy.deepcopy(requestArgs)
-        #req["versions"] = sample(versionPool,versionSize)
-        ##req["source"] = nodeToJson(sample(sourcePool,1))
-        #req["source"] = list(map(lambda x: nodeToJson(x),sample(sourcePool,1)))
-        ##time = runIter(requestArgs)
-        ##print(requestArgs)
-        #time = threading.Thread(target=runIter, args=(requestArgs,))
-        #threads.append(time)
-        #time.start()
-        ##print(time)
-    #print("queries sent")
 
 
 if __name__ == "__main__":
