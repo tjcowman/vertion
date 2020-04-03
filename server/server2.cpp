@@ -129,7 +129,7 @@ void* handlerDispatch(void* args)
 //     for(const auto& e : req.getHeaders())
 //         std::cout<<e.first<<" | "<<e.second<<std::endl;
 //         
-//     std::cout<<req.getBody()<<std::endl;
+     std::cout<<req.getBody()<<std::endl;
 //     
 //     
     std::string uri=  req.getURI();//getResource(req.first);

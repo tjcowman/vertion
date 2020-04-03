@@ -38,22 +38,22 @@ class ViewCache
     public:
         ViewCache(const VGraph<GT>& graph,  int cacheSize=10);
         
-        friend std::ostream& operator<<(std::ostream& os, const ViewCache& viewCache)
-        {
-            for(const auto e : viewCache.accessHeap_)
-            {
-                os<<e.first<<"\t"<<e.second<<"\n";
-            }
-            
-            return os;
-        }
+//         friend std::ostream& operator<<(std::ostream& os, const ViewCache& viewCache)
+//         {
+//             for(const auto e : viewCache.accessHeap_)
+//             {
+//                 os<<e.first<<"\t"<<e.second<<"\n";
+//             }
+//             
+//             return os;
+//         }
         
         
         bool full()const;
         void clean();
         
         
-        IntegratedViewer<GT>& lookup(const std::vector<typename GT::VersionIndex>& versions, const VertexLabel<GT>& nodeLabels, const EdgeLabel<GT>& edgeLabels);
+       auto lookup(const std::vector<typename GT::VersionIndex>& versions, const VertexLabel<GT>& nodeLabels, const EdgeLabel<GT>& edgeLabels);
         //TODO: Set up a better way to track number of users of version
         void lockView(const std::vector<typename GT::VersionIndex>& versions, const VertexLabel<GT>& nodeLabels, const EdgeLabel<GT>& edgeLabels);
         void unlockView(const std::vector<typename GT::VersionIndex>& versions, const VertexLabel<GT>& nodeLabels, const EdgeLabel<GT>& edgeLabels);
@@ -75,7 +75,7 @@ class ViewCache
         
 //         std::map<std::string, int> viewUsers_;
         
-        std::vector< std::pair<time_t, std::string>> accessHeap_;
+//         std::vector< std::pair<time_t, std::string>> accessHeap_;
 };
 
 template<class GT>
@@ -100,7 +100,7 @@ void ViewCache<GT>::clean()
 {
 //     std::cout<<"SB "<<views_.size()<<std::endl;
     std::vector<TrackerEntry> viewsToRemove;
-    
+     pthread_mutex_lock(&lock);
     
     if(views_.size()>cacheSize_)
     {
@@ -118,12 +118,13 @@ void ViewCache<GT>::clean()
             }
         }
     }
+    pthread_mutex_unlock(&lock);
 }
 
 
-//NOTE: attempt at fater lookup mutex
+//NOTE: attempt at fater lookup mutex //return iterator not &???????
 template<class GT>
-IntegratedViewer<GT>& ViewCache<GT>::lookup(const std::vector<typename GT::VersionIndex>& versions, const VertexLabel<GT>& nodeLabels, const EdgeLabel<GT>& edgeLabels)
+auto ViewCache<GT>::lookup(const std::vector<typename GT::VersionIndex>& versions, const VertexLabel<GT>& nodeLabels, const EdgeLabel<GT>& edgeLabels)
 {
     std::string key= generate_key(versions, nodeLabels, edgeLabels);
     IntegratedViewer<GT> viewProspective(*graph_); 
@@ -154,7 +155,7 @@ IntegratedViewer<GT>& ViewCache<GT>::lookup(const std::vector<typename GT::Versi
 
     pthread_mutex_unlock(&lock);
     
-    return v2->second.view_;
+    return v2;
 }
 
 // template<class GT>

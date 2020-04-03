@@ -146,7 +146,7 @@ namespace Commands
 //         IV.buildView(versions, VertexLab(vertexLabels), EdgeLab(edgeLabels));
         auto start = std::chrono::high_resolution_clock::now();
         
-        IntegratedViewer<GT> IV = viewCache.lookup(versions, VertexLab(vertexLabels), EdgeLab(edgeLabels)) ;
+        IntegratedViewer<GT> IV = viewCache.lookup(versions, VertexLab(vertexLabels), EdgeLab(edgeLabels))->second.view_ ;
         
         
         auto duration = std::chrono::high_resolution_clock::now() - start;
@@ -217,7 +217,10 @@ namespace Commands
         
         std::vector<typename GT::Index> vertexLabels = args["vertexLabels"].get<std::vector<typename GT::Index>>();
         std::vector<typename GT::Index> edgeLabels = args["edgeLabels"].get<std::vector<typename GT::Index>>();        
-        IntegratedViewer<GT> IV = viewCache.lookup(versions, VertexLab(vertexLabels), EdgeLab(edgeLabels)) ;
+//         IntegratedViewer<GT> IV = viewCache.lookup(versions, VertexLab(vertexLabels), EdgeLab(edgeLabels)) ;
+         IntegratedViewer<GT> IV = viewCache.lookup(versions, VertexLab(vertexLabels), EdgeLab(edgeLabels))->second.view_ ;
+        
+        
         
         
         auto edgeCounts = IV.countEdgeLabels();

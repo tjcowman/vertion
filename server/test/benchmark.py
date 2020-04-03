@@ -164,7 +164,7 @@ def main():
     #write header if blank
     with open(args.out, "a") as out:
         if os.path.getsize(args.out) == 0:
-            out.write('\t'.join(["State", "RepId" ,"SigmaNorm", "pytime", "Nodes", "Edges", "Versions", "Connections", "VersionsL", "Source", "Iterations", "Compute Time", "Integrate Time"]) + "\n")
+            out.write('\t'.join(["State", "RepId", "ThreadId", "SigmaNorm", "pytime", "Nodes", "Edges", "Versions", "Connections", "VersionsL", "Source", "Iterations", "Compute Time", "Integrate Time"]) + "\n")
     
     threads = list()
  
@@ -181,11 +181,12 @@ def main():
                 for s in sigmaOpNorms:
     
                     for i in range(0, c):
-                        results = threading.Thread(target=sendQuery(rep, i, s, v, c))
+                        results = threading.Thread(target=sendQuery, args=(rep, i, s, v, c,))
                         threads.append(results)
                         results.start()
                 
                     
+                    print("sent Queries")
                     for t in threads:
                         t.join()
         

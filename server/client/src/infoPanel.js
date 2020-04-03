@@ -60,7 +60,7 @@ class InfoPanel extends React.Component {
             }
             console.log("command",command)
             
-            Axios.get('http://localhost:9060', JSON.stringify(command)).then((response)=>{
+            Axios.post('http://localhost:9060', JSON.stringify(command)).then((response)=>{
                 console.log("DR", response);
                 
                 //nodes : {label: , count: }

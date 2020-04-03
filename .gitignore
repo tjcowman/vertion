@@ -6,3 +6,5 @@ documentation
 
 server/bin
 server/client/node_modules
+
+server/test/*.res
