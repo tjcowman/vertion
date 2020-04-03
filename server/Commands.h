@@ -145,7 +145,10 @@ namespace Commands
 //         IntegratedViewer<GT> IV(graph);
 //         IV.buildView(versions, VertexLab(vertexLabels), EdgeLab(edgeLabels));
         auto start = std::chrono::high_resolution_clock::now();
+        
         IntegratedViewer<GT> IV = viewCache.lookup(versions, VertexLab(vertexLabels), EdgeLab(edgeLabels)) ;
+        
+        
         auto duration = std::chrono::high_resolution_clock::now() - start;
         long long tIntegrateUs = std::chrono::duration_cast<std::chrono::microseconds>(duration).count();
         
@@ -157,6 +160,7 @@ namespace Commands
         typename RandomWalker<GT>::Args_Walk args_walk{args["alpha"], args["epsilon"], GraphList<VertexS<GT>>()};
      
         start = std::chrono::high_resolution_clock::now();
+//         auto res = Walk<GT>().setHeader("{}");//RW.walk(GraphList<VertexS<GT>>(source), args_walk); //TODO reen
         auto res = RW.walk(GraphList<VertexS<GT>>(source), args_walk);
         duration = std::chrono::high_resolution_clock::now() - start;
         long long tcomputeUs = std::chrono::duration_cast<std::chrono::microseconds>(duration).count();

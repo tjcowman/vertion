@@ -29,7 +29,7 @@ namespace fs = std::experimental::filesystem;
 using json = nlohmann::json;
 
 
-std::ofstream LOG("log.txt");
+// std::ofstream LOG("log.txt");
 
 void TOLOG(std::string message)
 {

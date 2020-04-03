@@ -158,6 +158,7 @@ IntegratedViewer<GT>& ViewCache<GT>::lookup(const std::vector<typename GT::Versi
 
     
     //Check if the view exists
+     pthread_mutex_lock(&lock_);
 //     #pragma omp critical
     {
 //         std::cout<<"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"<<std::endl;
@@ -165,17 +166,16 @@ IntegratedViewer<GT>& ViewCache<GT>::lookup(const std::vector<typename GT::Versi
         std::string key= generate_key(versions, nodeLabels, edgeLabels);
         auto v = views_.find(key);
 
-        
 
         if(v == views_.end())
         {
             IntegratedViewer<GT> view(*graph_); 
-            view.buildView(versions, nodeLabels,edgeLabels);
+            view.buildView(versions, nodeLabels,edgeLabels); 
 //             #pragma omp critical
             {
-                pthread_mutex_lock(&lock_);
+               
                 v = views_.insert(std::make_pair(key, Entry<GT>{view,1 ,time(NULL)})).first;
-                pthread_mutex_unlock(&lock_);
+              
             }
 
         }
@@ -187,7 +187,7 @@ IntegratedViewer<GT>& ViewCache<GT>::lookup(const std::vector<typename GT::Versi
 
 //             for(const auto& e : views_)
 //         e.second.print();
-        
+          pthread_mutex_unlock(&lock_);
         return v->second.view_;
     }
     
