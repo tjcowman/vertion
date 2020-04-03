@@ -6,6 +6,7 @@
 #include <string>
 #include <unordered_map>
 #include <functional>
+#include <pthread.h>
 
 template<class GT>
 struct Entry
@@ -28,12 +29,14 @@ struct TrackerEntry
 };
 
 
+pthread_mutex_t lock;
+
 //TODO: MAKE THIS THREAD SAFE
 template<class GT>
 class ViewCache
 {
     public:
-        ViewCache(const VGraph<GT>& graph, pthread_mutex_t lock,  int cacheSize=10);
+        ViewCache(const VGraph<GT>& graph,  int cacheSize=10);
         
         friend std::ostream& operator<<(std::ostream& os, const ViewCache& viewCache)
         {
@@ -61,7 +64,7 @@ class ViewCache
     private:
         
        
-        pthread_mutex_t lock_;
+//         pthread_mutex_t lock_;
         
         int cacheSize_;
         const VGraph<GT>* graph_;
@@ -76,14 +79,14 @@ class ViewCache
 };
 
 template<class GT>
-ViewCache<GT>::ViewCache(const VGraph<GT>& graph, pthread_mutex_t lock, int cacheSize)
+ViewCache<GT>::ViewCache(const VGraph<GT>& graph, int cacheSize)
 {
     activeCount = 0;
     cacheSize_ = cacheSize;
     views_ = std::map<std::string, Entry<GT>>();
 //     viewUsers_ = std::map<std::string, int>();
     graph_= &graph;
-    lock_ = lock;
+//     lock_ = lock;
 }
 
 template<class GT>
@@ -131,7 +134,7 @@ IntegratedViewer<GT>& ViewCache<GT>::lookup(const std::vector<typename GT::Versi
             
     
     //Check if the view exists
-    pthread_mutex_lock(&lock_);
+    pthread_mutex_lock(&lock);
 
         auto v2 = views_.find(key);
 
@@ -145,7 +148,7 @@ IntegratedViewer<GT>& ViewCache<GT>::lookup(const std::vector<typename GT::Versi
             }
         }
 
-    pthread_mutex_unlock(&lock_);
+    pthread_mutex_unlock(&lock);
     
     return v2->second.view_;
 }
@@ -179,7 +182,7 @@ template<class GT>
 void ViewCache<GT>::lockView(const std::vector<typename GT::VersionIndex>& versions, const VertexLabel<GT>& nodeLabels, const EdgeLabel<GT>& edgeLabels)
 {
 
-    
+     pthread_mutex_lock(&lock);
 //     #pragma omp critical
     {
 //         std::cout<<"BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"<<std::endl;
@@ -199,11 +202,13 @@ void ViewCache<GT>::lockView(const std::vector<typename GT::VersionIndex>& versi
         
          
     }
+     pthread_mutex_unlock(&lock);
 }
 
 template<class GT>
 void ViewCache<GT>::unlockView(const std::vector<typename GT::VersionIndex>& versions, const VertexLabel<GT>& nodeLabels, const EdgeLabel<GT>& edgeLabels)
 {
+     pthread_mutex_lock(&lock);
 //     #pragma omp critical
     {
 //         std::cout<<"CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"<<std::endl;
@@ -221,6 +226,7 @@ void ViewCache<GT>::unlockView(const std::vector<typename GT::VersionIndex>& ver
 // //             views_.erase(key);
 //         }
     }
+     pthread_mutex_unlock(&lock);
 }
 
 

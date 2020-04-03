@@ -46,7 +46,7 @@ using json = nlohmann::json;
 //Used to allow caching until server brough back
 //TODO: Make this more robust
 std::string eTag = "\""+std::to_string(rand() % 1000000)+"\"";
-pthread_mutex_t lock;
+// pthread_mutex_t lock;
 
 struct InstanceArgs{
     int sockfd;
@@ -65,15 +65,15 @@ void basicHandler(int sockfd, const CommandRunner<GraphType::GD>& CR, const Http
     std::vector<GraphType::GD::Index> vertexLabels = query["vertexLabels"].template get<std::vector<GraphType::GD::Index>>();
     std::vector<GraphType::GD::Index> edgeLabels = query["edgeLabels"].template get<std::vector<GraphType::GD::Index>>();    
             
-    pthread_mutex_lock(&lock);
+//     pthread_mutex_lock(&lock);
     CR.viewCache_->lockView(versions, VertexLab(vertexLabels), EdgeLab(edgeLabels)) ;
-    pthread_mutex_unlock(&lock);
+//     pthread_mutex_unlock(&lock);
              
     json queryResponse = CR.run(query);
                 
-    pthread_mutex_lock(&lock);
+//     pthread_mutex_lock(&lock);
     CR.viewCache_->unlockView(versions, VertexLab(vertexLabels), EdgeLab(edgeLabels)) ;
-    pthread_mutex_unlock(&lock);
+//     pthread_mutex_unlock(&lock);
     
     
     Http res;
@@ -262,13 +262,13 @@ int startServer_hgraph(int portNumber, int threads, const Graph* G,  ViewCache<G
 
             }
             //Run a viewCache Cleanup
-            pthread_mutex_lock(&lock);
+//             pthread_mutex_lock(&lock);
 // std::cout<<"cleanb"<<std::endl;
 //sleep(1);
             VC->clean();
             
 //             std::cout<<"cleana"<<std::endl;
-            pthread_mutex_unlock(&lock);
+//             pthread_mutex_unlock(&lock);
             i = 0;
         }
 
@@ -316,7 +316,7 @@ int main(int argc, char* argv[] )
     Graph G(Context::undirected);
     GraphIO IO(G);
     IO.read_serial(args.graph);
-    ViewCache<GraphType::GD> VC(G,  lock, args.cacheSize);
+    ViewCache<GraphType::GD> VC(G, args.cacheSize);
     
      std::cout<<G.size()<<std::endl;
     startServer_hgraph(args.port, args.threads, &G, &VC);
