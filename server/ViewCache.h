@@ -33,7 +33,7 @@ template<class GT>
 class ViewCache
 {
     public:
-        ViewCache(const VGraph<GT>& graph, int cacheSize=10);
+        ViewCache(const VGraph<GT>& graph, pthread_mutex_t lock,  int cacheSize=10);
         
         friend std::ostream& operator<<(std::ostream& os, const ViewCache& viewCache)
         {
@@ -61,6 +61,7 @@ class ViewCache
     private:
         
        
+        pthread_mutex_t lock_;
         
         int cacheSize_;
         const VGraph<GT>* graph_;
@@ -75,13 +76,14 @@ class ViewCache
 };
 
 template<class GT>
-ViewCache<GT>::ViewCache(const VGraph<GT>& graph, int cacheSize)
+ViewCache<GT>::ViewCache(const VGraph<GT>& graph, pthread_mutex_t lock, int cacheSize)
 {
     activeCount = 0;
     cacheSize_ = cacheSize;
     views_ = std::map<std::string, Entry<GT>>();
 //     viewUsers_ = std::map<std::string, int>();
     graph_= &graph;
+    lock_ = lock;
 }
 
 template<class GT>
@@ -169,7 +171,12 @@ IntegratedViewer<GT>& ViewCache<GT>::lookup(const std::vector<typename GT::Versi
         {
             IntegratedViewer<GT> view(*graph_); 
             view.buildView(versions, nodeLabels,edgeLabels);
-            v = views_.insert(std::make_pair(key, Entry<GT>{view,1 ,time(NULL)})).first;
+//             #pragma omp critical
+            {
+                pthread_mutex_lock(&lock_);
+                v = views_.insert(std::make_pair(key, Entry<GT>{view,1 ,time(NULL)})).first;
+                pthread_mutex_unlock(&lock_);
+            }
 
         }
         else

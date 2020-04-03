@@ -29,6 +29,13 @@ namespace fs = std::experimental::filesystem;
 using json = nlohmann::json;
 
 
+std::ofstream LOG("log.txt");
+
+void TOLOG(std::string message)
+{
+    LOG<<message<<" "<<std::to_string(rand()*10000) <<std::endl;
+}
+
 //#define MAX_CON 2048
 
 
@@ -51,7 +58,7 @@ struct InstanceArgs{
 void basicHandler(int sockfd, const CommandRunner<GraphType::GD>& CR, const Http& req)
 {
     json query = json::parse(req.getBody());
-    
+// //     TOLOG("parsed json fd(" +std::to_string(sockfd)+ "): " + query.dump());
 
 
     std::vector< GraphType::GD::VersionIndex> versions = query["versions"].template get<std::vector<GraphType::GD::VersionIndex>>();
@@ -77,7 +84,7 @@ void basicHandler(int sockfd, const CommandRunner<GraphType::GD>& CR, const Http
     });
     
     res.send(sockfd, queryResponse.dump());
-    
+//     TOLOG("sent reply fd(" +std::to_string(sockfd)+ ")");
     
 
 //     close(sockfd);
@@ -103,33 +110,6 @@ void handleInit_ls(int sockfd, const CommandRunner<GraphType::GD>& CR)
     
     res.send(sockfd, queryResponse.dump());
 
-//     response.headers().add<Http::Header::ETag>(eTag);
-// 
-//         
-//     if( !request.headers().has<Http::Header::IfNoneMatch>() ||
-//         !(request.headers().get<Http::Header::IfNoneMatch>()->value() == eTag)
-//     )
-//     {
-//         std::cout<<"has "<<request.headers().has<Http::Header::IfNoneMatch>()<<std::endl;
-//         if(request.headers().has<Http::Header::IfNoneMatch>())
-//             std::cout<<request.headers().get<Http::Header::IfNoneMatch>()->value()<<std::endl;
-    
-//     Response R;
-    
-    
-    //Check the etag
-//     if()
-//     {
-//         R.addHeader("ETag: " + eTag);
-//         
-//         json queryString = {{"cmd" ,"ls"}};
-//         json queryResponse = CR.run(queryString);
-//         response.send(Http::Code::Ok, queryResponse.dump());
-//     }
-//     else
-//     {
-//         response.send(Http::Code::Not_Modified, "");
-//     }
 }
 
 
@@ -206,8 +186,10 @@ void* handlerDispatch(void* args)
         basicHandler(sockfd, CR, req);
     }
     
+//     TOLOG("closed fd(" +std::to_string(sockfd)+ ")");
     close(sockfd);
-    return (0);
+   
+    pthread_exit(NULL);
 
 }
 
@@ -246,6 +228,7 @@ int startServer_hgraph(int portNumber, int threads, const Graph* G,  ViewCache<G
         int newsockfd = accept(sockfd,(struct sockaddr *) &cli_addr, &clilen);
         if (newsockfd < 0) 
             std::cout<<"ERROR on accept"<<std::endl;
+//         TOLOG("connection accepted: fd "+std::to_string(newsockfd));
         
         
         InstanceArgs* args = new InstanceArgs;
@@ -255,15 +238,19 @@ int startServer_hgraph(int portNumber, int threads, const Graph* G,  ViewCache<G
 
     
         if( pthread_create(&thread_id[i], NULL, handlerDispatch,  (void*)args) != 0 )
+        {
             std::cout<<"Failed to create thread"<<std::endl;
            //printf("Failed to create thread\n");
-        
+            exit(1);
+        }
         ++i;
         
 //          std::cout<<"i "<<i<<std::endl;
         //Once n threads have been created wait until they all finish
         if( i >= (threads))
         {
+            std::cout<<"i at join "<<i<<std::endl;
+//             TOLOG("waiting " + std::to_string(i) +" threads created");
             i = 0;
 
             while(i < threads)
@@ -326,7 +313,7 @@ int main(int argc, char* argv[] )
     Graph G(Context::undirected);
     GraphIO IO(G);
     IO.read_serial(args.graph);
-    ViewCache<GraphType::GD> VC(G, args.cacheSize);
+    ViewCache<GraphType::GD> VC(G,  lock, args.cacheSize);
     
      std::cout<<G.size()<<std::endl;
     startServer_hgraph(args.port, args.threads, &G, &VC);
