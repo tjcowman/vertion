@@ -31,10 +31,10 @@ using json = nlohmann::json;
 
 // std::ofstream LOG("log.txt");
 
-void TOLOG(std::string message)
-{
-    LOG<<message<<" "<<std::to_string(rand()*10000) <<std::endl;
-}
+// void TOLOG(std::string message)
+// {
+//     LOG<<message<<" "<<std::to_string(rand()*10000) <<std::endl;
+// }
 
 //#define MAX_CON 2048
 
@@ -247,6 +247,9 @@ int startServer_hgraph(int portNumber, int threads, const Graph* G,  ViewCache<G
         
 //          std::cout<<"i "<<i<<std::endl;
         //Once n threads have been created wait until they all finish
+        
+        //TODO: change to mutex  on count of active threads
+        //Then seperately check for cleaning 
         if( i >= (threads))
         {
             std::cout<<"i at join "<<i<<std::endl;

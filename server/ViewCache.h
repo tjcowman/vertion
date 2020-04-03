@@ -115,83 +115,65 @@ void ViewCache<GT>::clean()
             }
         }
     }
-    
-
-//     #pragma omp critical
-//     {
-//         if(views_.size()>cacheSize_)
-//         {
-//         //     sleep(10);
-//         //     for(const auto& e : views_)
-//             for(auto it=views_.begin(); it!=views_.end() ;++it)
-//             {
-//                   auto numUsers = viewUsers_.find(it->first);
-//                   auto numUsersV = viewUsers_.at(it->first);
-//                 std::cout<<it->first<<" : "<<numUsersV<<std::endl;
-//               
-//                 //if (it->second.users_ == 0)
-//                 if(numUsers->second ==0)
-//                 {
-//                     //THE ORDER OF ERASE SEEMS TO MATTER?!
-//                     viewUsers_.erase(numUsers);
-//                     views_.erase(it);
-//                     
-//                 }
-//         //             views_.erase(e);
-//             }
-//         }
-//     }
-//     std::cout<<"SA "<<views_.size()<<std::endl;
 }
 
-//Used when a version is queried while it exists, always increases the timestamp, thus can bubble up the larger of its children recursively after updating 
-// bubbleDown( std::vector< std::pair<time_t, std::string>> accessHeap)
-// {
-//     
-// }
 
-
-//NOTE: LOOKUP SETS IN USE TO ONE, NEED TO REMEBER TO DECREMENT
+//NOTE: attempt at fater lookup mutex
 template<class GT>
 IntegratedViewer<GT>& ViewCache<GT>::lookup(const std::vector<typename GT::VersionIndex>& versions, const VertexLabel<GT>& nodeLabels, const EdgeLabel<GT>& edgeLabels)
 {
-
+    std::string key= generate_key(versions, nodeLabels, edgeLabels);
+    IntegratedViewer<GT> viewProspective(*graph_); 
+    
+    auto v = views_.find(key);
+    if(v == views_.end())
+        viewProspective.buildView(versions, nodeLabels,edgeLabels); 
+            
     
     //Check if the view exists
-     pthread_mutex_lock(&lock_);
-//     #pragma omp critical
-    {
-//         std::cout<<"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"<<std::endl;
-        
-        std::string key= generate_key(versions, nodeLabels, edgeLabels);
-        auto v = views_.find(key);
+    pthread_mutex_lock(&lock_);
+
+        auto v2 = views_.find(key);
 
 
-        if(v == views_.end())
+        if(v2 == views_.end())
         {
-            IntegratedViewer<GT> view(*graph_); 
-            view.buildView(versions, nodeLabels,edgeLabels); 
-//             #pragma omp critical
+//             IntegratedViewer<GT> view(*graph_); 
+//             view.buildView(versions, nodeLabels,edgeLabels); 
             {
-               
-                v = views_.insert(std::make_pair(key, Entry<GT>{view,1 ,time(NULL)})).first;
-              
+                v2 = views_.insert(std::make_pair(key, Entry<GT>{viewProspective,1 ,time(NULL)})).first;
             }
-
-        }
-        else
-        {
-            //Increment users count
-//             ++v->second.users_;
         }
 
-//             for(const auto& e : views_)
-//         e.second.print();
-          pthread_mutex_unlock(&lock_);
-        return v->second.view_;
-    }
+    pthread_mutex_unlock(&lock_);
     
+    return v2->second.view_;
 }
+
+// template<class GT>
+// IntegratedViewer<GT>& ViewCache<GT>::lookup(const std::vector<typename GT::VersionIndex>& versions, const VertexLabel<GT>& nodeLabels, const EdgeLabel<GT>& edgeLabels)
+// {
+//     std::string key= generate_key(versions, nodeLabels, edgeLabels);
+//     
+//     //Check if the view exists
+//     pthread_mutex_lock(&lock_);
+// 
+//         auto v = views_.find(key);
+// 
+// 
+//         if(v == views_.end())
+//         {
+//             IntegratedViewer<GT> view(*graph_); 
+//             view.buildView(versions, nodeLabels,edgeLabels); 
+//             {
+//                 v = views_.insert(std::make_pair(key, Entry<GT>{view,1 ,time(NULL)})).first;
+//             }
+//         }
+// 
+//     pthread_mutex_unlock(&lock_);
+//     
+//     return v->second.view_;
+// }
 
 template<class GT>
 void ViewCache<GT>::lockView(const std::vector<typename GT::VersionIndex>& versions, const VertexLabel<GT>& nodeLabels, const EdgeLabel<GT>& edgeLabels)
