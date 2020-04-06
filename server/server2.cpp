@@ -261,14 +261,9 @@ int startServer_hgraph(int portNumber, int threads, const Graph* G,  ViewCache<G
                 pthread_join(thread_id[i++],NULL);
 
             }
-            //Run a viewCache Cleanup
-//             pthread_mutex_lock(&lock);
-// std::cout<<"cleanb"<<std::endl;
-//sleep(1);
+
             VC->clean();
-            
-//             std::cout<<"cleana"<<std::endl;
-//             pthread_mutex_unlock(&lock);
+
             i = 0;
         }
 

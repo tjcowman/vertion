@@ -30,7 +30,7 @@ struct TrackerEntry
     
     friend std::ostream& operator<<(std::ostream& os, const TrackerEntry& e)
     {
-        os<<e.key_<<" : "<< e.entryIndex_<<" : "<<e.numActive_<<" : "<<e.lastUsed_<<"\n";
+        os<<e.key_<<" : "<< e.entryIndex_<<" : "<<e.numActive_<<" : "<<e.lastUsed_;
         return os;
     }
 };
@@ -173,6 +173,7 @@ void ViewCache<GT>::clean()
 
         }
     }
+    std::cout<<"clean done"<<std::endl;
     pthread_mutex_unlock(&lock);
 }
 
@@ -212,6 +213,7 @@ IntegratedViewer<GT>& ViewCache<GT>::lookup(const ViewKey<GT>& key)
     {
         ++v->second.numActive_;
         v->second.lastUsed_ = time(NULL);
+        pthread_mutex_unlock(&lock);
         return viewData_[v->second.entryIndex_];   
     }
     else //insert the newly generated view in an available slot
@@ -245,77 +247,3 @@ void ViewCache<GT>::finishLookup(const ViewKey<GT>& key)
     
     pthread_mutex_unlock(&lock);
 }
-
-/*template<class GT>
-void ViewCache<GT>::lockView(const std::vector<typename GT::VersionIndex>& versions, const VertexLabel<GT>& nodeLabels, const EdgeLabel<GT>& edgeLabels)
-{
-
-     pthread_mutex_lock(&lock);
-// //     #pragma omp critical
-//     {
-// //         std::cout<<"BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"<<std::endl;
-//         
-//         std::string key= generate_key(versions, nodeLabels, edgeLabels);
-//         auto v = users_.find(key);
-//         
-//         if(v == users_.end())
-//         {
-//             users_.insert(std::make_pair(key, TrackerEntry{key, 1,time(NULL)}));
-//         }
-//         else
-//         {
-//             users_[key] = {key, users_[key].numActive_+1, time(NULL)};
-// //             ++v->second;
-//         }
-//         
-//          
-//     }
-     pthread_mutex_unlock(&lock);
-}*/
-
-// template<class GT>
-// void ViewCache<GT>::lockView(const std::string& key)
-// {
-//     pthread_mutex_lock(&lock);
-//     
-//     pthread_mutex_unlock(&lock);
-// }
-
-// template<class GT>
-// void ViewCache<GT>::unlockView(const std::vector<typename GT::VersionIndex>& versions, const VertexLabel<GT>& nodeLabels, const EdgeLabel<GT>& edgeLabels)
-// {
-//      pthread_mutex_lock(&lock);
-// // //     #pragma omp critical
-// //     {
-// // //         std::cout<<"CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"<<std::endl;
-// //         std::string key= generate_key(versions, nodeLabels, edgeLabels);
-// //        auto v = users_.find(key);
-// // //          auto v = viewUsers_.at(key);
-// //          
-// //          users_[key].numActive_-=1;
-// // 
-// //     }
-//      pthread_mutex_unlock(&lock);
-// }
-
-/*
-template<class GT>
-void ViewCache<GT>::unlockView(const std::string& key)
-{
-    pthread_mutex_lock(&lock);
-    pthread_mutex_unlock(&lock);
-}*/
-
-// template<class GT>
-// std::string ViewCache<GT>::generate_key(const std::vector<typename GT::VersionIndex>& versions, const VertexLabel<GT>& nodeLabels, const EdgeLabel<GT>& edgeLabels)
-// {
-//     std::string s;
-//     auto tmp = versions;
-//     std::sort(tmp.begin(),tmp.end());
-//     for(const auto& e : tmp)
-//         s.append(std::to_string(e));
-//     s.append(std::to_string(nodeLabels.getBits().to_ulong()));
-//     s.append(std::to_string(edgeLabels.getBits().to_ulong()));
-//     return s;
-// }
-
