@@ -67,6 +67,9 @@ template<class T>
 class VGraph
 {
     public:
+        
+        void temp_populate_IACache();
+        
         using template_type = T;
         using Index = typename T::Index;
         using Value = typename T::Value;
@@ -213,6 +216,12 @@ class VGraph
         template<RangeFlags F>
         constexpr std::vector<std::pair<Index, EdgeLabel<T>> > getSortedSegmentsLabels(const AugIA<T>& range)const;
 };
+
+template<class T>
+void VGraph<T>::temp_populate_IACache()
+{
+    IA_.populateCache();
+}
 
 template<class T>
 VGraph<T>::VGraph()

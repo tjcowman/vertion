@@ -2,7 +2,7 @@
 
 /*Sets the max number of uncompressed IA vectors to store in cache. Resizing is not implemented yet. */
 //TODO: Move to a Graph Input Parameter
-#define INITIAL_CACHE_SIZE 100
+// #define INITIAL_CACHE_SIZE 100
 
 
 struct VertexType
@@ -40,8 +40,11 @@ namespace GraphType
             
             using Value=float;
             using VertexInternal= VertexType;
+            
+//             static int IACacheSize;
     };
 }
+
 
 using Index = GraphType::GD::Index;
 using VersionIndex = GraphType::GD::VersionIndex;

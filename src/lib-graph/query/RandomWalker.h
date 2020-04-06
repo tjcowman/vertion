@@ -44,7 +44,6 @@ std::pair<long, std::vector<typename GT::Calc> > LinearAlgebraSolver(
     {
         std::vector<typename GT::Calc> ranksNext(nodes, 0 );
 
-        //#pragma omp parallel for num_threads(4)
         for(typename GT::Index n=0; n<nodes; ++n)
         {
             //outbound nodes

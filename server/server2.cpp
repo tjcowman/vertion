@@ -313,6 +313,8 @@ int main(int argc, char* argv[] )
     Graph G(Context::undirected);
     GraphIO IO(G);
     IO.read_serial(args.graph);
+    G.temp_populate_IACache();
+    
     ViewCache<GraphType::GD> VC(G, args.threads, args.cacheFactor);
     
      std::cout<<G.size()<<std::endl;

@@ -39,6 +39,9 @@ class VectorIA
         
         void pop();
         
+        //Fill the cache with all uncompressed IA segments
+        void populateCache();
+        
         
         //Read/Write
         void read_serial(std::istream & stream);
@@ -46,6 +49,7 @@ class VectorIA
         
     private:
          
+        int IACacheSize = 100; //Temporary
         
         static std::vector< typename T::Index > findAlignments(
             typename std::vector<AugIA<T>>::const_iterator begin1, typename std::vector<AugIA<T>>::const_iterator end1, 
@@ -69,7 +73,7 @@ VectorIA<T>::VectorIA()
 {
     IA_ = std::vector<AugIA<T>>();
     cacheIA_ = std::unordered_map<typename T::VersionIndex, std::vector<AugIA<T>> >();
-    cacheReplacementOrder = std::vector<typename T::VersionIndex>(INITIAL_CACHE_SIZE, -1);
+    cacheReplacementOrder = std::vector<typename T::VersionIndex>(IACacheSize, -1);
     versionBounds_ = std::vector<std::pair<typename T::Index,typename T::Index>>();
     nextInsert=0; //nodes;
 }
@@ -81,7 +85,7 @@ VectorIA<T>::VectorIA(const VectorIA& cpy)
     versionBounds_ = cpy.versionBounds_;
     
     cacheIA_ = std::unordered_map<typename T::VersionIndex, std::vector<AugIA<T>> >();
-    cacheReplacementOrder = std::vector<typename T::VersionIndex>(INITIAL_CACHE_SIZE, -1);
+    cacheReplacementOrder = std::vector<typename T::VersionIndex>(IACacheSize, -1);
     nextInsert=0; //nodes;
 }
 
@@ -91,7 +95,7 @@ VectorIA<T>::VectorIA(typename T::Index nodes)
     IA_ = std::vector<AugIA<T>>(nodes,AugIA<T>());
 
     cacheIA_ = std::unordered_map<typename T::VersionIndex, std::vector<AugIA<T>> >();
-    cacheReplacementOrder = std::vector<typename T::VersionIndex>(INITIAL_CACHE_SIZE, -1);
+    cacheReplacementOrder = std::vector<typename T::VersionIndex>(IACacheSize, -1);
     versionBounds_ = std::vector<std::pair<typename T::Index,typename T::Index>>{std::make_pair(0, nodes)};
     
     nextInsert=0; //nodes;
@@ -272,6 +276,16 @@ void VectorIA<T>::pop()
 }
 
 template<class T>
+void VectorIA<T>::populateCache()
+{
+    IACacheSize = versionBounds_.size();
+    
+    for(typename T::VersionIndex i = 0; i<versionBounds_.size(); ++i)
+        cacheIA_.insert(std::make_pair(i,  decompressIA(i))).first;
+
+}
+
+template<class T>
 typename std::unordered_map<typename T::VersionIndex, std::vector<AugIA<T>> >::const_iterator VectorIA<T>::cacheInsert(typename T::VersionIndex version)const
 {
     //Check if already in cache
@@ -280,16 +294,15 @@ typename std::unordered_map<typename T::VersionIndex, std::vector<AugIA<T>> >::c
     if (it == cacheIA_.end())
     {
         //If not, remove oldest cached, add to cache and move marker for next insert
-//         #pragma omp critical
         {
-            if(cacheIA_.size()>INITIAL_CACHE_SIZE)
+            if(cacheIA_.size()>IACacheSize)
                 cacheIA_.erase(cacheReplacementOrder[nextInsert]);
             
             it = cacheIA_.insert(std::make_pair(version,  decompressIA(version))).first;
 
             cacheReplacementOrder[nextInsert] = version;
 
-            nextInsert = (nextInsert + 1) % INITIAL_CACHE_SIZE;
+            nextInsert = (nextInsert + 1) % IACacheSize;
         }
     }
     return it;
