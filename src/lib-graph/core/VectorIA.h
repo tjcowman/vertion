@@ -146,6 +146,7 @@ const std::vector<AugIA<T>> & VectorIA<T>::getIA(typename T::VersionIndex versio
     {
         cacheInsert(version);
         it = cacheIA_.find(version);
+        
         pthread_mutex_unlock(&lock);
         return it->second;
     }
@@ -279,7 +280,7 @@ typename std::unordered_map<typename T::VersionIndex, std::vector<AugIA<T>> >::c
     if (it == cacheIA_.end())
     {
         //If not, remove oldest cached, add to cache and move marker for next insert
-        #pragma omp critical
+//         #pragma omp critical
         {
             if(cacheIA_.size()>INITIAL_CACHE_SIZE)
                 cacheIA_.erase(cacheReplacementOrder[nextInsert]);
