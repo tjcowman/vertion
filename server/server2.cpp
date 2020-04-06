@@ -66,13 +66,13 @@ void basicHandler(int sockfd, const CommandRunner<GraphType::GD>& CR, const Http
     std::vector<GraphType::GD::Index> edgeLabels = query["edgeLabels"].template get<std::vector<GraphType::GD::Index>>();    
             
 //     pthread_mutex_lock(&lock);
-    CR.viewCache_->lockView(versions, VertexLab(vertexLabels), EdgeLab(edgeLabels)) ;
+//     CR.viewCache_->lockView(versions, VertexLab(vertexLabels), EdgeLab(edgeLabels)) ;
 //     pthread_mutex_unlock(&lock);
              
     json queryResponse = CR.run(query);
                 
 //     pthread_mutex_lock(&lock);
-    CR.viewCache_->unlockView(versions, VertexLab(vertexLabels), EdgeLab(edgeLabels)) ;
+//     CR.viewCache_->unlockView(versions, VertexLab(vertexLabels), EdgeLab(edgeLabels)) ;
 //     pthread_mutex_unlock(&lock);
     
     
@@ -129,7 +129,7 @@ void* handlerDispatch(void* args)
 //     for(const auto& e : req.getHeaders())
 //         std::cout<<e.first<<" | "<<e.second<<std::endl;
 //         
-     std::cout<<req.getBody()<<std::endl;
+//     std::cout<<req.getBody()<<std::endl;
 //     
 //     
     std::string uri=  req.getURI();//getResource(req.first);
@@ -286,7 +286,8 @@ struct Args
     int port = -1;
     std::string graph = "";
     std::string mode = "";
-    int cacheSize = 10; 
+//     int cacheSize = 10; 
+    int cacheFactor = 2;
     
     int threads = 1;
 
@@ -300,23 +301,24 @@ int main(int argc, char* argv[] )
         ARG(port,stoi)
         ARG(graph,)
 
-        ARG(cacheSize, stoi) //Needs to be > threads for the server so in use views dont get deleted
+//         ARG(cacheSize, stoi) //Needs to be > threads for the server so in use views dont get deleted
+        ARG(cacheFactor,stoi)
         ARG(mode,)
         
         ARG(threads, stoi)
     );
      
-     if(args.cacheSize<args.threads)
-     {
-         args.cacheSize = args.threads+1; //TODO: BUG?: Cache size needs to be > 2xnum of possible threads
-        std::cout<<"[warn] cacheSize increased to "<<args.cacheSize<<std::endl;
-     }
+//      if(args.cacheSize<args.threads)
+//      {
+//          args.cacheSize = args.threads+1; //TODO: BUG?: Cache size needs to be > 2xnum of possible threads
+//         std::cout<<"[warn] cacheSize increased to "<<args.cacheSize<<std::endl;
+//      }
     
      
     Graph G(Context::undirected);
     GraphIO IO(G);
     IO.read_serial(args.graph);
-    ViewCache<GraphType::GD> VC(G, args.cacheSize);
+    ViewCache<GraphType::GD> VC(G, args.threads, args.cacheFactor);
     
      std::cout<<G.size()<<std::endl;
     startServer_hgraph(args.port, args.threads, &G, &VC);

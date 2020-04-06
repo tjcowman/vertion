@@ -144,11 +144,14 @@ namespace Commands
 //         std::cout<<"RWR RUN"<<std::endl;
 //         IntegratedViewer<GT> IV(graph);
 //         IV.buildView(versions, VertexLab(vertexLabels), EdgeLab(edgeLabels));
+        ViewKey<GT> key(versions, VertexLab(vertexLabels), EdgeLab(edgeLabels));
+        
         auto start = std::chrono::high_resolution_clock::now();
         
-        IntegratedViewer<GT> IV = viewCache.lookup(versions, VertexLab(vertexLabels), EdgeLab(edgeLabels))->second.view_ ;
-        
-        
+//         IntegratedViewer<GT> IV = viewCache.lookup(ViewCache<GT>::generate_key(versions, VertexLab(vertexLabels), EdgeLab(edgeLabels))) ;
+//         IntegratedViewer<GT> IV = viewCache.lookup(ViewCache<GT>::generate_key(versions, VertexLab(vertexLabels), EdgeLab(edgeLabels))) ;
+         IntegratedViewer<GT> IV = viewCache.lookup(key) ;
+         
         auto duration = std::chrono::high_resolution_clock::now() - start;
         long long tIntegrateUs = std::chrono::duration_cast<std::chrono::microseconds>(duration).count();
         
@@ -164,6 +167,8 @@ namespace Commands
         auto res = RW.walk(GraphList<VertexS<GT>>(source), args_walk);
         duration = std::chrono::high_resolution_clock::now() - start;
         long long tcomputeUs = std::chrono::duration_cast<std::chrono::microseconds>(duration).count();
+        
+        viewCache.finishLookup(key);
         
         res.sort(Sort::valueDec);
         res.resize(std::min(size_t(args["topk"]), res.size()));
@@ -218,11 +223,14 @@ namespace Commands
         std::vector<typename GT::Index> vertexLabels = args["vertexLabels"].get<std::vector<typename GT::Index>>();
         std::vector<typename GT::Index> edgeLabels = args["edgeLabels"].get<std::vector<typename GT::Index>>();        
 //         IntegratedViewer<GT> IV = viewCache.lookup(versions, VertexLab(vertexLabels), EdgeLab(edgeLabels)) ;
-         IntegratedViewer<GT> IV = viewCache.lookup(versions, VertexLab(vertexLabels), EdgeLab(edgeLabels))->second.view_ ;
         
         
+         ViewKey<GT> key(versions, VertexLab(vertexLabels), EdgeLab(edgeLabels));
         
+//         IntegratedViewer<GT> IV = viewCache.lookup(ViewCache<GT>::generate_key(versions, VertexLab(vertexLabels), EdgeLab(edgeLabels))) ;
         
+          IntegratedViewer<GT> IV = viewCache.lookup(key) ;
+         
         auto edgeCounts = IV.countEdgeLabels();
         auto nodeCounts = IV.countVertexLabels();
         
@@ -239,6 +247,7 @@ namespace Commands
                 
             });
         
+        viewCache.finishLookup(key);
         //Get nodes and edges
 //         for(const auto& e : IV.)
         
