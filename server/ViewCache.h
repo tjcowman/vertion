@@ -68,7 +68,7 @@ struct ViewKey{
 };
 
 
-pthread_mutex_t lock;
+
 
 //TODO: MAKE THIS THREAD SAFE
 template<class GT>
@@ -100,7 +100,7 @@ class ViewCache
         static std::string generate_key(const std::vector<typename GT::VersionIndex>& versions, const VertexLabel<GT>& nodeLabels, const EdgeLabel<GT>& edgeLabels);
         int activeCount;
     private:
-        
+        pthread_mutex_t lock;
        
         int cacheSize_; //Should be the number of concurrent threads
         int sizeFactor_; //Multiplier for the cache size, determines number of non-purged versions during a cleanup: e,g, 1=all deleted, 2= half deleted

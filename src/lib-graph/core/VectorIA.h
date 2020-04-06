@@ -4,6 +4,7 @@
 
 #include <unordered_map>
 #include <iostream> 
+#include <pthread.h>
 
 template<class T>
 class VectorIA
@@ -44,6 +45,8 @@ class VectorIA
         void write_serial(std::ostream & stream)const;
         
     private:
+         
+        
         static std::vector< typename T::Index > findAlignments(
             typename std::vector<AugIA<T>>::const_iterator begin1, typename std::vector<AugIA<T>>::const_iterator end1, 
             typename std::vector<AugIA<T>>::const_iterator begin2, typename std::vector<AugIA<T>>::const_iterator end2);
@@ -53,10 +56,13 @@ class VectorIA
         
          typename std::unordered_map<typename T::VersionIndex, std::vector<AugIA<T>> >::const_iterator cacheInsert(typename T::VersionIndex version)const;
         //These are mutable to allow caching from const access reads 
+        mutable pthread_mutex_t lock;
         mutable std::unordered_map<typename T::VersionIndex, std::vector<AugIA<T>> > cacheIA_;
         mutable std::vector<typename T::VersionIndex> cacheReplacementOrder;
         mutable typename T::VersionIndex nextInsert;
 };
+
+
 
 template<class T>
 VectorIA<T>::VectorIA()
@@ -129,16 +135,21 @@ template<class T>
 const std::vector<AugIA<T>> & VectorIA<T>::getIA(typename T::VersionIndex version)const
 {
   //  std::cout<<"GET IA "<<version<<std::endl;
-    
+    pthread_mutex_lock(&lock);
     auto it = cacheIA_.find(version);
     if(it != cacheIA_.end())
+    {
+        pthread_mutex_unlock(&lock);
          return it->second;
+    }
     else
     {
         cacheInsert(version);
         it = cacheIA_.find(version);
+        pthread_mutex_unlock(&lock);
         return it->second;
     }
+    
     //return cacheInsert(version);
 }
 
