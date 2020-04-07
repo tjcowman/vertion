@@ -123,6 +123,13 @@ template<class GT>
 ViewCache<GT>::ViewCache(const VGraph<GT>& graph, int cacheSize, int sizeFactor)
 {
 //     activeCount = 0;
+    
+    if (pthread_mutex_init(&lock, NULL) != 0) { 
+        std::cerr<<"mutex init failed"<<std::endl; 
+        exit(1); 
+    } 
+  
+    
     cacheSize_ = cacheSize;
     sizeFactor_ = sizeFactor;
     viewData_ = std::vector<IntegratedViewer<GT>>(cacheSize_*sizeFactor_, IntegratedViewer<GT>(graph));
