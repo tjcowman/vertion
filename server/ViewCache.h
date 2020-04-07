@@ -183,10 +183,14 @@ template<class GT>
 IntegratedViewer<GT>& ViewCache<GT>::lookup(const ViewKey<GT>& key)
 {
     pthread_mutex_lock(&lock);
+    std::cout<<"LUB: "<<key.key_<<std::endl;
+    
     auto v = viewMap_.find(key.key_);
     
     if(v != viewMap_.end())
     {
+        std::cout<<"found 1: "<<key.key_<<std::endl;
+        
         ++v->second.numActive_;
         v->second.lastUsed_ = time(NULL);
         pthread_mutex_unlock(&lock);
@@ -194,6 +198,8 @@ IntegratedViewer<GT>& ViewCache<GT>::lookup(const ViewKey<GT>& key)
     }
     else
     {
+         std::cout<<"!found 1: "<<key.key_<<std::endl;
+        
         pthread_mutex_unlock(&lock);
     }
 
@@ -211,6 +217,8 @@ IntegratedViewer<GT>& ViewCache<GT>::lookup(const ViewKey<GT>& key)
     
     if(v != viewMap_.end()) //another thread already added the view
     {
+         std::cout<<"found 2: "<<key.key_<<std::endl;
+        
         ++v->second.numActive_;
         v->second.lastUsed_ = time(NULL);
         pthread_mutex_unlock(&lock);
@@ -218,6 +226,8 @@ IntegratedViewer<GT>& ViewCache<GT>::lookup(const ViewKey<GT>& key)
     }
     else //insert the newly generated view in an available slot
     {
+         std::cout<<"!found 2: "<<key.key_<<std::endl;
+        
         auto lastE = (--emptySlots_.end());
         
         int viewIndex = (*lastE);

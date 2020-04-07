@@ -73,7 +73,7 @@ def generateProbs(sigmaOpNorm):
     
     normProbs /= normProbs.sum()
     
-    print(normProbs)
+    #print(normProbs)
     
     return(normProbs)
 
@@ -118,7 +118,7 @@ def generateQuery(normProbs, numVersions):
     req["versions"] = list(npr.random.choice(versionPool, numVersions, p=normProbs, replace=False))
     #req["source"] = list(map(lambda x: nodeToJson(x),sample(sourcePool,1)))
     
-    
+    print(str(req).replace(" ", "").replace("\'","\""))
     return  str(req["versions"]), str(req["source"]), str(req).replace(" ", "").replace("\'","\"")
     
 
