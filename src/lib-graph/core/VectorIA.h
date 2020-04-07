@@ -139,19 +139,20 @@ template<class T>
 const std::vector<AugIA<T>> & VectorIA<T>::getIA(typename T::VersionIndex version)const
 {
   //  std::cout<<"GET IA "<<version<<std::endl;
-    pthread_mutex_lock(&lock);
+//     pthread_mutex_lock(&lock);
     auto it = cacheIA_.find(version);
     if(it != cacheIA_.end())
     {
-        pthread_mutex_unlock(&lock);
+//         pthread_mutex_unlock(&lock);
          return it->second;
     }
     else
     {
+        std::cout<<"tmp IA Cache Ins"<<std::endl;
         cacheInsert(version);
         it = cacheIA_.find(version);
         
-        pthread_mutex_unlock(&lock);
+//         pthread_mutex_unlock(&lock);
         return it->second;
     }
     

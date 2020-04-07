@@ -239,10 +239,24 @@ IntegratedViewer<GT>& ViewCache<GT>::lookup(const ViewKey<GT>& key)
 template<class GT>
 void ViewCache<GT>::finishLookup(const ViewKey<GT>& key)
 {
+    std::cout<<"finishLookup "<<key.key_<<std::endl;
     pthread_mutex_lock(&lock);
-    auto v = viewMap_.at(key.key_);
-
-    v.numActive_ -= 1;
+//     auto v = viewMap_.at(key.key_);
+// 
+//     std::cout<<v.numActive_<<std::endl;
+//     v.numActive_ = (v.numActive_ - 1);
+//     std::cout<<v.numActive_<<std::endl;
+//     
+    //NOTE: map.at does not decrment the value, not sure why
+    auto v = viewMap_.find(key.key_);
+//     if(v != viewMap_.end())
+    
+    std::cout<<v->second.numActive_<<std::endl;
+    v->second.numActive_ -=1;
+    std::cout<<v->second.numActive_<<std::endl;
+    
+    
+    
     
     
     pthread_mutex_unlock(&lock);
