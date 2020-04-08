@@ -4,7 +4,7 @@ library(ggplot2)
 library(scales)
 library(ggpubr)
 
-D <- read.delim2("cophex_32t_2f.res", sep="\t")
+D <- read.delim2("cophex_32t_2f_r.res", sep="\t")
 D = filter(D, State != "FAIL")
 D$pytime = as.numeric(as.character(D$pytime))
 D$Versions = as.factor(D$Versions)

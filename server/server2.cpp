@@ -120,93 +120,10 @@ void handleInit_ls(int sockfd, const CommandRunner<GraphType::GD>& CR)
 }
 
 
-void* handlerDispatch(void* args)
-{
-    int sockfd = ((struct InstanceArgs*)args)->sockfd;
-    const Graph* G = ((struct InstanceArgs*)args)->G;
-    ViewCache<GraphType::GD>* VC =  ((struct InstanceArgs*)args)->VC;
-    
-//     auto req = readHttp(sockfd);
-    
-    
-    Http req;
-    req.rec(sockfd);
-    
-    
-//     for(const auto& e : req.getHeaders())
-//         std::cout<<e.first<<" | "<<e.second<<std::endl;
-//         
-//     std::cout<<req.getBody()<<std::endl;
-//     
-//     
-    std::string uri=  req.getURI();//getResource(req.first);
-//     std::cout<<"URI = :"<<uri<<std::endl;
-    
-    CommandRunner<GraphType::GD> CR(*G, *VC);
-    
-    //Get resouce requested
-    //std
-    //Special cases ex:cacheable ls
-    if(uri=="/ls")
-    {
-//         Response R;
-//         R.addHeader("ETag: " + eTag);
-        
-//         for(const auto& ee : req.getHeaders())
-//             std::cout<<"<"<<ee.first<<">"<<" "<<"<"<<ee.second<<">"<<std::endl; 
-        
-        
-        //Check the Etag and match
-        auto it = req.getHeaders().find("if-none-match"); //keys stored as lowercase
-        
-//         if(it != req.getHeaders().end())
-//         {
-//             std::cout<<"<"<<it->first<<">"<<" : "<<"<"<<it->second<<">"<<" ::: "<<"<"<<eTag<<">"<<std::endl;
-//         }
-        
-        if(it != req.getHeaders().end() && it->second == eTag  )
-        {
-            Http res;
-            res.setStatus("HTTP/1.1 304 Not Modified");
-            res.setHeaders({
-                {"Access-Control-Allow-Origin","*"},
-                {"Content-Type", "application/json"}
-            });
-            res.send(sockfd, "");
-        }
-        else
-        {
-            handleInit_ls(sockfd, CR);
-        }
-        
 
-
-            
-        
-    }
-    else //Default
-    {
-    
-    
-       
-
-        basicHandler(sockfd, CR, req);
-    }
-    
-//     TOLOG("closed fd(" +std::to_string(sockfd)+ ")");
-    close(sockfd);
-   
-    pthread_exit(NULL);
-
-}
 
 void handlerDispatchSL(int sockfd, std::set<int>* threadSlots, int threadId, const Graph* G, ViewCache<GraphType::GD>* VC)
 {
-//     int sockfd = ((struct InstanceArgs*)args)->sockfd;
-//     const Graph* G = ((struct InstanceArgs*)args)->G;
-//     ViewCache<GraphType::GD>* VC =  ((struct InstanceArgs*)args)->VC;
-    
-
     Http req;
     req.rec(sockfd);
 
@@ -255,10 +172,6 @@ void handlerDispatchSL(int sockfd, std::set<int>* threadSlots, int threadId, con
     }
     else //Default
     {
-    
-    
-       
-
         basicHandler(sockfd, CR, req);
     }
     
@@ -312,35 +225,32 @@ int startServer_hgraph(int portNumber, int threads, const Graph* G,  ViewCache<G
 //     int i = 0;
     while(true)
     {
-//         std::cout<<"SLOTSAV "<<threadSlots.size()<<std::endl;
-//         while(threadSlots.size()<=0)
-//         {
-// //             std::cout<<threadSlots.size()<<std::endl;
-//         }
-//         if(threadSlots.size() <= 1)
-//             acceptLock.lock();
         
-         if(threadSlots.size() <= 1)
-         {
-            std::unique_lock<std::mutex> lk(acceptLock);
-            cv.wait(lk);
-         }
+
         
         //check if versionCache full
         if(VC->full())
         {
             //join running
-             std::cout<<"joining"<<std::endl;
+//              std::cout<<"joining"<<std::endl;
                 //clean
-            for(int t=0; t<thread_id.size(); ++t)
-            {
-             if(thread_id[t].joinable())
-                thread_id[t].join();
-            }   
-            
-             VC->clean();
+//             for(int t=0; t<thread_id.size(); ++t)
+//             {
+//              if(thread_id[t].joinable())
+//                 thread_id[t].join();
+//             }   
+//             
+            auto clean_thread = std::thread(&ViewCache<GraphType::GD>::clean, VC);
+            clean_thread.detach();
+//             std::cout<<"Thread created"<<std::endl;
+//             VC->clean();
         }
         
+        if(threadSlots.size() <= 1)
+        {
+            std::unique_lock<std::mutex> lk(acceptLock);
+            cv.wait(lk);
+        }
         
         int newsockfd = accept(sockfd,(struct sockaddr *) &cli_addr, &clilen);
         if (newsockfd < 0) 

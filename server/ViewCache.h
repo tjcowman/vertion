@@ -157,7 +157,7 @@ bool ViewCache<GT>::full()const
 template<class GT>
 void ViewCache<GT>::clean()
 {
-// //     std::cout<<"SB "<<views_.size()<<std::endl;
+//     std::cout<<"SB "<<viewMap_.size()<<std::endl;
     std::vector<TrackerEntry> viewsToRemove;
 //      pthread_mutex_lock(&lock);
      lock.lock();
@@ -167,25 +167,32 @@ void ViewCache<GT>::clean()
          std::cout<<e.first<<" "<<e.second<<std::endl;
      
 //     if(full())
-    {
+//     {
         for(const auto& e : viewMap_)
             viewsToRemove.push_back(e.second);
 //         
         std::sort(viewsToRemove.begin(), viewsToRemove.end(), [](const auto& lhs, const auto& rhs){return lhs.lastUsed_<rhs.lastUsed_;});
 //         
         int numToBlank = viewMap_.size()- (cacheSize_*(sizeFactor_-1));
-        for(int i=0; i<numToBlank; ++i)
+        for(int i=0; i<viewsToRemove.size(); ++i)
         {
-
-//             int slotIndex = 
-            std::cout<<"blanking "<<viewsToRemove[i].entryIndex_<<std::endl;
+            if(viewsToRemove[i].numActive_ <=0)
+            {
+                --numToBlank;
+                //             int slotIndex = 
+//             std::cout<<"blanking "<<viewsToRemove[i].entryIndex_<<std::endl;
             
-            emptySlots_.insert(viewsToRemove[i].entryIndex_);
-            viewMap_.erase(viewsToRemove[i].key_);
+                emptySlots_.insert(viewsToRemove[i].entryIndex_);
+                viewMap_.erase(viewsToRemove[i].key_);
+            }
 
+
+
+            if(numToBlank <= 0)
+                break;
         }
-    }
-    std::cout<<"clean done"<<std::endl;
+//     }
+//     std::cout<<"clean done"<<std::endl;
 //     pthread_mutex_unlock(&lock);
     lock.unlock();
 }
@@ -197,13 +204,13 @@ IntegratedViewer<GT>& ViewCache<GT>::lookup(const ViewKey<GT>& key)
 {
 //     pthread_mutex_lock(&lock);
     lock.lock();
-    std::cout<<"LUB: "<<key.key_<<std::endl;
+//     std::cout<<"LUB: "<<key.key_<<std::endl;
     
     auto v = viewMap_.find(key.key_);
     
     if(v != viewMap_.end())
     {
-        std::cout<<"found 1: "<<key.key_<<std::endl;
+//         std::cout<<"found 1: "<<key.key_<<std::endl;
         
         ++v->second.numActive_;
         v->second.lastUsed_ = time(NULL);
@@ -213,7 +220,7 @@ IntegratedViewer<GT>& ViewCache<GT>::lookup(const ViewKey<GT>& key)
     }
     else
     {
-         std::cout<<"!found 1: "<<key.key_<<std::endl;
+//          std::cout<<"!found 1: "<<key.key_<<std::endl;
         
          lock.unlock();
 //         pthread_mutex_unlock(&lock);
@@ -234,7 +241,7 @@ IntegratedViewer<GT>& ViewCache<GT>::lookup(const ViewKey<GT>& key)
     
     if(v != viewMap_.end()) //another thread already added the view
     {
-         std::cout<<"found 2: "<<key.key_<<std::endl;
+//          std::cout<<"found 2: "<<key.key_<<std::endl;
         
         ++v->second.numActive_;
         v->second.lastUsed_ = time(NULL);
@@ -244,7 +251,7 @@ IntegratedViewer<GT>& ViewCache<GT>::lookup(const ViewKey<GT>& key)
     }
     else //insert the newly generated view in an available slot
     {
-         std::cout<<"!found 2: "<<key.key_<<std::endl;
+//          std::cout<<"!found 2: "<<key.key_<<std::endl;
         
         auto lastE = (--emptySlots_.end());
         
@@ -268,7 +275,7 @@ IntegratedViewer<GT>& ViewCache<GT>::lookup(const ViewKey<GT>& key)
 template<class GT>
 void ViewCache<GT>::finishLookup(const ViewKey<GT>& key)
 {
-    std::cout<<"finishLookup "<<key.key_<<std::endl;
+//     std::cout<<"finishLookup "<<key.key_<<std::endl;
     //pthread_mutex_lock(&lock);
     lock.lock();
 //     auto v = viewMap_.at(key.key_);
