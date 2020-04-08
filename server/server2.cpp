@@ -26,6 +26,7 @@
 
 #include <thread>
 #include <mutex>
+#include <condition_variable>
 
 namespace fs = std::experimental::filesystem;
 using json = nlohmann::json;
@@ -41,7 +42,10 @@ using json = nlohmann::json;
 //#define MAX_CON 2048
 
 std::mutex threadLock;
+
+
 std::mutex acceptLock;
+std::condition_variable cv;
 
 
 //TODO: Make simple http classes for request and response
@@ -265,7 +269,9 @@ void handlerDispatchSL(int sockfd, std::set<int>* threadSlots, int threadId, con
     threadSlots->insert(threadId);
     std::cout<<"re-enabled "<<threadId<<std::endl;
     threadLock.unlock();
-    acceptLock.unlock();
+    
+    cv.notify_one();
+//     acceptLock.unlock();
 }
 
 
@@ -311,9 +317,14 @@ int startServer_hgraph(int portNumber, int threads, const Graph* G,  ViewCache<G
 //         {
 // //             std::cout<<threadSlots.size()<<std::endl;
 //         }
-        if(threadSlots.size() <= 1)
-            acceptLock.lock();
+//         if(threadSlots.size() <= 1)
+//             acceptLock.lock();
         
+         if(threadSlots.size() <= 1)
+         {
+            std::unique_lock<std::mutex> lk(acceptLock);
+            cv.wait(lk);
+         }
         
         //check if versionCache full
         if(VC->full())
