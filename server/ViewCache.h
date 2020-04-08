@@ -6,7 +6,9 @@
 #include <string>
 #include <unordered_map>
 #include <functional>
-#include <pthread.h>
+// #include <pthread.h>
+#include <thread>
+#include <mutex>
 
 template<class GT>
 struct Entry
@@ -100,7 +102,9 @@ class ViewCache
         static std::string generate_key(const std::vector<typename GT::VersionIndex>& versions, const VertexLabel<GT>& nodeLabels, const EdgeLabel<GT>& edgeLabels);
         int activeCount;
     private:
-        pthread_mutex_t lock;
+//         pthread_mutex_t lock;
+        std::mutex lock;
+        
        
         int cacheSize_; //Should be the number of concurrent threads
         int sizeFactor_; //Multiplier for the cache size, determines number of non-purged versions during a cleanup: e,g, 1=all deleted, 2= half deleted
@@ -124,11 +128,11 @@ ViewCache<GT>::ViewCache(const VGraph<GT>& graph, int cacheSize, int sizeFactor)
 {
 //     activeCount = 0;
     
-    if (pthread_mutex_init(&lock, NULL) != 0) { 
-        std::cerr<<"mutex init failed"<<std::endl; 
-        exit(1); 
-    } 
-  
+//     if (pthread_mutex_init(&lock, NULL) != 0) { 
+//         std::cerr<<"mutex init failed"<<std::endl; 
+//         exit(1); 
+//     } 
+//   
     
     cacheSize_ = cacheSize;
     sizeFactor_ = sizeFactor;
@@ -155,13 +159,14 @@ void ViewCache<GT>::clean()
 {
 // //     std::cout<<"SB "<<views_.size()<<std::endl;
     std::vector<TrackerEntry> viewsToRemove;
-     pthread_mutex_lock(&lock);
+//      pthread_mutex_lock(&lock);
+     lock.lock();
 //     
      
      for(const auto& e : viewMap_)
          std::cout<<e.first<<" "<<e.second<<std::endl;
      
-    if(full())
+//     if(full())
     {
         for(const auto& e : viewMap_)
             viewsToRemove.push_back(e.second);
@@ -181,7 +186,8 @@ void ViewCache<GT>::clean()
         }
     }
     std::cout<<"clean done"<<std::endl;
-    pthread_mutex_unlock(&lock);
+//     pthread_mutex_unlock(&lock);
+    lock.unlock();
 }
 
 
@@ -189,7 +195,8 @@ void ViewCache<GT>::clean()
 template<class GT>
 IntegratedViewer<GT>& ViewCache<GT>::lookup(const ViewKey<GT>& key)
 {
-    pthread_mutex_lock(&lock);
+//     pthread_mutex_lock(&lock);
+    lock.lock();
     std::cout<<"LUB: "<<key.key_<<std::endl;
     
     auto v = viewMap_.find(key.key_);
@@ -200,14 +207,16 @@ IntegratedViewer<GT>& ViewCache<GT>::lookup(const ViewKey<GT>& key)
         
         ++v->second.numActive_;
         v->second.lastUsed_ = time(NULL);
-        pthread_mutex_unlock(&lock);
+//         pthread_mutex_unlock(&lock);
+        lock.unlock();
         return viewData_[v->second.entryIndex_];   
     }
     else
     {
          std::cout<<"!found 1: "<<key.key_<<std::endl;
         
-        pthread_mutex_unlock(&lock);
+         lock.unlock();
+//         pthread_mutex_unlock(&lock);
     }
 
     
@@ -219,7 +228,8 @@ IntegratedViewer<GT>& ViewCache<GT>::lookup(const ViewKey<GT>& key)
     
     
     //lookup again
-    pthread_mutex_lock(&lock);
+//     pthread_mutex_lock(&lock);
+    lock.lock();
     v = viewMap_.find(key.key_);
     
     if(v != viewMap_.end()) //another thread already added the view
@@ -228,7 +238,8 @@ IntegratedViewer<GT>& ViewCache<GT>::lookup(const ViewKey<GT>& key)
         
         ++v->second.numActive_;
         v->second.lastUsed_ = time(NULL);
-        pthread_mutex_unlock(&lock);
+//         pthread_mutex_unlock(&lock);
+        lock.unlock();
         return viewData_[v->second.entryIndex_];   
     }
     else //insert the newly generated view in an available slot
@@ -246,7 +257,8 @@ IntegratedViewer<GT>& ViewCache<GT>::lookup(const ViewKey<GT>& key)
         viewData_[viewIndex] = std::move(newView);
     }
     
-    pthread_mutex_unlock(&lock);
+//     pthread_mutex_unlock(&lock);
+    lock.unlock();
     return viewData_[v->second.entryIndex_];  
      
      
@@ -257,7 +269,8 @@ template<class GT>
 void ViewCache<GT>::finishLookup(const ViewKey<GT>& key)
 {
     std::cout<<"finishLookup "<<key.key_<<std::endl;
-    pthread_mutex_lock(&lock);
+    //pthread_mutex_lock(&lock);
+    lock.lock();
 //     auto v = viewMap_.at(key.key_);
 // 
 //     std::cout<<v.numActive_<<std::endl;
@@ -276,5 +289,6 @@ void ViewCache<GT>::finishLookup(const ViewKey<GT>& key)
     
     
     
-    pthread_mutex_unlock(&lock);
+    //pthread_mutex_unlock(&lock);
+    lock.unlock();
 }

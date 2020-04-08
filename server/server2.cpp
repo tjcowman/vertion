@@ -3,7 +3,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <sys/signal.h>
-#include <pthread.h>
+//#include <pthread.h>
 #include <cstring>
 #include <string_view>
 
@@ -24,6 +24,8 @@
 #include <iostream>
 #include <string>
 
+#include <thread>
+#include <mutex>
 
 namespace fs = std::experimental::filesystem;
 using json = nlohmann::json;
@@ -38,7 +40,8 @@ using json = nlohmann::json;
 
 //#define MAX_CON 2048
 
-
+std::mutex threadLock;
+std::mutex acceptLock;
 
 
 //TODO: Make simple http classes for request and response
@@ -193,6 +196,79 @@ void* handlerDispatch(void* args)
 
 }
 
+void handlerDispatchSL(int sockfd, std::set<int>* threadSlots, int threadId, const Graph* G, ViewCache<GraphType::GD>* VC)
+{
+//     int sockfd = ((struct InstanceArgs*)args)->sockfd;
+//     const Graph* G = ((struct InstanceArgs*)args)->G;
+//     ViewCache<GraphType::GD>* VC =  ((struct InstanceArgs*)args)->VC;
+    
+
+    Http req;
+    req.rec(sockfd);
+
+    std::string uri=  req.getURI();//getResource(req.first);
+//     std::cout<<"URI = :"<<uri<<std::endl;
+    
+    CommandRunner<GraphType::GD> CR(*G, *VC);
+    
+    //Get resouce requested
+    //std
+    //Special cases ex:cacheable ls
+    if(uri=="/ls")
+    {
+//         Response R;
+//         R.addHeader("ETag: " + eTag);
+        
+//         for(const auto& ee : req.getHeaders())
+//             std::cout<<"<"<<ee.first<<">"<<" "<<"<"<<ee.second<<">"<<std::endl; 
+        
+        
+        //Check the Etag and match
+        auto it = req.getHeaders().find("if-none-match"); //keys stored as lowercase
+        
+//         if(it != req.getHeaders().end())
+//         {
+//             std::cout<<"<"<<it->first<<">"<<" : "<<"<"<<it->second<<">"<<" ::: "<<"<"<<eTag<<">"<<std::endl;
+//         }
+        
+        if(it != req.getHeaders().end() && it->second == eTag  )
+        {
+            Http res;
+            res.setStatus("HTTP/1.1 304 Not Modified");
+            res.setHeaders({
+                {"Access-Control-Allow-Origin","*"},
+                {"Content-Type", "application/json"}
+            });
+            res.send(sockfd, "");
+        }
+        else
+        {
+            handleInit_ls(sockfd, CR);
+        }
+        
+
+        
+    }
+    else //Default
+    {
+    
+    
+       
+
+        basicHandler(sockfd, CR, req);
+    }
+    
+//     TOLOG("closed fd(" +std::to_string(sockfd)+ ")");
+    close(sockfd);
+
+    threadLock.lock();
+    threadSlots->insert(threadId);
+    std::cout<<"re-enabled "<<threadId<<std::endl;
+    threadLock.unlock();
+    acceptLock.unlock();
+}
+
+
 int startServer_hgraph(int portNumber, int threads, const Graph* G,  ViewCache<GraphType::GD>* VC)
 {
     struct sockaddr_in serv_addr, cli_addr;
@@ -218,54 +294,73 @@ int startServer_hgraph(int portNumber, int threads, const Graph* G,  ViewCache<G
     listen(sockfd,50);
     clilen = sizeof(cli_addr);
     
-// std::cout<<"threads "<<threads<<std::endl;
-  
-    pthread_t thread_id[threads];
-    int i = 0;
 
+    std::vector<std::thread> thread_id(threads);
+    
+    
+    std::set<int> threadSlots;
+        for(int i=0; i<threads; ++i)
+            threadSlots.insert(threadSlots.end(), i);
+
+        
+//     int i = 0;
     while(true)
     {
+//         std::cout<<"SLOTSAV "<<threadSlots.size()<<std::endl;
+//         while(threadSlots.size()<=0)
+//         {
+// //             std::cout<<threadSlots.size()<<std::endl;
+//         }
+        if(threadSlots.size() <= 1)
+            acceptLock.lock();
+        
+        
+        //check if versionCache full
+        if(VC->full())
+        {
+            //join running
+             std::cout<<"joining"<<std::endl;
+                //clean
+            for(int t=0; t<thread_id.size(); ++t)
+            {
+             if(thread_id[t].joinable())
+                thread_id[t].join();
+            }   
+            
+             VC->clean();
+        }
+        
+        
         int newsockfd = accept(sockfd,(struct sockaddr *) &cli_addr, &clilen);
         if (newsockfd < 0) 
             std::cout<<"ERROR on accept"<<std::endl;
+        
+        std::cout<<"conn acc on "<<newsockfd<<std::endl;
 //         TOLOG("connection accepted: fd "+std::to_string(newsockfd));
         
-        
-        InstanceArgs* args = new InstanceArgs;
-        args->sockfd = newsockfd;
-        args->G = G;
-        args->VC = VC;
+
 
     
-        if( pthread_create(&thread_id[i], NULL, handlerDispatch,  (void*)args) != 0 )
-        {
-            std::cout<<"Failed to create thread"<<std::endl;
-           //printf("Failed to create thread\n");
-            exit(1);
-        }
-        ++i;
+
         
-//          std::cout<<"i "<<i<<std::endl;
-        //Once n threads have been created wait until they all finish
+        //get empty threadSlot
+        threadLock.lock();
+        auto lastE = (--threadSlots.end());
+        int threadId = (*lastE);
         
-        //TODO: change to mutex  on count of active threads
-        //Then seperately check for cleaning 
-        if( i >= (threads))
-        {
-            std::cout<<"i at join "<<i<<std::endl;
-//             TOLOG("waiting " + std::to_string(i) +" threads created");
-            i = 0;
+        threadSlots.erase(lastE);
+        std::cout<<threadId<<" "<<threadSlots.size()<<std::endl;
+        threadLock.unlock();
+        
+        
 
-            while(i < threads)
-            {
-                pthread_join(thread_id[i++],NULL);
+        
+        if(thread_id[threadId].joinable())
+            thread_id[threadId].join();
+        thread_id[threadId] = std::thread(handlerDispatchSL, newsockfd, &threadSlots, threadId,  G, VC);
 
-            }
-
-            VC->clean();
-
-            i = 0;
-        }
+        
+        
 
     }
   
