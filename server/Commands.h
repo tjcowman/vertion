@@ -17,6 +17,29 @@ auto run_rwr(const VGraph<GT>& graph, const json& args){
 namespace Commands
 {
 
+    //Takes an array of string identifiers and returns the correpsonding index or not found
+    template<class GT>
+    json lkpn(const VGraph<GT>& graph, const json& args)
+    {
+        std::cout<<args["names"]<<std::endl;
+        
+        std::vector<std::string> names = args["names"].get<std::vector<std::string>>();
+        
+        std::vector<typename GT::Index> ids;
+        for(const auto& e : names)
+        {
+            auto id = graph.lookupVertex(e);
+            if(id != GT::invalidIndex)
+                ids.push_back(id);
+            else
+                ids.push_back(-1);
+                
+        }
+        
+        json ret;
+        ret["ids"] = ids;
+        return ret;
+    }
     
     template<class GT>
     json ls(const VGraph<GT>& graph, const json& args)
@@ -38,8 +61,8 @@ namespace Commands
         }
         
         //Version tree
-        auto versionTree = graph.getVersionChildLists();
-        json jsArr2 = json(versionTree); 
+//         auto versionTree = graph.getVersionChildLists();
+//         json jsArr2 = json(versionTree); 
         
         //labels
         json labels;
@@ -57,21 +80,21 @@ namespace Commands
         //NodeData
         //Need form [{"id":0, "name":"...", "labels":[0,1,1] }]
         auto vertexData=json::array();
-        for(typename GT::Index i=0; i<graph.size(0).nodes_; ++i)
-        {
-            json js;
-            js["id"] = i;
-            js["name"]= graph.getID(i);
-            js["labels"] = graph.getVertexData().lookupLabels(i).getBits().to_ulong();
-            vertexData.push_back(js);
-        }
+//         for(typename GT::Index i=0; i<graph.size(0).nodes_; ++i)
+//         {
+//             json js;
+//             js["id"] = i;
+//             js["name"]= graph.getID(i);
+//             js["labels"] = graph.getVertexData().lookupLabels(i).getBits().to_ulong();
+//             vertexData.push_back(js);
+//         }
         
         
         //Consolidating
         ret["nodes"] = graph.size(0).nodes_;
-        ret["vertexData"] = vertexData;
+//         ret["vertexData"] = vertexData;
         ret["versions"] = jsArr ;
-        ret["tree"] = jsArr2;
+//         ret["tree"] = jsArr2;
         ret["labels"] = labels;
         ret["vertexData"];
         

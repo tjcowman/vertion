@@ -3,6 +3,8 @@
 #define BUFFER_SIZE 1024
 
 #include <sstream>
+#include <sys/socket.h>
+
 
 class Http
 {
@@ -10,7 +12,7 @@ class Http
     public:
         Http();
         
-        void send(int socketFD, const std::string& body);
+        int send(int socketFD, const std::string& body);
         void rec(int socketFD);
         
         std::string getURI()const;
@@ -54,7 +56,7 @@ std::string Http::getURI()const
 
 //TODO: Improve, probably should send more than just headers on first write, maybe less? Actually make it follow the buffer size
 //TODO: Isnt sending body atm for testing
-void Http::send(int socketFD, const std::string& body)
+int Http::send(int socketFD, const std::string& body)
 {
 
 //     
@@ -80,20 +82,27 @@ void Http::send(int socketFD, const std::string& body)
     int written=0;
     while(true)
     {
-        int n = write(socketFD, &buf[written], toWrite);        
-        
+//         std::cout<<"iter"<<std::endl;
+        //NOTE: MS_NOSIGNAL prevents entire server from exiting when client resets connection during transfer
+        int n = ::send(socketFD, &buf[written], toWrite, MSG_NOSIGNAL);        
+//         std::cout<<"write ret "<<n<<std::endl;
 // //         std::cout<<written<< " / "<<toWrite<<" : "<<n<<std::endl;
         
         if(n < 0){  
-            perror("Write Error:");
+//             perror("Write Error:");
+            std::cerr<<"write error"<<std::endl;
+            return -1;
         }  
-        written += n;
         
+        written += n;
+//         std::cout<<"written "<<written<<std::endl;
         
         if(written == toWrite)
             break;
     }
-
+    
+//     std::cout<<"returing written from http send"<<std::endl;
+    return written;
 }
 
 void Http::rec(int socketFD)

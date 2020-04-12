@@ -116,7 +116,9 @@ class VGraph
         VersionTagMap<T>& getTags();
         const VersionTagMap<T>& getTags()const;
         
-        std::string getID(Index index)const;
+        std::string getID(Index index)const; //TODO deprecate
+        auto lookupVertex(Index index)const;
+        auto lookupVertex(const std::string& name)const;
         
         std::vector<std::vector<typename T::VersionIndex> > getVersionChildLists()const;
     
@@ -400,6 +402,17 @@ std::string VGraph<T>::getID(Index index) const
     return vertexData_.lookup(index);
 }
 
+template<class T>
+auto VGraph<T>::lookupVertex(Index index)const
+{
+    return vertexData_.lookup(index);
+}
+
+template<class T>
+auto VGraph<T>::lookupVertex(const std::string& name)const
+{
+    return vertexData_.lookup(name);
+}
 
 template<class T>
 GraphSize<T> VGraph<T>::size()const

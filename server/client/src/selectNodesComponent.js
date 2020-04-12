@@ -8,7 +8,7 @@ import {Card, CardDeck, ListGroup, ListGroupItem, Button, Row, Col} from 'react-
 import {SelectedElementDeck}  from './selectedElementDeck.js'
 
 import ToolkitProvider, { Search } from 'react-bootstrap-table2-toolkit';
-
+import Axios from 'axios';
 const { SearchBar } = Search;
 
 function getColumns(){
@@ -48,24 +48,50 @@ class SelectNodesComponent extends React.Component{
     }
     
     handleBatchInputClick=(event)=>{
+        
+        //console.log(this.state.batchText.split('\n'))
+        if(this.state.batchText === "")
+            return;
+        
+        let names = this.state.batchText.split('\n');
+//         console.log(names)
+        //makes sure the node ids exist first
+        if(names.length > 0){
+            this.props.handleNodeLookup(names)
+//             .then(
+//                 console.log(this.props.nodeData)                                                          
+    //             this.props.handleSelect("nodes_s", this.props.activeVersionCard, ids)
+//             )
+        }
+                
+
+//         
+        
+//         console.log(JSON.stringify(this.state.batchText))
+        
+        
+//         Axios.post('http://'+this.state.backAddr,JSON.stringify(command))).then((response)=>{
+//              console.log("biresp", response)
+//         })
 //          console.log(this.state.batchText)
          
-        let ids = [];
-         
-        this.state.batchText.split('\n').forEach((e) => (
-            ids.push( this.props.nodeLookup.get(e))
-//             this.props.selectNodes2(this.state.activeCard,  this.props.nodeLookup.get(e))  
-//              console.log(e, this.props.nodeLookup.get(e))
-        ));
-        
-//          console.log("wut", ids)
-//         this.props.selectNodes2(this.state.activeCard,  ids.filter(e => typeof e !== 'undefined' )) 
-        this.props.handleSelect("nodes_s", this.props.activeVersionCard, ids.filter(e => typeof e !== 'undefined' ))
-        
+//         let ids = [];
+//          
+//         this.state.batchText.split('\n').forEach((e) => (
+//             ids.push( this.props.nodeLookup.get(e))
+// //             this.props.selectNodes2(this.state.activeCard,  this.props.nodeLookup.get(e))  
+// //              console.log(e, this.props.nodeLookup.get(e))
+//         ));
+//         
+// //          console.log("wut", ids)
+// //         this.props.selectNodes2(this.state.activeCard,  ids.filter(e => typeof e !== 'undefined' )) 
+//         this.props.handleSelect("nodes_s", this.props.activeVersionCard, ids.filter(e => typeof e !== 'undefined' ))
+//         
+//         
         this.setState({batchText: ""});
-        this.handleCardClick(this.props.activeVersionCard)
+//         this.handleCardClick(this.props.activeVersionCard)
     }
-    
+    /*
     renderTable1(){
         return(
             <Card>
@@ -107,7 +133,7 @@ class SelectNodesComponent extends React.Component{
             </Card>
             
         );
-    }
+    }*/
     
     RenderSelectedNodes(){
         return (
@@ -122,7 +148,7 @@ class SelectNodesComponent extends React.Component{
 
                 handleCardClick={this.handleCardClick} 
 
-                displayLookup={[ this.props.elementNames.vertexes]}
+                displayLookup={[ this.props.nodeData.indexes]}
                 handleClickAddVersionCard={this.props.handleAddVersionCard}
                 handleClickRemoveVersionCard={this.props.handleRemoveVersionCard}
 //                 showDiff={true}
@@ -136,9 +162,7 @@ class SelectNodesComponent extends React.Component{
         return(
             <Card>
             
-                <Card.Body>
-                    {this.RenderSelectedNodes()}
-                </Card.Body>
+
                 
                 
                 <Card.Body>
@@ -154,12 +178,15 @@ class SelectNodesComponent extends React.Component{
                     </Card>
                 </Card.Body>
                     
+                <Card.Body>
+                    {this.RenderSelectedNodes()}
+                </Card.Body>
 
-                    
+               {/*     
                 <Card.Body>
                     {this.renderTable1()}
                 </Card.Body>
-            
+                */}
             </Card>
             
         );

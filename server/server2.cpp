@@ -48,7 +48,6 @@ std::mutex acceptLock;
 std::condition_variable cv;
 
 
-//TODO: Make simple http classes for request and response
 
 //Used to allow caching until server brough back
 //TODO: Make this more robust
@@ -68,20 +67,13 @@ void basicHandler(int sockfd, const CommandRunner<GraphType::GD>& CR, const Http
 // //     TOLOG("parsed json fd(" +std::to_string(sockfd)+ "): " + query.dump());
 
 
-    std::vector< GraphType::GD::VersionIndex> versions = query["versions"].template get<std::vector<GraphType::GD::VersionIndex>>();
-    std::vector<GraphType::GD::Index> vertexLabels = query["vertexLabels"].template get<std::vector<GraphType::GD::Index>>();
-    std::vector<GraphType::GD::Index> edgeLabels = query["edgeLabels"].template get<std::vector<GraphType::GD::Index>>();    
+//     std::vector< GraphType::GD::VersionIndex> versions = query["versions"].template get<std::vector<GraphType::GD::VersionIndex>>();
+//     std::vector<GraphType::GD::Index> vertexLabels = query["vertexLabels"].template get<std::vector<GraphType::GD::Index>>();
+//     std::vector<GraphType::GD::Index> edgeLabels = query["edgeLabels"].template get<std::vector<GraphType::GD::Index>>();    
             
-//     pthread_mutex_lock(&lock);
-//     CR.viewCache_->lockView(versions, VertexLab(vertexLabels), EdgeLab(edgeLabels)) ;
-//     pthread_mutex_unlock(&lock);
-             
     json queryResponse = CR.run(query);
                 
-//     pthread_mutex_lock(&lock);
-//     CR.viewCache_->unlockView(versions, VertexLab(vertexLabels), EdgeLab(edgeLabels)) ;
-//     pthread_mutex_unlock(&lock);
-    
+
     
     Http res;
     res.setStatus("HTTP/1.1 200 OK");
@@ -94,12 +86,10 @@ void basicHandler(int sockfd, const CommandRunner<GraphType::GD>& CR, const Http
 //     TOLOG("sent reply fd(" +std::to_string(sockfd)+ ")");
     
 
-//     close(sockfd);
-//     return NULL;
 }
 
 
-void handleInit_ls(int sockfd, const CommandRunner<GraphType::GD>& CR)
+int handleInit_ls(int sockfd, const CommandRunner<GraphType::GD>& CR)
 {
     Http res;
     res.setStatus("HTTP/1.1 200 OK");
@@ -115,8 +105,14 @@ void handleInit_ls(int sockfd, const CommandRunner<GraphType::GD>& CR)
     
 //     std::cout<<queryResponse.dump()<<std::endl;
     
-    res.send(sockfd, queryResponse.dump());
+    auto written = res.send(sockfd, queryResponse.dump());
 
+    std::cout<<"returned from send to handle ls"<<std::endl;
+    
+    if(written < 0 )
+        return -1;
+    else
+        return 0;
 }
 
 
@@ -126,6 +122,8 @@ void handlerDispatchSL(int sockfd, std::set<int>* threadSlots, int threadId, con
 {
     Http req;
     req.rec(sockfd);
+    
+    std::cout<<"REQ BODY\n"<<req.getBody()<<std::endl;
 
     std::string uri=  req.getURI();//getResource(req.first);
 //     std::cout<<"URI = :"<<uri<<std::endl;
@@ -137,21 +135,10 @@ void handlerDispatchSL(int sockfd, std::set<int>* threadSlots, int threadId, con
     //Special cases ex:cacheable ls
     if(uri=="/ls")
     {
-//         Response R;
-//         R.addHeader("ETag: " + eTag);
-        
-//         for(const auto& ee : req.getHeaders())
-//             std::cout<<"<"<<ee.first<<">"<<" "<<"<"<<ee.second<<">"<<std::endl; 
-        
-        
+
         //Check the Etag and match
         auto it = req.getHeaders().find("if-none-match"); //keys stored as lowercase
-        
-//         if(it != req.getHeaders().end())
-//         {
-//             std::cout<<"<"<<it->first<<">"<<" : "<<"<"<<it->second<<">"<<" ::: "<<"<"<<eTag<<">"<<std::endl;
-//         }
-        
+
         if(it != req.getHeaders().end() && it->second == eTag  )
         {
             Http res;
@@ -176,6 +163,7 @@ void handlerDispatchSL(int sockfd, std::set<int>* threadSlots, int threadId, con
     }
     
 //     TOLOG("closed fd(" +std::to_string(sockfd)+ ")");
+std::cout<<"before socket close"<<std::endl;
     close(sockfd);
 
     threadLock.lock();
@@ -312,20 +300,13 @@ int main(int argc, char* argv[] )
         ARG(port,stoi)
         ARG(graph,)
 
-//         ARG(cacheSize, stoi) //Needs to be > threads for the server so in use views dont get deleted
         ARG(cacheFactor,stoi)
         ARG(mode,)
         
         ARG(threads, stoi)
     );
      
-//      if(args.cacheSize<args.threads)
-//      {
-//          args.cacheSize = args.threads+1; //TODO: BUG?: Cache size needs to be > 2xnum of possible threads
-//         std::cout<<"[warn] cacheSize increased to "<<args.cacheSize<<std::endl;
-//      }
-    
-     
+
     Graph G(Context::undirected);
     GraphIO IO(G);
     IO.read_serial(args.graph);

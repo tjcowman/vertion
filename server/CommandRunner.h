@@ -49,19 +49,27 @@ CommandRunner<GT>::CommandRunner(const VGraph<GT>& graph, ViewCache<GT>& viewCac
 template<class GT>
 json CommandRunner<GT>::run(const json& command)const
 {
-//     std::cout<<command<<std::endl;
-    
-    if(command["cmd"] == "ls")
-        return Commands::ls<GT>(*graph_, command);
-    else if(command["cmd"] == "rwr")
-        return Commands::rwr<GT>(*graph_, *viewCache_, command);
-    else if(command["cmd"] == "rwr2")
-        return Commands::rwr2<GT>(*graph_, *viewCache_,command);
-    else if(command["cmd"] == "lsv")
-        return Commands::lsv<GT>(*graph_, *viewCache_, command);
-    else if(command["cmd"] == "mft")
-        return Commands::mft<GT>(*graph_, *viewCache_, command);
+    std::cout<<"COMMAND\n"<<command<<std::endl;
     
     
-    return json();
+    if(command.find("cmd") != command.end())
+    {
+        if(command["cmd"] == "ls")
+            return Commands::ls<GT>(*graph_, command);
+        else if(command["cmd"] == "rwr")
+            return Commands::rwr<GT>(*graph_, *viewCache_, command);
+        else if (command["cmd"] == "lkpn")
+            return Commands::lkpn<GT>(*graph_, command);
+        else if(command["cmd"] == "rwr2")
+            return Commands::rwr2<GT>(*graph_, *viewCache_,command);
+        else if(command["cmd"] == "lsv")
+            return Commands::lsv<GT>(*graph_, *viewCache_, command);
+        else if(command["cmd"] == "mft")
+            return Commands::mft<GT>(*graph_, *viewCache_, command);
+    }
+    else
+    {
+        std::cerr<<"no cmd provided to run"<<std::endl;
+        return json();
+    }
 }

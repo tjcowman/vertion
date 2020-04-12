@@ -157,44 +157,47 @@ bool ViewCache<GT>::full()const
 template<class GT>
 void ViewCache<GT>::clean()
 {
-//     std::cout<<"SB "<<viewMap_.size()<<std::endl;
-    std::vector<TrackerEntry> viewsToRemove;
-//      pthread_mutex_lock(&lock);
-     lock.lock();
-//     
-     
-     for(const auto& e : viewMap_)
-         std::cout<<e.first<<" "<<e.second<<std::endl;
-     
-//     if(full())
-//     {
+     if(full()) //if another thread already cleaned up
+     {
+    //     std::cout<<"SB "<<viewMap_.size()<<std::endl;
+        std::vector<TrackerEntry> viewsToRemove;
+    //      pthread_mutex_lock(&lock);
+        lock.lock();
+    //     
+        
         for(const auto& e : viewMap_)
-            viewsToRemove.push_back(e.second);
-//         
-        std::sort(viewsToRemove.begin(), viewsToRemove.end(), [](const auto& lhs, const auto& rhs){return lhs.lastUsed_<rhs.lastUsed_;});
-//         
-        int numToBlank = viewMap_.size()- (cacheSize_*(sizeFactor_-1));
-        for(int i=0; i<viewsToRemove.size(); ++i)
-        {
-            if(viewsToRemove[i].numActive_ <=0)
+            std::cout<<e.first<<" "<<e.second<<std::endl;
+        
+    //    
+    //     {
+            for(const auto& e : viewMap_)
+                viewsToRemove.push_back(e.second);
+    //         
+            std::sort(viewsToRemove.begin(), viewsToRemove.end(), [](const auto& lhs, const auto& rhs){return lhs.lastUsed_<rhs.lastUsed_;});
+    //         
+            int numToBlank = viewMap_.size()- (cacheSize_*(sizeFactor_-1));
+            for(int i=0; i<viewsToRemove.size(); ++i)
             {
-                --numToBlank;
-                //             int slotIndex = 
-//             std::cout<<"blanking "<<viewsToRemove[i].entryIndex_<<std::endl;
-            
-                emptySlots_.insert(viewsToRemove[i].entryIndex_);
-                viewMap_.erase(viewsToRemove[i].key_);
+                if(viewsToRemove[i].numActive_ <=0)
+                {
+                    --numToBlank;
+                    //             int slotIndex = 
+    //             std::cout<<"blanking "<<viewsToRemove[i].entryIndex_<<std::endl;
+                
+                    emptySlots_.insert(viewsToRemove[i].entryIndex_);
+                    viewMap_.erase(viewsToRemove[i].key_);
+                }
+
+
+
+                if(numToBlank <= 0)
+                    break;
             }
-
-
-
-            if(numToBlank <= 0)
-                break;
-        }
-//     }
-//     std::cout<<"clean done"<<std::endl;
-//     pthread_mutex_unlock(&lock);
-    lock.unlock();
+    //     }
+    //     std::cout<<"clean done"<<std::endl;
+    //     pthread_mutex_unlock(&lock);
+        lock.unlock();
+    }
 }
 
 

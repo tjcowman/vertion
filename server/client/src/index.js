@@ -28,7 +28,7 @@ class LabelSet{
             this.names = names.map((e)=>({name:e}));
         }
         
-        console.log("TDN", this.names);
+//         console.log("TDN", this.names);
 //         this.urls = 
     }
     
@@ -88,6 +88,42 @@ class GraphData{
 
 }
 
+//Holds the result of nodeLookup queries to the server so the same node name isn't queried twice
+class NodeData{
+    constructor(numNodes){
+//         this.indexes = new Map();
+        this.indexes = new Array(numNodes)
+        this.names = new Map();
+            
+    }
+    
+    getIndex(name){
+        return this.names.get(name);
+    }
+    
+//     [](index){
+//         return this.indexes.get(index);
+//     }
+    
+    //Returns the names that have not been looked up yet
+    filterKnown(names){
+        let unknownNames = names.filter((e) => (!this.names.has(e)))
+        return unknownNames;
+    }
+    
+    //Takes a array of pairs corresponding to the name : index of nodes
+    update(names, serverResponse){
+        for (let i=0; i< names.length; ++i){
+            this.names.set(names[i], serverResponse[i]);
+            if(serverResponse[i] != -1)
+                this.indexes[serverResponse[i]] = {name: names[i]};
+//             this.indexes.set(serverResponse[i], names[i]);
+        }
+        return this;
+    }
+    
+}
+
 //Holds the plaintext representations of each element index 
 class ElementNames{
     constructor(serverResponse){
@@ -99,7 +135,7 @@ class ElementNames{
         
         if(typeof serverResponse !== 'undefined'){
             this.versions = serverResponse.data.versions.map((e) => ({name:e.name, tags:e.tags}));
-            this.vertexes = serverResponse.data.vertexData.map((e,i) => ({name: e.name, labels: e.labels, id: e.id}));
+//             this.vertexes = serverResponse.data.vertexData.map((e,i) => ({name: e.name, labels: e.labels, id: e.id}));
             this.labelsV = new LabelSet(serverResponse.data.labels.vertex.names);
             this.labelsE = new LabelSet(serverResponse.data.labels.edge);
             //Add the vertex label bits as plaintext
@@ -108,7 +144,7 @@ class ElementNames{
                     (ee) => (ee.name)
                 ).join(" : ")
             ));
-            console.log("WUT", this)
+//             console.log("WUT", this)
         }
     }
     
@@ -176,6 +212,7 @@ class VersionCards{
 
 class App extends React.Component {
     constructor(props){
+        
         super(props);
         this.state={
             graphData: new GraphData(),
@@ -190,24 +227,26 @@ class App extends React.Component {
             staleCards: [false],
             activeVersionCard: 0,
 
-            
+            nodeData: new NodeData(),
             
             nodeLookup: new Map(),
             versionTagDisplay : new Map(),
+            backAddr  : "192.168.1.19:9060"
+            //"localhost:9060"
         }
         
         var date = new Date();
-         Axios.get('http://localhost:9060/ls', date.getTime()).then((response)=>{
+         Axios.get('http://'+this.state.backAddr+'/ls', date.getTime()).then((response)=>{
              console.log("lsResponse", response)
           
-            let nodeLookup = new Map();
+//             let nodeLookup = new Map();
             
 
             let serverProps = JSON.parse(response.data.serverProps);
-            
+           /* 
             response.data.vertexData.forEach((e) =>(
                 nodeLookup.set(e.name, e.id)
-            ));
+            ));*/
 
 //             let allVertexLabels0 = new Set(Array(response.data.labels.vertex.names.length).keys());
 //             let allEdgeLabels0 = new  Set(Array(response.data.labels.edge.length).keys());
@@ -228,7 +267,8 @@ class App extends React.Component {
                 serverProps : serverProps,
                 versionTagDisplay: versionTagDisplay,
                 graphData: new GraphData(response.data),
-                nodeLookup : nodeLookup,
+//                 nodeLookup : nodeLookup,
+                nodeData: new NodeData(response.data.nodes),
                 elementNames: new ElementNames(response)
 
             }, () =>{console.log("initstate", this.state)})
@@ -237,6 +277,37 @@ class App extends React.Component {
         
     }
     
+    handleNodeLookup=(names)=>{
+//         return new Promise((resolve, reject) =>{
+            let queryNames = this.state.nodeData.filterKnown(names);
+    
+            //Only need to make request if names are unknown
+            if(queryNames.length > 0){
+                Axios.post('http://'+this.state.backAddr,JSON.stringify({cmd:"lkpn", names:queryNames})).then((response)=>{
+
+                    let nodeData = this.state.nodeData.update(queryNames, response.data.ids);
+                    
+                    this.setState({nodeData: nodeData},
+                        names.forEach((n) => (
+                            this.handleSelect("nodes_s", this.state.activeVersionCard, this.state.nodeData.getIndex(n))
+
+                        ))
+                    );
+                })
+            }
+            else
+            {
+                names.forEach((n) => (
+                    this.handleSelect("nodes_s", this.state.activeVersionCard, this.state.nodeData.getIndex(n))
+                ))  
+            }
+        
+            
+//         })
+        
+
+        console.log(this.state);
+    }
 
     
     handleAddVersionCard=()=>{
@@ -271,7 +342,7 @@ class App extends React.Component {
         versionCardsO.cards[cardId].toggle(name,elementId);
         
         this.setState({versionCardsO: versionCardsO});
-        console.log("VC ", this.state.versionCardsO)
+//         console.log("VC ", this.state.versionCardsO)
     }
     
     handleCheckToggle=(name,cardId, elementId)=>{
@@ -279,6 +350,10 @@ class App extends React.Component {
 //          return this.state[name][cardId].has(elementId);
     }
     
+    handleSelect=(name, cardId, elementId)=>{
+        if( elementId != -1 & !this.state.versionCardsO.cards[cardId][name].has(elementId))
+            this.handleToggle(name, cardId, elementId)
+    }
 
     handleUpdateStats=(cardId, stats)=>{
         
@@ -329,6 +404,7 @@ class App extends React.Component {
                         <Tab.Content>
                             <Tab.Pane eventKey="main">
                                 <InfoPanel
+                                    backAddr={this.state.backAddr}
                                     activeVersionCard={this.state.activeVersionCard}
                                     handleClickVersionCard = {this.handleClickVersionCard}
                                     handleUpdateStats= {this.handleUpdateStats}
@@ -375,19 +451,22 @@ class App extends React.Component {
                                      
                             <Tab.Pane eventKey="nodes">
                                 <SelectNodesComponent 
+                                    backAddr={this.state.backAddr}
                                     allNodes={this.state.graphData.data.vertexData} 
+                                    nodeData={this.state.nodeData}
                                     
                                     handleCheckToggle={this.handleCheckToggle}
                                     handleToggle={this.handleToggle}
                                     handleSelect={this.handleSelect}
 
-
+                                    
                                     
                                     handleAddVersionCard = {this.handleAddVersionCard}
                                     handleRemoveVersionCard = {this.handleRemoveVersionCard}
                                     handleClickVersionCard = {this.handleClickVersionCard}
                                     activeVersionCard={this.state.activeVersionCard}
                                     
+                                    handleNodeLookup={this.handleNodeLookup}
                                     
                                     versionCardsO={this.state.versionCardsO}
                                     nodeLookup={this.state.nodeLookup}
@@ -399,6 +478,7 @@ class App extends React.Component {
                         
                             <Tab.Pane eventKey="query_rwr">
                                 <QueryComponentRWR
+                                    backAddr={this.state.backAddr}
                                     selectedVersions={this.state.versions_s}  
                                 
                                     
@@ -408,7 +488,7 @@ class App extends React.Component {
                                     selectedNodes={this.state.nodes_s}
                                     
                                     versionCardsO={this.state.versionCardsO}
-                                     activeVersionCard={this.state.activeVersionCard}
+                                    activeVersionCard={this.state.activeVersionCard}
                                     elementNames = {this.state.elementNames}
                                 />
                             </Tab.Pane>

@@ -28,7 +28,8 @@ args = parser.parse_args()
 
 #random.seed(900)
 
-url = 'http://localhost:9060'
+url = 'http://129.22.31.155:28340'
+#'http://localhost:9060'
 
 versionPool = list(range(1,26))
 #shuffle the versions so the same versions aren't covered by the normal distribution used to generate random version integrations
