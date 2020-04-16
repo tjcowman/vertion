@@ -20,3 +20,4 @@ ggplot(D2, aes(y=meanRes, ymax=meanRes+sdRes, ymin=meanRes-sdRes, x=Connections)
   xscale("log2")+
 #  geom_errorbar() +
   facet_wrap(.~SigmaNorm)
+

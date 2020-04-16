@@ -100,10 +100,9 @@ class NodeData{
     getIndex(name){
         return this.names.get(name);
     }
-    
-//     [](index){
-//         return this.indexes.get(index);
-//     }
+    getEntry(index){
+        return this.indexes[index];
+    }
     
     //Returns the names that have not been looked up yet
     filterKnown(names){
@@ -111,12 +110,26 @@ class NodeData{
         return unknownNames;
     }
     
+    filterKnownIndex(indexes){
+        return indexes.filter((e)=>(this.indexes[e]) == null )
+    }
+    
     //Takes a array of pairs corresponding to the name : index of nodes
     update(names, serverResponse){
         for (let i=0; i< names.length; ++i){
-            this.names.set(names[i], serverResponse[i]);
+            this.names.set(names[i], serverResponse[i].id);
             if(serverResponse[i] != -1)
-                this.indexes[serverResponse[i]] = {name: names[i]};
+                this.indexes[serverResponse[i].id] = {name: names[i], labels:serverResponse[i].l, labelsText: "tmp" };
+//             this.indexes.set(serverResponse[i], names[i]);
+        }
+        return this;
+    }
+    
+    updateIndex(indexes, serverResponse){
+        for (let i=0; i< indexes.length; ++i){
+            this.names.set(indexes[i], serverResponse[i].name);
+//             if(serverResponse[i] != -1)
+            this.indexes[indexes[i]] = {name: serverResponse[i].name, labels:serverResponse[i].l, labelsText: "tmp"};
 //             this.indexes.set(serverResponse[i], names[i]);
         }
         return this;
@@ -239,18 +252,8 @@ class App extends React.Component {
          Axios.get('http://'+this.state.backAddr+'/ls', date.getTime()).then((response)=>{
              console.log("lsResponse", response)
           
-//             let nodeLookup = new Map();
-            
-
             let serverProps = JSON.parse(response.data.serverProps);
-           /* 
-            response.data.vertexData.forEach((e) =>(
-                nodeLookup.set(e.name, e.id)
-            ));*/
 
-//             let allVertexLabels0 = new Set(Array(response.data.labels.vertex.names.length).keys());
-//             let allEdgeLabels0 = new  Set(Array(response.data.labels.edge.length).keys());
-            
             let versionTagDisplay = new Map();
             response.data.versions.forEach((e) => {
                 e.tags.forEach((t) => {
@@ -277,36 +280,51 @@ class App extends React.Component {
         
     }
     
-    handleNodeLookup=(names)=>{
-//         return new Promise((resolve, reject) =>{
+    //TODO: Split the lookup and fill in nodeData from the handleSelect card
+    handleNodeLookup=(names, afterLookupFn)=>{
+//          return new Promise((resolve) =>{
             let queryNames = this.state.nodeData.filterKnown(names);
     
             //Only need to make request if names are unknown
             if(queryNames.length > 0){
                 Axios.post('http://'+this.state.backAddr,JSON.stringify({cmd:"lkpn", names:queryNames})).then((response)=>{
 
-                    let nodeData = this.state.nodeData.update(queryNames, response.data.ids);
+                    console.log("R", response.data)
+                    let nodeData = this.state.nodeData.update(queryNames, response.data);
                     
-                    this.setState({nodeData: nodeData},
-                        names.forEach((n) => (
-                            this.handleSelect("nodes_s", this.state.activeVersionCard, this.state.nodeData.getIndex(n))
+                    this.setState({nodeData: nodeData}, afterLookupFn
 
-                        ))
                     );
                 })
             }
             else
             {
-                names.forEach((n) => (
-                    this.handleSelect("nodes_s", this.state.activeVersionCard, this.state.nodeData.getIndex(n))
-                ))  
+                afterLookupFn()
             }
-        
-            
-//         })
-        
 
-        console.log(this.state);
+    }
+    
+    handleNodeLookupIndex=(indexes, afterLookupFn)=>{
+//          return new Promise((resolve) =>{
+            let queryIndexes = this.state.nodeData.filterKnownIndex(indexes);
+    
+            //Only need to make request if names are unknown
+            if(queryIndexes.length > 0){
+                Axios.post('http://'+this.state.backAddr,JSON.stringify({cmd:"lkpi", ids:queryIndexes})).then((response)=>{
+
+                    console.log("R", response.data)
+                    let nodeData = this.state.nodeData.updateIndex(queryIndexes, response.data);
+//                     
+                    this.setState({nodeData: nodeData}, afterLookupFn
+
+                    );
+                })
+            }
+            else
+            {
+                afterLookupFn()
+            }
+
     }
 
     
@@ -338,6 +356,7 @@ class App extends React.Component {
 
     handleToggle=(name, cardId, elementId)=>{
 
+        console.log("DB", name, cardId, elementId)
         let versionCardsO = this.state.versionCardsO;
         versionCardsO.cards[cardId].toggle(name,elementId);
         
@@ -357,9 +376,9 @@ class App extends React.Component {
 
     handleUpdateStats=(cardId, stats)=>{
         
-        console.log("HUSS", stats,this.state)
+//         console.log("HUSS", stats,this.state)
         let versionCardsO = this.state.versionCardsO;
-        console.log("VCUS", this.state.versionCardsO, versionCardsO)
+//         console.log("VCUS", this.state.versionCardsO, versionCardsO)
         versionCardsO.cards[cardId].stats = stats;
         versionCardsO.cards[cardId].isStale=false;
         
@@ -481,7 +500,9 @@ class App extends React.Component {
                                     backAddr={this.state.backAddr}
                                     selectedVersions={this.state.versions_s}  
                                 
+                                    handleNodeLookupIndex={this.handleNodeLookupIndex}
                                     
+                                    nodeData = {this.state.nodeData}
                                     
                                     selectedVertexLabels={this.state.labelsV_s}
                                     selectedEdgeLabels={this.state.labelsE_s}

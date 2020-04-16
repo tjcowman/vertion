@@ -16,7 +16,7 @@ auto run_rwr(const VGraph<GT>& graph, const json& args){
 
 namespace Commands
 {
-
+//TODO: send labels
     //Takes an array of string identifiers and returns the correpsonding index or not found
     template<class GT>
     json lkpn(const VGraph<GT>& graph, const json& args)
@@ -25,19 +25,56 @@ namespace Commands
         
         std::vector<std::string> names = args["names"].get<std::vector<std::string>>();
         
-        std::vector<typename GT::Index> ids;
+        //js["labels"] = graph.getVertexData().lookupLabels(i).getBits().to_ulong();
+        
+        json ret;
+//         std::vector<typename GT::Index> ids;
+//         std::vector< VertexLab> labs;
         for(const auto& e : names)
         {
             auto id = graph.lookupVertex(e);
             if(id != GT::invalidIndex)
-                ids.push_back(id);
+//                 ids.push_back(id);
+                ret.push_back({{"id",id},{"l", graph.getVertexData().lookupLabels(id).getBits().to_ulong()}});
             else
-                ids.push_back(-1);
+                  ret.push_back({{"id",-1}});
+//                 ids.push_back(-1);
                 
         }
         
+        
+//         ret["ids"] = ids;
+        return ret;
+    }
+    
+    template<class GT>
+    json lkpi(const VGraph<GT>& graph, const json& args)
+    {
+//         std::cout<<args["names"]<<std::endl;
+        
+        std::vector<typename GT::Index> ids = args["ids"].get<std::vector<typename GT::Index>>();
+        
+        //js["labels"] = graph.getVertexData().lookupLabels(i).getBits().to_ulong();
+        
         json ret;
-        ret["ids"] = ids;
+//         std::vector<typename GT::Index> ids;
+//         std::vector< VertexLab> labs;
+        for(const auto& id : ids)
+        {
+            ret.push_back({{"name", graph.lookupVertex(id)}, {"l", graph.getVertexData().lookupLabels(id).getBits().to_ulong()} });
+            
+// //             auto id = graph.lookupVertex(e);
+//             if(id != GT::invalidIndex)
+// //                 ids.push_back(id);
+//                 ret.push_back({{"id",id},{"l",0}});
+//             else
+//                   ret.push_back({{"id",-1}});
+// //                 ids.push_back(-1);
+                
+        }
+        
+        
+//         ret["ids"] = ids;
         return ret;
     }
     

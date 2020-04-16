@@ -22,7 +22,7 @@ function getColumns(){
         {
             dataField: "labels",
             text: "labels",
-            filter: textFilter()
+
         },
         {
             dataField: "value",
@@ -126,26 +126,49 @@ class QueryComponentRWR extends React.Component{
         
         
         Axios.post('http://'+this.props.backAddr, JSON.stringify(command)).then((response)=>{
-//          console.log("cmd",response)
+            console.log("cmd",response.data)
          
-            response.data.nodes.forEach((e,i) => {
-//                 let labelBits = this.props.getVertexDataRow(e["id"])["labels"];
-//                  let labelBits = this.props.elementNames 
+            let ids = response.data.nodes.map((e) => e.id);
+            
+            
+            let formatResponse = () =>{
+               let result = response.data.nodes.map((e,i) => ({
+                    row : i,
+                    value : e.value,
+                    name: this.props.nodeData.getEntry(e.id).name,
+                    labels: this.props.nodeData.getEntry(e.id).labelsText
+                    
+                }))
+               
+               console.log(result)
+                this.setState({ result:  {nodes:result, edges: response.data.edges } })
                 
-                
-                e["row"]=i;  
+    //             response.data.nodes.forEach((e,i) => {
+// //                 let labelBits = this.props.getVertexDataRow(e["id"])["labels"];
+// //                  let labelBits = this.props.elementNames 
+//                 
+//                 
+//                 e["row"]=i;  
+// 
+// //                 e["name"]=this.props.getVertexDataRow(e["id"])["name"];
+//                 e.name = this.props.elementNames.vertexes[e["id"]].name; 
+//                 
+// //                 e["labels"] = this.props.getLabels()[0].bitsToNames(labelBits);
+//                 e.labels=this.props.elementNames.vertexes[e["id"]].labelsPlainText; 
+//             });
+//                 console.log(response.data.nodes)
+            }
+            
+            this.props.handleNodeLookupIndex(ids, formatResponse);
 
-//                 e["name"]=this.props.getVertexDataRow(e["id"])["name"];
-                e.name = this.props.elementNames.vertexes[e["id"]].name; 
-                
-//                 e["labels"] = this.props.getLabels()[0].bitsToNames(labelBits);
-                e.labels=this.props.elementNames.vertexes[e["id"]].labelsPlainText; 
-            });
+//             
+//             
+//             
+//             
+//             
+//             this.setState({result: response.data})
             
-            
-            
-            this.setState({result: response.data})
-           console.log(this.state.result);
+//            console.log(this.state.result);
         });
       
     }

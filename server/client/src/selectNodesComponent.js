@@ -48,48 +48,28 @@ class SelectNodesComponent extends React.Component{
     }
     
     handleBatchInputClick=(event)=>{
-        
-        //console.log(this.state.batchText.split('\n'))
+
         if(this.state.batchText === "")
             return;
         
         let names = this.state.batchText.split('\n');
-//         console.log(names)
+
         //makes sure the node ids exist first
         if(names.length > 0){
-            this.props.handleNodeLookup(names)
-//             .then(
-//                 console.log(this.props.nodeData)                                                          
-    //             this.props.handleSelect("nodes_s", this.props.activeVersionCard, ids)
-//             )
-        }
-                
+            
+            
+            let  selectFn =()=> {names.forEach((n) => (
+                this.props.handleSelect("nodes_s", this.props.activeVersionCard, this.props.nodeData.getIndex(n))
 
-//         
-        
-//         console.log(JSON.stringify(this.state.batchText))
-        
-        
-//         Axios.post('http://'+this.state.backAddr,JSON.stringify(command))).then((response)=>{
-//              console.log("biresp", response)
-//         })
-//          console.log(this.state.batchText)
-         
-//         let ids = [];
-//          
-//         this.state.batchText.split('\n').forEach((e) => (
-//             ids.push( this.props.nodeLookup.get(e))
-// //             this.props.selectNodes2(this.state.activeCard,  this.props.nodeLookup.get(e))  
-// //              console.log(e, this.props.nodeLookup.get(e))
-//         ));
-//         
-// //          console.log("wut", ids)
-// //         this.props.selectNodes2(this.state.activeCard,  ids.filter(e => typeof e !== 'undefined' )) 
-//         this.props.handleSelect("nodes_s", this.props.activeVersionCard, ids.filter(e => typeof e !== 'undefined' ))
-//         
-//         
+            ))}
+            
+            
+            this.props.handleNodeLookup(names, selectFn )
+
+        }
+
         this.setState({batchText: ""});
-//         this.handleCardClick(this.props.activeVersionCard)
+
     }
     /*
     renderTable1(){

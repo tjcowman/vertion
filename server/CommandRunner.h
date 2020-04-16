@@ -60,6 +60,8 @@ json CommandRunner<GT>::run(const json& command)const
             return Commands::rwr<GT>(*graph_, *viewCache_, command);
         else if (command["cmd"] == "lkpn")
             return Commands::lkpn<GT>(*graph_, command);
+        else if (command["cmd"] == "lkpi")
+            return Commands::lkpi<GT>(*graph_, command);
         else if(command["cmd"] == "rwr2")
             return Commands::rwr2<GT>(*graph_, *viewCache_,command);
         else if(command["cmd"] == "lsv")
