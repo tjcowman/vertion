@@ -10,6 +10,11 @@
 #include <thread>
 #include <mutex>
 
+#include <nlohmann/json.hpp>
+using json = nlohmann::json;
+
+
+
 template<class GT>
 struct Entry
 {
@@ -56,7 +61,9 @@ struct ViewKey{
         std::sort(tmp.begin(),tmp.end());
         for(const auto& e : tmp)
             s.append(std::to_string(e));
+        s.append("-");
         s.append(std::to_string(nodeLabels_.getBits().to_ulong()));
+        s.append("-");
         s.append(std::to_string(edgeLabels_.getBits().to_ulong()));
         return s;   
     }
@@ -69,10 +76,52 @@ struct ViewKey{
     
 };
 
+template<class GT>
+class ViewSummary{
+    
+    public:
+        ViewSummary(){}
+        
+        void compute(const IntegratedViewer<GT>& view)
+        {
+            std::tie(numNodes_, numEdges_) = view.size(); 
+            numVertexLabels_ = view.countVertexLabels();
+            numEdgeLabels_ = view.countEdgeLabels();
+        }
+        
+
+
+        friend void to_json(json& j, const ViewSummary<GT>& vs)
+        {
+//             j= json{{"nodes", vs.numNodes_}, {"edges", vs.numEdges_}};
+            
+            j= {{"nodes",json::array()}, {"edges",json::array()}};
+             
+            for(const auto& e : vs.numVertexLabels_)
+                j["nodes"].push_back({
+                    {"labels", e.first.getBits().to_ulong()},
+                    {"count", e.second}
+                });
+            for(const auto& e : vs.numEdgeLabels_)
+                j["edges"].push_back({
+                    {"labels",e.first.getBits().to_ulong()},
+                    {"count", e.second}
+                    
+                });
+                
+        }
+            
+    private:
+        typename GT::Index numNodes_;
+        typename GT::Index numEdges_;
+        
+        std::map<VertexLabel<GT>, typename GT::Index> numVertexLabels_;
+        std::map<EdgeLabel<GT>, typename GT::Index> numEdgeLabels_;
+};
 
 
 
-//TODO: MAKE THIS THREAD SAFE
+
 template<class GT>
 class ViewCache
 {
@@ -94,7 +143,8 @@ class ViewCache
         void clean();
         
         
-//         IntegratedViewer<GT>& lookup(const std::vector<typename GT::VersionIndex>& versions, const VertexLabel<GT>& nodeLabels, const EdgeLabel<GT>& edgeLabels);
+        json getViewSummary(const std::string& key);
+        
         IntegratedViewer<GT>& lookup(const ViewKey<GT>& key);
         void finishLookup(const ViewKey<GT>& key);
 
@@ -102,7 +152,6 @@ class ViewCache
         static std::string generate_key(const std::vector<typename GT::VersionIndex>& versions, const VertexLabel<GT>& nodeLabels, const EdgeLabel<GT>& edgeLabels);
         int activeCount;
     private:
-//         pthread_mutex_t lock;
         std::mutex lock;
         
        
@@ -111,10 +160,8 @@ class ViewCache
         
         const VGraph<GT>* graph_;
 
-        
-//         std::map<std::string, Entry<GT>> views_;
-//         std::map<std::string, TrackerEntry> users_;
-        
+        //store various view summary statistics (Note these are not purged upon a view cleanup)
+        std::map<std::string, ViewSummary<GT>> viewSummaries_;
         
         std::map<std::string, TrackerEntry> viewMap_;
         std::set<int> emptySlots_;
@@ -126,14 +173,6 @@ class ViewCache
 template<class GT>
 ViewCache<GT>::ViewCache(const VGraph<GT>& graph, int cacheSize, int sizeFactor)
 {
-//     activeCount = 0;
-    
-//     if (pthread_mutex_init(&lock, NULL) != 0) { 
-//         std::cerr<<"mutex init failed"<<std::endl; 
-//         exit(1); 
-//     } 
-//   
-    
     cacheSize_ = cacheSize;
     sizeFactor_ = sizeFactor;
     viewData_ = std::vector<IntegratedViewer<GT>>(cacheSize_*sizeFactor_, IntegratedViewer<GT>(graph));
@@ -141,11 +180,7 @@ ViewCache<GT>::ViewCache(const VGraph<GT>& graph, int cacheSize, int sizeFactor)
     for(int i=0; i<cacheSize_*sizeFactor_; ++i)
         emptySlots_.insert(emptySlots_.end(), i);
     
-    
-//     views_ = std::map<std::string, Entry<GT>>();
-//     viewUsers_ = std::map<std::string, int>();
     graph_= &graph;
-//     lock_ = lock;
 }
 
 template<class GT>
@@ -159,107 +194,100 @@ void ViewCache<GT>::clean()
 {
      if(full()) //if another thread already cleaned up
      {
-    //     std::cout<<"SB "<<viewMap_.size()<<std::endl;
         std::vector<TrackerEntry> viewsToRemove;
-    //      pthread_mutex_lock(&lock);
+
         lock.lock();
     //     
         
+//         for(const auto& e : viewMap_)
+//             std::cout<<e.first<<" "<<e.second<<std::endl;
+
         for(const auto& e : viewMap_)
-            std::cout<<e.first<<" "<<e.second<<std::endl;
-        
-    //    
-    //     {
-            for(const auto& e : viewMap_)
-                viewsToRemove.push_back(e.second);
+            viewsToRemove.push_back(e.second);
     //         
-            std::sort(viewsToRemove.begin(), viewsToRemove.end(), [](const auto& lhs, const auto& rhs){return lhs.lastUsed_<rhs.lastUsed_;});
-    //         
-            int numToBlank = viewMap_.size()- (cacheSize_*(sizeFactor_-1));
-            for(int i=0; i<viewsToRemove.size(); ++i)
+        std::sort(viewsToRemove.begin(), viewsToRemove.end(), [](const auto& lhs, const auto& rhs){return lhs.lastUsed_<rhs.lastUsed_;});
+//         
+        int numToBlank = viewMap_.size()- (cacheSize_*(sizeFactor_-1));
+        for(int i=0; i<viewsToRemove.size(); ++i)
+        {
+            if(viewsToRemove[i].numActive_ <=0)
             {
-                if(viewsToRemove[i].numActive_ <=0)
-                {
-                    --numToBlank;
-                    //             int slotIndex = 
-    //             std::cout<<"blanking "<<viewsToRemove[i].entryIndex_<<std::endl;
-                
-                    emptySlots_.insert(viewsToRemove[i].entryIndex_);
-                    viewMap_.erase(viewsToRemove[i].key_);
-                }
-
-
-
-                if(numToBlank <= 0)
-                    break;
+                --numToBlank;
+                //             int slotIndex = 
+//             std::cout<<"blanking "<<viewsToRemove[i].entryIndex_<<std::endl;
+            
+                emptySlots_.insert(viewsToRemove[i].entryIndex_);
+                viewMap_.erase(viewsToRemove[i].key_);
             }
-    //     }
-    //     std::cout<<"clean done"<<std::endl;
-    //     pthread_mutex_unlock(&lock);
+
+
+
+            if(numToBlank <= 0)
+                break;
+        }
         lock.unlock();
     }
 }
 
+template<class GT>
+json ViewCache<GT>::getViewSummary(const std::string& key)
+{
+    return json(viewSummaries_.at(key));
+}
 
 // 
 template<class GT>
 IntegratedViewer<GT>& ViewCache<GT>::lookup(const ViewKey<GT>& key)
 {
-//     pthread_mutex_lock(&lock);
+    //The summary existence also needs to be checked in the lock, but need to be able to compute it in the non blocking portion
+    bool summaryExists = false;
+    
     lock.lock();
-//     std::cout<<"LUB: "<<key.key_<<std::endl;
+    
+    if (viewSummaries_.count(key.key_) != 0)
+        summaryExists = true;
     
     auto v = viewMap_.find(key.key_);
     
     if(v != viewMap_.end())
     {
-//         std::cout<<"found 1: "<<key.key_<<std::endl;
-        
         ++v->second.numActive_;
         v->second.lastUsed_ = time(NULL);
-//         pthread_mutex_unlock(&lock);
+        
         lock.unlock();
         return viewData_[v->second.entryIndex_];   
     }
     else
     {
-//          std::cout<<"!found 1: "<<key.key_<<std::endl;
-        
          lock.unlock();
-//         pthread_mutex_unlock(&lock);
     }
 
-    
-    
-    //Generate VersionIndex
+    //Generate VersionIndex (Doesn't block other threads)
     IntegratedViewer<GT> newView(*graph_); 
     newView.buildView(key.versions_, key.nodeLabels_, key.edgeLabels_); 
-
     
+    //If summary stats don't exist, compute them as well
+    ViewSummary<GT> newSummary;
+    if(!summaryExists)
+       newSummary.compute(newView);
     
     //lookup again
-//     pthread_mutex_lock(&lock);
     lock.lock();
     v = viewMap_.find(key.key_);
     
     if(v != viewMap_.end()) //another thread already added the view
     {
-//          std::cout<<"found 2: "<<key.key_<<std::endl;
-        
         ++v->second.numActive_;
         v->second.lastUsed_ = time(NULL);
-//         pthread_mutex_unlock(&lock);
+
         lock.unlock();
         return viewData_[v->second.entryIndex_];   
     }
     else //insert the newly generated view in an available slot
     {
-//          std::cout<<"!found 2: "<<key.key_<<std::endl;
-        
         auto lastE = (--emptySlots_.end());
-        
         int viewIndex = (*lastE);
-//         std::cout<<"VIN "<<viewIndex<<std::endl;
+
         emptySlots_.erase(lastE);
         
         //Note: only uses hint to use the non pair return signature
@@ -267,38 +295,25 @@ IntegratedViewer<GT>& ViewCache<GT>::lookup(const ViewKey<GT>& key)
         viewData_[viewIndex] = std::move(newView);
     }
     
-//     pthread_mutex_unlock(&lock);
+    if (viewSummaries_.count(key.key_) == 0)
+        viewSummaries_.insert(std::make_pair(key.key_, std::move(newSummary)));
+    
     lock.unlock();
     return viewData_[v->second.entryIndex_];  
-     
-     
 }
 
 
 template<class GT>
 void ViewCache<GT>::finishLookup(const ViewKey<GT>& key)
 {
-//     std::cout<<"finishLookup "<<key.key_<<std::endl;
-    //pthread_mutex_lock(&lock);
     lock.lock();
-//     auto v = viewMap_.at(key.key_);
-// 
-//     std::cout<<v.numActive_<<std::endl;
-//     v.numActive_ = (v.numActive_ - 1);
-//     std::cout<<v.numActive_<<std::endl;
-//     
+
     //NOTE: map.at does not decrment the value, not sure why
     auto v = viewMap_.find(key.key_);
-//     if(v != viewMap_.end())
     
     std::cout<<v->second.numActive_<<std::endl;
     v->second.numActive_ -=1;
     std::cout<<v->second.numActive_<<std::endl;
     
-    
-    
-    
-    
-    //pthread_mutex_unlock(&lock);
     lock.unlock();
 }

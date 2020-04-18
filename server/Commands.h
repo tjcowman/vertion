@@ -9,10 +9,15 @@
 using json = nlohmann::json;
 
 template<class GT>
-auto run_rwr(const VGraph<GT>& graph, const json& args){
+ViewKey<GT> viewKeyFromArgs(const json& args)
+{
+    std::vector<typename GT::VersionIndex> versions = args["versions"].get<std::vector<typename GT::VersionIndex>>();
+    std::vector<typename GT::Index> vertexLabels = args["vertexLabels"].get<std::vector<typename GT::Index>>();
+    std::vector<typename GT::Index> edgeLabels = args["edgeLabels"].get<std::vector<typename GT::Index>>();
     
-    
+    return(ViewKey<GT>(versions, VertexLab(vertexLabels), EdgeLab(edgeLabels)));
 }
+
 
 namespace Commands
 {
@@ -50,31 +55,14 @@ namespace Commands
     template<class GT>
     json lkpi(const VGraph<GT>& graph, const json& args)
     {
-//         std::cout<<args["names"]<<std::endl;
-        
         std::vector<typename GT::Index> ids = args["ids"].get<std::vector<typename GT::Index>>();
-        
-        //js["labels"] = graph.getVertexData().lookupLabels(i).getBits().to_ulong();
-        
+
         json ret;
-//         std::vector<typename GT::Index> ids;
-//         std::vector< VertexLab> labs;
         for(const auto& id : ids)
         {
-            ret.push_back({{"name", graph.lookupVertex(id)}, {"l", graph.getVertexData().lookupLabels(id).getBits().to_ulong()} });
-            
-// //             auto id = graph.lookupVertex(e);
-//             if(id != GT::invalidIndex)
-// //                 ids.push_back(id);
-//                 ret.push_back({{"id",id},{"l",0}});
-//             else
-//                   ret.push_back({{"id",-1}});
-// //                 ids.push_back(-1);
-                
+            ret.push_back({{"name", graph.lookupVertex(id)}, {"l", graph.getVertexData().lookupLabels(id).getBits().to_ulong()} });       
         }
-        
-        
-//         ret["ids"] = ids;
+
         return ret;
     }
     
@@ -117,16 +105,7 @@ namespace Commands
         //NodeData
         //Need form [{"id":0, "name":"...", "labels":[0,1,1] }]
         auto vertexData=json::array();
-//         for(typename GT::Index i=0; i<graph.size(0).nodes_; ++i)
-//         {
-//             json js;
-//             js["id"] = i;
-//             js["name"]= graph.getID(i);
-//             js["labels"] = graph.getVertexData().lookupLabels(i).getBits().to_ulong();
-//             vertexData.push_back(js);
-//         }
-        
-        
+
         //Consolidating
         ret["nodes"] = graph.size(0).nodes_;
 //         ret["vertexData"] = vertexData;
@@ -139,78 +118,30 @@ namespace Commands
 // //         std::cout<<ret<<std::endl;
         return ret;
     }
-
-    template<class GT>
-    json rwr(const VGraph<GT>& graph, ViewCache<GT>& viewCache, const json& args)
-    {
-        json retVal;
-        std::vector<typename GT::VersionIndex> versions = args["versions"].get<std::vector<typename GT::VersionIndex>>();
-        
-        
-        IntegratedViewer<GT> IV(graph);
-        
-        IV.viewUnion(versions);
-        
-        RandomWalker<GT> RW(IV);
-        //specifiy arguments
-        typename RandomWalker<GT>::Args_Walk args_walk{args["alpha"], args["epsilon"], GraphList<VertexS<GT>>()};
-        
-
-//         std::cout<<args["source"]<<std::endl;
-        std::vector<VertexS<GT>> source  = (args["source"]);
-        std::cout<<GraphList<VertexS<GT>>(source);
-        std::cout<<source.size()<<std::endl;
-
-        auto res = RW.walk(GraphList<VertexS<GT>>(source), args_walk);
-        res.sort(Sort::valueDec);
-        res.resize(std::min(size_t(args["topk"]), res.size()));
-        
-        if(args["mode"] == "nl")
-        {
-            for(size_t i=0; i<std::min(size_t(args["topk"]), res.size()); ++i)
-            {
-                retVal["weights"] +=  {{"id", res[i].index_}, {"value", res[i].value_}};
-            }
-        }
-        else if(args["mode"] == "el")
-        {
-            GraphList<EdgeElement<GT>> edges = IV.mapVertexes(res);
-            for(size_t i=0; i<res.size(); ++i)
-            {
-                retVal["nodes"] +=  {{"id", res[i].index_}, {"value", res[i].value_}};
-            }
-            for(const auto& e : edges)
-            {
-                retVal["edges"] += {{"id1",e.index1_}, {"id2", e.index2_}, {"value",e.value_}, {"labels",e.labels_.getBits().to_ulong()}};
-            }
-            
-
-        }
-        
-//         std::cout<<"Query Finished"<<std::endl;
-        return retVal;
-    }
+    
     
     template<class GT>
     json rwr2(const VGraph<GT>& graph, ViewCache<GT>& viewCache, const json& args)
     {
         json retVal;
-        std::vector<typename GT::VersionIndex> versions = args["versions"].get<std::vector<typename GT::VersionIndex>>();
-        std::vector<typename GT::Index> vertexLabels = args["vertexLabels"].get<std::vector<typename GT::Index>>();
-        std::vector<typename GT::Index> edgeLabels = args["edgeLabels"].get<std::vector<typename GT::Index>>();
-        std::vector<VertexS<GT>> source  = (args["source"]);
-        
-//         std::cout<<args<<std::endl;
-//         std::cout<<"RWR RUN"<<std::endl;
-//         IntegratedViewer<GT> IV(graph);
-//         IV.buildView(versions, VertexLab(vertexLabels), EdgeLab(edgeLabels));
-        ViewKey<GT> key(versions, VertexLab(vertexLabels), EdgeLab(edgeLabels));
+
+            
+        ViewKey<GT> key = viewKeyFromArgs<GT>(args);
         
         auto start = std::chrono::high_resolution_clock::now();
+
+        IntegratedViewer<GT> IV = viewCache.lookup(key);
         
-//         IntegratedViewer<GT> IV = viewCache.lookup(ViewCache<GT>::generate_key(versions, VertexLab(vertexLabels), EdgeLab(edgeLabels))) ;
-//         IntegratedViewer<GT> IV = viewCache.lookup(ViewCache<GT>::generate_key(versions, VertexLab(vertexLabels), EdgeLab(edgeLabels))) ;
-         IntegratedViewer<GT> IV = viewCache.lookup(key) ;
+        
+       auto source  = GraphList<VertexS<GT>>(  std::vector<VertexS<GT>>(args["source"]) );
+        //Convert the globalIndex to the viewIndexes
+        for(auto& e : source.getElements())
+            e.index_ = IV.getViewIndex(e.index_);
+        
+        source = source.select([](const auto& e){return e.index_ != GT::invalidIndex;});
+        
+
+         
          
         auto duration = std::chrono::high_resolution_clock::now() - start;
         long long tIntegrateUs = std::chrono::duration_cast<std::chrono::microseconds>(duration).count();
@@ -224,7 +155,7 @@ namespace Commands
      
         start = std::chrono::high_resolution_clock::now();
 //         auto res = Walk<GT>().setHeader("{}");//RW.walk(GraphList<VertexS<GT>>(source), args_walk); //TODO reen
-        auto res = RW.walk(GraphList<VertexS<GT>>(source), args_walk);
+        auto res = RW.walk(source, args_walk);
         duration = std::chrono::high_resolution_clock::now() - start;
         long long tcomputeUs = std::chrono::duration_cast<std::chrono::microseconds>(duration).count();
         
@@ -235,6 +166,8 @@ namespace Commands
         
         if(args["mode"] == "nl")
         {
+             retVal["weights"] = json::array();
+            
             for(size_t i=0; i<std::min(size_t(args["topk"]), res.size()); ++i)
             {
                 retVal["weights"] +=  {{"id",  IV.getOriginalIndex(res[i].index_)}, {"value", res[i].value_}};
@@ -242,6 +175,9 @@ namespace Commands
         }
         else if(args["mode"] == "el")
         {
+            retVal["nodes"] = json::array();
+            retVal["edges"] = json::array();
+              
             GraphList<EdgeElement<GT>> edges = IV.mapVertexes(res);
             for(size_t i=0; i<res.size(); ++i)
             {
@@ -271,55 +207,15 @@ namespace Commands
     template<class GT>
     json lsv(const VGraph<GT>& graph, ViewCache<GT>& viewCache, const json& args)
     {
-        
-        
-        
-        json ret{{"nodes",json::array()}, {"edges",json::array()}};
-        
-        std::vector<typename GT::VersionIndex> versions = args["versions"].get<std::vector<typename GT::VersionIndex>>();
-        if(versions.size() == 0)
-            return(json{{"nodes",json::array()}, {"edges", json::array()}});
-        
-        std::vector<typename GT::Index> vertexLabels = args["vertexLabels"].get<std::vector<typename GT::Index>>();
-        std::vector<typename GT::Index> edgeLabels = args["edgeLabels"].get<std::vector<typename GT::Index>>();        
-//         IntegratedViewer<GT> IV = viewCache.lookup(versions, VertexLab(vertexLabels), EdgeLab(edgeLabels)) ;
-        
-        
-         ViewKey<GT> key(versions, VertexLab(vertexLabels), EdgeLab(edgeLabels));
-        
-//         IntegratedViewer<GT> IV = viewCache.lookup(ViewCache<GT>::generate_key(versions, VertexLab(vertexLabels), EdgeLab(edgeLabels))) ;
-        
-          IntegratedViewer<GT> IV = viewCache.lookup(key) ;
+        ViewKey<GT> key = viewKeyFromArgs<GT>(args);
          
-        auto edgeCounts = IV.countEdgeLabels();
-        auto nodeCounts = IV.countVertexLabels();
-        
-        
-        for(const auto& e : nodeCounts)
-            ret["nodes"].push_back({
-                {"labels", e.first.getBits().to_ulong()},
-                {"count", e.second}
-            });
-        for(const auto& e : edgeCounts)
-            ret["edges"].push_back({
-                {"labels",e.first.getBits().to_ulong()},
-                {"count", e.second}
-                
-            });
-        
+        //Need to make sure the integration has been generated
+        IntegratedViewer<GT> IV = viewCache.lookup(key);
+        json ret = viewCache.getViewSummary(key.key_);
         viewCache.finishLookup(key);
-        //Get nodes and edges
-//         for(const auto& e : IV.)
-        
-//         retVal["nodes"];
-            //l1
-            //l2
-//         retVal["edges"];
-            //l1
-        //l2
-        
+
         //Get the existing node and edge labels, maybe counts?
-        
+
         return ret;
     }
 

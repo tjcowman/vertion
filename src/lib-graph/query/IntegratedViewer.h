@@ -6,6 +6,10 @@
 
 template<class GT>
 using ZippedRow = std::vector<std::tuple<typename GT::Index, typename GT::Value, EdgeLabel<GT>>>;
+
+template<class GT>
+using ViewRow = std::pair< typename GT::Index, ZippedRow<GT>>;
+
 template<class GT>
 using ZippedRowIT = typename std::vector<std::tuple<typename GT::Index, typename GT::Value, EdgeLabel<GT>>>::iterator;
 //using ZippedRowIT = typename std::vector<std::tuple<typename GT::Index, typename GT::Value, EdgeLabel<GT>>>::iterator;
@@ -23,11 +27,13 @@ class IntegratedViewer
         
         void describe(std::ostream& os);
         
-        std::map<VertexLabel<GT>, size_t> countVertexLabels()const;
-        std::map<EdgeLabel<GT>, size_t> countEdgeLabels()const;
+        std::map<VertexLabel<GT>, typename GT::Index> countVertexLabels()const;
+        std::map<EdgeLabel<GT>, typename GT::Index> countEdgeLabels()const;
         
         
         typename GT::Index getOriginalIndex(typename GT::Index viewIndex)const;
+        typename GT::Index getViewIndex(typename GT::Index originalIndex)const;
+        std::vector<typename GT::Index> convertToViewIndexes(const std::vector<typename GT::Index> fullIndexes)const;
         
         void buildView(std::vector<typename GT::VersionIndex> versions, VertexLabel<GT> nodeLabels, EdgeLabel<GT> edgeLabels);
         
@@ -91,9 +97,9 @@ std::pair<size_t, size_t> IntegratedViewer<GT>::size()const
 }
 
 template<class GT>
-std::map<VertexLabel<GT>, size_t> IntegratedViewer<GT>::countVertexLabels()const
+std::map<VertexLabel<GT>, typename GT::Index> IntegratedViewer<GT>::countVertexLabels()const
 {
-    std::map<VertexLabel<GT>, size_t> counts;
+    std::map<VertexLabel<GT>,typename GT::Index> counts;
     
     for(const auto& e : viewIndexes_)
     {
@@ -110,9 +116,9 @@ std::map<VertexLabel<GT>, size_t> IntegratedViewer<GT>::countVertexLabels()const
 }
 
 template<class GT>
-std::map<EdgeLabel<GT>, size_t> IntegratedViewer<GT>::countEdgeLabels()const
+std::map<EdgeLabel<GT>, typename GT::Index> IntegratedViewer<GT>::countEdgeLabels()const
 {
-    std::map<EdgeLabel<GT>, size_t> counts;
+    std::map<EdgeLabel<GT>, typename GT::Index> counts;
     
     for(const auto& e : L_)
     {
@@ -128,6 +134,25 @@ template<class GT>
 typename GT::Index IntegratedViewer<GT>::getOriginalIndex(typename GT::Index viewIndex)const
 {
     return viewIndexes_[viewIndex];
+}
+
+template<class GT>
+typename GT::Index IntegratedViewer<GT>::getViewIndex(typename GT::Index originalIndex)const
+{
+    return originalIndexes_[originalIndex];
+}
+
+template<class GT>
+std::vector<typename GT::Index> IntegratedViewer<GT>::convertToViewIndexes(const std::vector<typename GT::Index> fullIndexes)const
+{
+    std::vector<typename GT::Index> retVal;
+    for(const auto& e : fullIndexes)
+    {
+        auto i = getViewIndex(e);
+        if( i != GT::invalidIndex)
+            retVal.push_back(i);
+    }
+    return retVal;
 }
 
 template<class GT>
@@ -214,79 +239,323 @@ void IntegratedViewer<GT>::buildView(std::vector<typename GT::VersionIndex> vers
 {
     clear();
     
-    //Get full node list and filter out unrequested labels
-    auto allNodes = graph_->getVertexList();
+    std::vector<ViewRow<GT>> rows;
     
-//     std::cout<<allNodes<<std::endl;
-    
+    //Gets rows from first version, satisfying the nodeLabel constraint
     if(nodeLabels.getBits().any())
     {
-        allNodes = allNodes.select([nodeLabels](const auto& e){
-            return ((e.labels_.getBits() & nodeLabels.getBits()).any());
-        });
+        for(typename GT::Index i=0; i<graph_->size(0).nodes_; ++i)
+        {
+            if((graph_->getVertexData().lookupLabels(i).getBits() & nodeLabels.getBits()).any())
+                rows.push_back(std::make_pair(i, graph_->getRowDataZipped(i, versions[0])));
+        }
     }
+    else
+    {
+         for(typename GT::Index i=0; i<graph_->size(0).nodes_; ++i)
+             rows.push_back(std::make_pair(i, graph_->getRowDataZipped(i, versions[0])));
+    }
+    
+    //Integrate the rows between versions
+    for(auto& row : rows)
+    {
+        for(size_t v=1; v<versions.size(); ++v)
+        {
+            auto next = graph_->getRowDataZipped(row.first, versions[v]);
+            ZippedRow<GT> tmp;
+            setUnionReduced<GT>(row.second.begin(), row.second.end(), next.begin(), next.end(), std::back_inserter(tmp));
+            row.second=tmp;
+        }
+    }
+    
+    //Filter out the edges and outgoing nodes that are unrequested
+    for(auto& row : rows)
+    {
+        auto ne = std::remove_if(row.second.begin(), row.second.end(), [edgeLabels, nodeLabels,this, row](const auto& e){
+            return ( 
+                    
+                        (!(std::get<2>(e).getBits() & edgeLabels.getBits()).any()) || 
+                        (!(graph_->getVertexData().lookupLabels(row.first).getBits() & nodeLabels.getBits()).any()  )
+                   
+            );
+        
+        });
+        row.second.resize(std::distance(row.second.begin(), ne));
+    }
+    
+    //remove rows with no outgoing edges
+    auto ne = std::remove_if(rows.begin(), rows.end(), [](const auto& row){return row.second.size() == 0;});
+    rows.resize(std::distance(rows.begin(), ne));
+    
+    
+    
+//       viewIndexes_ = allNodes.getIndexes();
+//     originalIndexes_ = std::vector<typename GT::Index>(graph_->size(0).nodes_, GT::invalidIndex);
+//     for(size_t i=0; i<viewIndexes_.size(); ++i)
+//         originalIndexes_[viewIndexes_[i]] = i; 
+    
+    //Determine the node old->new index mapping
+    
+    viewIndexes_ = std::vector<typename GT::Index>(rows.size());
+    originalIndexes_ = std::vector<typename GT::Index>(graph_->size(0).nodes_, GT::invalidIndex);
+    
+    for(typename GT::Index i=0; i< viewIndexes_.size(); ++i)
+    {
+        viewIndexes_[i] = rows[i].first;
+        originalIndexes_[rows[i].first] = i;
+    }
+
+    
+        //Convert to view Indexes
+//         std::for_each(row.begin(), row.end(), [this]( auto& e){std::get<0>(e) = originalIndexes_[std::get<0>(e)];});
+       
+        for(const auto& row : rows)
+        {
+            for(const auto& e : row.second)
+            {
+                //convert to the viewIndex
+                JA_.push_back(originalIndexes_[std::get<0>(e)]);
+                
+                A_.push_back(std::get<1>(e));
+                L_.push_back(std::get<2>(e));
+
+            }
+
+            //Row indices computed based on the length of the current nodes edge segment as standard
+            IA_.push_back( AugIA<GT>(JA_.size()-row.second.size(), row.second.size() ));        
+        }
+    //Get full node list and filter out unrequested labels, defaults to all labels if none provided
+//     auto allNodes = graph_->getVertexList();
+//     if(nodeLabels.getBits().any())
+//     {
+//         allNodes = allNodes.select([nodeLabels](const auto& e){
+//             return ((e.labels_.getBits() & nodeLabels.getBits()).any());
+//         });
+//     }
 //     std::cout<<allNodes.size()<<std::endl;
     
     
-    IA_.reserve(allNodes.size());
-    
-    //Determine the node old->new index mapping
-    viewIndexes_ = allNodes.getIndexes();
-    originalIndexes_ = std::vector<typename GT::Index>(graph_->size(0).nodes_, GT::invalidIndex);
-    for(size_t i=0; i<viewIndexes_.size(); ++i)
-        originalIndexes_[viewIndexes_[i]] = i; 
-    
-    
-    for(const auto& node : allNodes)
-    {
-        //Iterate over the versions for that row
-        auto row = graph_->getRowDataZipped(node.index_, versions[0]);
-        
-        //Perform the union if versions > 1
-        for(size_t v=1; v<versions.size(); ++v)
-        {
-            auto next = graph_->getRowDataZipped(node.index_, versions[v]);
-            ZippedRow<GT> tmp;
-            setUnionReduced<GT>(row.begin(), row.end(), next.begin(), next.end(), std::back_inserter(tmp));
-            row=tmp;
-        }
-        //Filter out based on node labels
-        if(nodeLabels.getBits().any())
-        {
-//             std::cout<<"node filter"<<std::endl;
-            auto ne = std::remove_if(row.begin(), row.end(), [this](const auto& e){
-                return ( originalIndexes_[std::get<0>(e)] == GT::invalidIndex);
-            });
-             row.resize(std::distance(row.begin(), ne));
-        }
-        
-        if(edgeLabels.getBits().any())
-        {
-//             std::cout<<"edge filter"<<std::endl;
-            auto ne = std::remove_if(row.begin(), row.end(), [edgeLabels](const auto& e){
-                return ( !((std::get<2>(e).getBits() & edgeLabels.getBits()).any()));
-                
-            });
-            row.resize(std::distance(row.begin(), ne));
-        }
-        
-//         std::cout<<"here"<<std::endl;
-        //Convert to view Indexes
-        std::for_each(row.begin(), row.end(), [this]( auto& e){std::get<0>(e) = originalIndexes_[std::get<0>(e)];});
-//         std::cout<<"here"<<std::endl;
-        for(const auto& e : row)
-        {
+//     IA_.reserve(allNodes.size());
+//     
+//     //Determine the node old->new index mapping
+//     viewIndexes_ = allNodes.getIndexes();
+//     originalIndexes_ = std::vector<typename GT::Index>(graph_->size(0).nodes_, GT::invalidIndex);
 
-            JA_.push_back(std::get<0>(e));
-            A_.push_back(std::get<1>(e));
-            L_.push_back(std::get<2>(e));
-
-        }
-//     std::cout<<"here"<<std::endl;
-        IA_.push_back( AugIA<GT>(JA_.size()-row.size(), row.size() ));        
-    }   
+//     
+//     
+//     std::vector<ZippedRow<GT>> integratedRows(graph_->size().nodes_);
+//     for(size_t i=0; i< integratedRows.size(); ++i)
+//     {
+//         if( (graph_->getVertexData().lookupLabels(i).getBits() & nodeLabels.getBits()).any())
+//         {
+//             integratedRows[i] =  graph_->getRowDataZipped(i, versions[0]);
+//             //Perform the union if versions > 1
+//             for(size_t v=1; v<versions.size(); ++v)
+//             {
+//                 auto next = graph_->getRowDataZipped(i, versions[v]);
+//                 ZippedRow<GT> tmp;
+//                 setUnionReduced<GT>(integratedRows[i].begin(), integratedRows[i].end(), next.begin(), next.end(), std::back_inserter(tmp));
+//                 integratedRows[i]=tmp;
+//             }
+//             
+//             //Filter out based on edge labels 
+// //             if(edgeLabels.getBits().any())
+// //             {
+//             auto ne = std::remove_if(integratedRows[i].begin(), integratedRows[i].end(), [edgeLabels, nodeLabels, this](const auto& e){
+//                 return ( 
+//                     !(
+//                         (std::get<2>(e).getBits() & edgeLabels.getBits()).any() || 
+//                         (graph_->getVertexData().lookupLabels(std::get<0>(e)).getBits() & nodeLabels.getBits()).any()  
+//                     )   
+//                 );
+//                 
+//             });
+//             integratedRows[i].resize(std::distance(integratedRows[i].begin(), ne));
+// //             }
+//             
+//             //Filter out based on row outgoing nodes 
+// //             if(nodeLabels.getBits().any())
+// //             {
+// //              ne = std::remove_if(integratedRows[i].begin(), integratedRows[i].end(), [edgeLabels](const auto& e){
+// //                 return !(std::get<2>(e).getBits() & edgeLabels.getBits()).any();
+// //             });
+// //             integratedRows[i].resize(std::distance(integratedRows[i].begin(), ne));
+// //             }
+// //             
+//             
+//         }
+//     }
+//     std::cout<<"SS "<<integratedRows.size()<<std::endl;
+//     
+//     originalIndexes_ = std::vector<typename GT::Index>(graph_->size(0).nodes_, GT::invalidIndex);
+//     size_t vId =0;
+//     for(size_t i=0; i<integratedRows.size(); ++i)
+//     {
+//         if(integratedRows[i].size()>0)
+//         {
+// //             originalIndexes_[viewIndexes_[i]] = i; 
+//             viewIndexes_[vId] =  i;
+//             originalIndexes_[i] = vId;
+//             ++vId;
+//         }
+//     }
+//     
+//     
+//     //  Convert to view Indexes
+//     for(const auto& row : integratedRows)
+//     {
+// //         std::cout<<row.size()<<std::endl;
+// //         std::for_each(row.begin(), row.end(), [this]( auto& e){std::get<0>(e) = originalIndexes_[std::get<0>(e)];});
+//         for(const auto& e : row)
+//         {
+//             
+//             if(row.size()>0)
+//             {
+// 
+//                 JA_.push_back(std::get<0>(e));
+//                 A_.push_back(std::get<1>(e));
+//                 L_.push_back(std::get<2>(e));
+//             }
+//         }
+// 
+//         //Row indices computed based on the length of the current nodes edge segment as standard
+//         IA_.push_back( AugIA<GT>(JA_.size()-row.size(), row.size() ));        
+//     }
+// //     for(const auto& node : allNodes)
+//     {
+//         //Iterate over the versions for that row
+//         auto row = graph_->getRowDataZipped(node.index_, versions[0]);
+//         
+//         //Perform the union if versions > 1
+//         for(size_t v=1; v<versions.size(); ++v)
+//         {
+//             auto next = graph_->getRowDataZipped(node.index_, versions[v]);
+//             ZippedRow<GT> tmp;
+//             setUnionReduced<GT>(row.begin(), row.end(), next.begin(), next.end(), std::back_inserter(tmp));
+//             row=tmp;
+//         }
+//         
+//         //Filter out based on edge labels 
+//         if(edgeLabels.getBits().any())
+//         {
+// //             std::cout<<"edge filter"<<std::endl;
+//             auto ne = std::remove_if(row.begin(), row.end(), [edgeLabels](const auto& e){
+//                 return ( !((std::get<2>(e).getBits() & edgeLabels.getBits()).any()));
+//                 
+//             });
+//             row.resize(std::distance(row.begin(), ne));
+//         }
+//         
+//         //Filter out based on node labels
+//         if(nodeLabels.getBits().any())
+//         {
+// //             std::cout<<"node filter"<<std::endl;
+//             auto ne = std::remove_if(row.begin(), row.end(), [this](const auto& e){
+//                 return ( originalIndexes_[std::get<0>(e)] == GT::invalidIndex);
+//             });
+//              row.resize(std::distance(row.begin(), ne));
+//         }
+//         
+// 
+//         
+// 
+//         //Convert to view Indexes
+//         std::for_each(row.begin(), row.end(), [this]( auto& e){std::get<0>(e) = originalIndexes_[std::get<0>(e)];});
+//         for(const auto& e : row)
+//         {
+// 
+//             JA_.push_back(std::get<0>(e));
+//             A_.push_back(std::get<1>(e));
+//             L_.push_back(std::get<2>(e));
+// 
+//         }
+// 
+//         //Row indices computed based on the length of the current nodes edge segment as standard
+//         IA_.push_back( AugIA<GT>(JA_.size()-row.size(), row.size() ));        
+//     }   
     
 }
+
+    
+// template<class GT>
+// void IntegratedViewer<GT>::buildView(std::vector<typename GT::VersionIndex> versions, VertexLabel<GT> nodeLabels, EdgeLabel<GT>  edgeLabels)
+// {
+//     clear();
+//     
+//     //Get full node list and filter out unrequested labels, defaults to all labels if none provided
+//     auto allNodes = graph_->getVertexList();
+//     if(nodeLabels.getBits().any())
+//     {
+//         allNodes = allNodes.select([nodeLabels](const auto& e){
+//             return ((e.labels_.getBits() & nodeLabels.getBits()).any());
+//         });
+//     }
+// //     std::cout<<allNodes.size()<<std::endl;
+//     
+//     
+//     IA_.reserve(allNodes.size());
+//     
+//     //Determine the node old->new index mapping
+//     viewIndexes_ = allNodes.getIndexes();
+//     originalIndexes_ = std::vector<typename GT::Index>(graph_->size(0).nodes_, GT::invalidIndex);
+//     for(size_t i=0; i<viewIndexes_.size(); ++i)
+//         originalIndexes_[viewIndexes_[i]] = i; 
+//     
+//     
+//     for(const auto& node : allNodes)
+//     {
+//         //Iterate over the versions for that row
+//         auto row = graph_->getRowDataZipped(node.index_, versions[0]);
+//         
+//         //Perform the union if versions > 1
+//         for(size_t v=1; v<versions.size(); ++v)
+//         {
+//             auto next = graph_->getRowDataZipped(node.index_, versions[v]);
+//             ZippedRow<GT> tmp;
+//             setUnionReduced<GT>(row.begin(), row.end(), next.begin(), next.end(), std::back_inserter(tmp));
+//             row=tmp;
+//         }
+//         
+//         //Filter out based on edge labels 
+//         if(edgeLabels.getBits().any())
+//         {
+// //             std::cout<<"edge filter"<<std::endl;
+//             auto ne = std::remove_if(row.begin(), row.end(), [edgeLabels](const auto& e){
+//                 return ( !((std::get<2>(e).getBits() & edgeLabels.getBits()).any()));
+//                 
+//             });
+//             row.resize(std::distance(row.begin(), ne));
+//         }
+//         
+//         //Filter out based on node labels
+//         if(nodeLabels.getBits().any())
+//         {
+// //             std::cout<<"node filter"<<std::endl;
+//             auto ne = std::remove_if(row.begin(), row.end(), [this](const auto& e){
+//                 return ( originalIndexes_[std::get<0>(e)] == GT::invalidIndex);
+//             });
+//              row.resize(std::distance(row.begin(), ne));
+//         }
+//         
+// 
+//         
+// 
+//         //Convert to view Indexes
+//         std::for_each(row.begin(), row.end(), [this]( auto& e){std::get<0>(e) = originalIndexes_[std::get<0>(e)];});
+//         for(const auto& e : row)
+//         {
+// 
+//             JA_.push_back(std::get<0>(e));
+//             A_.push_back(std::get<1>(e));
+//             L_.push_back(std::get<2>(e));
+// 
+//         }
+// 
+//         //Row indices computed based on the length of the current nodes edge segment as standard
+//         IA_.push_back( AugIA<GT>(JA_.size()-row.size(), row.size() ));        
+//     }   
+//     
+// }
 
 template<class GT>
 void IntegratedViewer<GT>::buildViewWIntersect(std::vector<std::vector<typename GT::VersionIndex> > versions, VertexLabel<GT> nodeLabels, EdgeLabel<GT> edgeLabels)
