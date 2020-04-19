@@ -1,0 +1,8 @@
+-The empty root version should not show up as a selectable version
+-Selected nodes on the front end can't be deselected
+-Node selection is global as to whether the name exists at all, but the node may not exist in the speicified view
+-Tags in labels should automatically display/hide based on what versions are selected and default to selecting the relevant tags
+    -During the VGraph construction also create a datastructure to store what tags exist in each versions
+    -Send tag existence to the front end during the intial load
+
+-Implement some form of window response for returing error messages, e.g. empty query return

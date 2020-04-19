@@ -115,6 +115,14 @@ namespace Commands
         ret["vertexData"];
         
         ret["serverProps"] = graph.getServerProps();
+        
+        //for(const auto& e : graph.getVersionsData())
+        for(typename GT::VersionIndex i=0; i<graph.getVersionsData().size(); ++i)
+        {
+            ret["labelsUsed"]["nodes"].push_back( graph.getVersionsData()[i].vertexLabelsUsed_.getBits().to_ulong());
+            ret["labelsUsed"]["edges"].push_back( graph.getVersionsData()[i].edgeLabelsUsed_.getBits().to_ulong());
+        }
+            
 // //         std::cout<<ret<<std::endl;
         return ret;
     }

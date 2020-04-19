@@ -11,6 +11,9 @@ struct VersionData
     typename T::Index nodes_;
     
     typename T::Index beginAppendIndex_;
+    
+    VertexLabel<T> vertexLabelsUsed_;
+    EdgeLabel<T> edgeLabelsUsed_;
 
     //Used to construct the first version in a graph
     VersionData(typename T::Index edges, typename T::Index nodes)
@@ -81,6 +84,8 @@ class VersionDataVector
         void push_back(const VersionData<T>& versionData);
         
         
+        void setLabelsUsed(typename T::VersionIndex i,  const VertexLabel<T>& vl, const EdgeLabel<T>& el);
+        
         /*
          * Get a list of each version index's children
          */
@@ -150,6 +155,14 @@ template<class T>
 void VersionDataVector<T>::push_back(const VersionData<T>& versionData)
 {
     versionsData_.push_back(versionData);
+}
+
+template<class T>
+void VersionDataVector<T>::setLabelsUsed(typename T::VersionIndex i, const VertexLabel<T>& vl, const EdgeLabel<T>& el)
+{
+    //+1 from sentry correction
+    versionsData_[i+1].vertexLabelsUsed_ = vl;
+    versionsData_[i+1].edgeLabelsUsed_ = el;
 }
 
 template<class T>

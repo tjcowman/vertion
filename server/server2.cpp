@@ -315,6 +315,10 @@ int main(int argc, char* argv[] )
     ViewCache<GraphType::GD> VC(G, args.threads, args.cacheFactor);
     
      std::cout<<G.size()<<std::endl;
+     
+//      for(int i=0; i<G.versionsData_.size(); ++i)
+//          std::cout<<G.versionsData_[i].edgeLabelsUsed_<<" "<<G.versionsData_[i].vertexLabelsUsed_<<"\n";
+//      
     startServer_hgraph(args.port, args.threads, &G, &VC);
 
 

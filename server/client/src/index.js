@@ -399,16 +399,17 @@ class App extends React.Component {
     renderMainPanel5(){
         return(
             <div className="mainContent">
-                <Tab.Container id="menu" defaultActiveKey="main" >
+                <Tab.Container id="menu" defaultActiveKey="versions" >
                     
                     <div className=" border-right menuContainer bg-light">
                    
         
                         <div className=" text-dark sideElementHeading border-bottom">GraphView</div>
                                 
-                            <Nav.Link eventKey="main" className="sideElement" >Main</Nav.Link>
+                            
                             <Nav.Link eventKey="versions" className=" sideElement">Versions</Nav.Link>
                             <Nav.Link eventKey="labels" className=" sideElement">Labels</Nav.Link>
+                            <Nav.Link eventKey="summary" className="sideElement" >Summary</Nav.Link>
                             
                         <div className=" text-dark sideElementHeading border-bottom">Queries</div>
                             <Nav.Link eventKey="nodes" className="sideElement">Nodes</Nav.Link>
@@ -421,7 +422,7 @@ class App extends React.Component {
                     
                     <div className= "displayPanel">
                         <Tab.Content>
-                            <Tab.Pane eventKey="main">
+                            <Tab.Pane eventKey="summary">
                                 <InfoPanel
                                     backAddr={this.state.backAddr}
                                     activeVersionCard={this.state.activeVersionCard}

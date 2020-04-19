@@ -164,6 +164,8 @@ class VGraph
         
         const VertexController<T>& getVertexData()const;
         
+        const auto & getVersionsData()const;
+        
         /*
          * Used to get the correct, ordered row version from decompression and rebuilding based on IA Range
          */
@@ -206,7 +208,8 @@ class VGraph
        
         VertexController<T> vertexData_;
        
-        
+        //TODO: THIS IS VERY SLOW TO COMPUTE, REWRITE
+//         std::vector<std::pair<VertexLabel<T>, EdgeLabel<T>>> labelsUsed_; //Stores which labels are used in which versions by looking at the final edgelist
         
         
         Index aggregate(std::vector<std::tuple<Index,Value, EdgeLabel<T>>>& tmpJAA, Index row, typename T::VersionIndex fromVersion /*FUNCTION*/);
@@ -234,6 +237,7 @@ VGraph<T>::VGraph()
     IA_ = VectorIA<T>();
     
     versionsData_ = VersionDataVector<T>();
+    
 }
 
 template<class T>
@@ -267,6 +271,7 @@ void VGraph<T>::setEmptyInitialVersion()
     IA_ = VectorIA<T>(vertexData_.size());
     versionsData_ = VersionDataVector<T>(vertexData_.size());
     versionTags_.addTag(0, "Empty");
+//     labelsUsed_ = std::vector<std::pair<VertexLabel<T>, EdgeLabel<T>>>(1);
 }
 
 //name_ also intended to be sort of a primary key
@@ -886,6 +891,24 @@ void VGraph<T>::addVersion(const VersionChanges<T> & versionChanges, typename T:
         )
     );
     
+    //TODO: THIS IS VERY INEFFICIENT TEMP SOLUTION TO GET USED LABELS, REWRITE
+    //Compute the used labels
+    auto lastI = size().versions_-1;
+//     labelsUsed_.push_back(std::pair<VertexLabel<T>, EdgeLabel<T>>());
+    auto edges = getEdgeList(lastI);
+        
+    VertexLabel<T> vus;
+    EdgeLabel<T> eus;
+    
+    for(const auto& e: edges.getElements())
+    {
+        eus = eus.makeUnion(e.labels_); 
+        vus = vus.makeUnion( getVertexData().lookupLabels( e.index1_));
+        vus = vus.makeUnion( getVertexData().lookupLabels( e.index2_));
+    }
+    versionsData_.setLabelsUsed(lastI, vus, eus);
+    
+    
 }
 
 template<class T>
@@ -1273,4 +1296,10 @@ bool VGraph<T>::checkVersionValid(typename T::VersionIndex version)const
         return false;
     }
     else return true;
+}
+
+template<class T>
+const auto & VGraph<T>::getVersionsData()const
+{
+    return versionsData_;
 }

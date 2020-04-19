@@ -46,6 +46,7 @@ class Labels
         void add(std::string s);
         
         Labels<L,GT> makeUnion(const Labels<L,GT>& rhs)const;
+        Labels<L,GT> makeIntersection(const Labels<L,GT>& rhs)const;
         
         
 //         std::string toString(std::string delim = ",")const;
@@ -233,6 +234,13 @@ template <LabelGroup L, class T>
 Labels<L,T> Labels<L,T>::makeUnion(const Labels<L,T>& rhs)const
 {
     return Labels<L,T>(bits_ | rhs.bits_ );
+}
+
+
+template <LabelGroup L, class T>
+Labels<L,T>  Labels<L,T>::makeIntersection(const Labels<L,T>& rhs)const
+{
+    return Labels<L,T>(bits_ & rhs.bits);
 }
 
 // template <LabelGroup L, class T>
