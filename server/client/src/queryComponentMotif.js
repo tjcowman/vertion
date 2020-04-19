@@ -1,7 +1,7 @@
 import React from 'react';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { Button, Form,Col,Row,Tabs,Tab, Card, TabPane} from 'react-bootstrap';
+import { Button, Card} from 'react-bootstrap';
 
 import {BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip} from 'recharts';
 // import ReactDOM from 'react-dom'; 

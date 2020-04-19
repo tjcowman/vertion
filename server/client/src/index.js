@@ -1,6 +1,8 @@
+import { StrictMode} from 'react';
+
 import 'bootstrap/dist/css/bootstrap.min.css';
 
-import {Tabs,Tab, Card, Navbar, Nav, Form, FormControl, Button, ListGroup, Col} from 'react-bootstrap';
+import {Tab, Nav,} from 'react-bootstrap';
 
 import React from 'react';
 import ReactDOM from 'react-dom'; 
@@ -16,57 +18,17 @@ import {SelectLabelsComponent} from './selectLabelsComponent.js'
 import {QueryComponentRWR} from './queryComponentRWR.js';
 import QueryComponentMotif from './queryComponentMotif.js';
 
+import {LabelSet, NodeData} from './graphStructs.js';
+import {VersionCards, VersionCard} from './versionCards.js';
 
 import './index.css';
 import './sideBarMenu.css';
-
-class LabelSet{
-    constructor(names){
-        this.names = []
-        
-        if(typeof names != 'undefined'){
-            this.names = names.map((e)=>({name:e}));
-        }
-        
-//         console.log("TDN", this.names);
-//         this.urls = 
-    }
-    
-    bitsToArray(labelBits){
-        let indexes = [];
-        for(let i=0; i<this.names.length; ++i) {
-            if (labelBits & 0x1)
-                indexes.push(i);
-        
-            labelBits = labelBits >> 1;
-        }
-        return indexes;
-    }
-  
-    arrayToNames(labelArray){
-        let names=[];
-
-        for(let e in labelArray)
-            names.push(this.names[labelArray[e]]);
-            
-        return names;
-    }
-    
-    bitsToNames(labelBits){
-        return this.arrayToNames(this.bitsToArray(labelBits));
-    }
-  
-    bitsToNamesFlat(labelBits){
-        return this.bitsToNames(labelBits).map((e)=>(e.name));
-    }
-}
 
 
 
 class GraphData{
     constructor(serverResponse){
-//         console.log(serverResponse)
-        
+
         this.data={
             labelNames: {
                 vertex: [],
@@ -80,62 +42,10 @@ class GraphData{
             },
             versions: [],
             vertexData: []
-            
         }
-
     }
-  
-
 }
 
-//Holds the result of nodeLookup queries to the server so the same node name isn't queried twice
-class NodeData{
-    constructor(numNodes){
-//         this.indexes = new Map();
-        this.indexes = new Array(numNodes)
-        this.names = new Map();
-            
-    }
-    
-    getIndex(name){
-        return this.names.get(name);
-    }
-    getEntry(index){
-        return this.indexes[index];
-    }
-    
-    //Returns the names that have not been looked up yet
-    filterKnown(names){
-        let unknownNames = names.filter((e) => (!this.names.has(e)))
-        return unknownNames;
-    }
-    
-    filterKnownIndex(indexes){
-        return indexes.filter((e)=>(this.indexes[e]) == null )
-    }
-    
-    //Takes a array of pairs corresponding to the name : index of nodes
-    update(names, serverResponse){
-        for (let i=0; i< names.length; ++i){
-            this.names.set(names[i], serverResponse[i].id);
-            if(serverResponse[i] != -1)
-                this.indexes[serverResponse[i].id] = {name: names[i], labels:serverResponse[i].l, labelsText: "tmp" };
-//             this.indexes.set(serverResponse[i], names[i]);
-        }
-        return this;
-    }
-    
-    updateIndex(indexes, serverResponse){
-        for (let i=0; i< indexes.length; ++i){
-            this.names.set(indexes[i], serverResponse[i].name);
-//             if(serverResponse[i] != -1)
-            this.indexes[indexes[i]] = {name: serverResponse[i].name, labels:serverResponse[i].l, labelsText: "tmp"};
-//             this.indexes.set(serverResponse[i], names[i]);
-        }
-        return this;
-    }
-    
-}
 
 //Holds the plaintext representations of each element index 
 class ElementNames{
@@ -157,7 +67,7 @@ class ElementNames{
                     (ee) => (ee.name)
                 ).join(" : ")
             ));
-//             console.log("WUT", this)
+
         }
     }
     
@@ -165,63 +75,7 @@ class ElementNames{
     
 }
 
-class VersionCard{
-    constructor(){
-        this.isStale = false;
-        this.versions_s = new Set();          
-        this.nodes_s =  new Set();
-        this.labelsV_s = new Set();
-        this.labelsE_s = new Set();
-        
-        this.stats = {
-            nodes: [
-                
-            ],
-            edges: [
-                
-            ]
-        };
-    }
-    
-    toggle=(name, elementId)=>{
 
-        let ns = this[name];
-                    
-        if(this[name].has(elementId)){
-            ns.delete(elementId);
-        }
-        else{
-            ns.add(elementId);
-        }
-
-        
-        this[name] = ns;
-        this.isStale = true;
-    
-    }
-    
-    checkToggle=(name, elementId)=>{
-         return this[name].has(elementId);
-    }
-    
-}
-
-class VersionCards{
-    constructor(){
-        this.cards = [new VersionCard()];
-    }
-    
-    
-    push=()=>{
-        this.cards.push(new VersionCard());
-
-    }
-    
-    pop=()=>{
-        this.cards.pop();
-    }
-    
-}
 
 class App extends React.Component {
     constructor(props){
@@ -236,16 +90,13 @@ class App extends React.Component {
             elementNames: new ElementNames(),
             
             //Combine in versionCards?
-           
-            staleCards: [false],
-            activeVersionCard: 0,
+//             activeVersionCard: 0,
 
             nodeData: new NodeData(),
             
             nodeLookup: new Map(),
             versionTagDisplay : new Map(),
             backAddr  : "192.168.1.19:9060"
-            //"localhost:9060"
         }
         
         var date = new Date();
@@ -331,7 +182,8 @@ class App extends React.Component {
     handleAddVersionCard=()=>{
 
         let versionCardsO = this.state.versionCardsO;
-        versionCardsO.push();
+//         versionCardsO.push();
+        this.state.versionCardsO.handleAddVersionCard();
         
         this.setState({versionCardsO: versionCardsO});
     }
@@ -342,7 +194,8 @@ class App extends React.Component {
             return;
 
         let versionCardsO = this.state.versionCardsO;
-        versionCardsO.pop();
+//         versionCardsO.pop();
+        this.state.versionCardsO.handleRemoveVersionCard();
         
         this.setState({
             versionCardsO: versionCardsO,
@@ -351,9 +204,13 @@ class App extends React.Component {
     }
     
     handleClickVersionCard=(id)=>{
-        this.setState({activeVersionCard: id})
+         let versionCardsO = this.state.versionCardsO;
+         this.state.versionCardsO.handleClickVersionCard(id);
+        this.setState({versionCardsO: versionCardsO});
+//         this.setState({activeVersionCard: id})
     }
 
+    
     handleToggle=(name, cardId, elementId)=>{
 
         console.log("DB", name, cardId, elementId)
@@ -370,15 +227,13 @@ class App extends React.Component {
     }
     
     handleSelect=(name, cardId, elementId)=>{
-        if( elementId != -1 & !this.state.versionCardsO.cards[cardId][name].has(elementId))
+        if( elementId !== -1 & !this.state.versionCardsO.cards[cardId][name].has(elementId))
             this.handleToggle(name, cardId, elementId)
     }
 
     handleUpdateStats=(cardId, stats)=>{
-        
-//         console.log("HUSS", stats,this.state)
         let versionCardsO = this.state.versionCardsO;
-//         console.log("VCUS", this.state.versionCardsO, versionCardsO)
+
         versionCardsO.cards[cardId].stats = stats;
         versionCardsO.cards[cardId].isStale=false;
         
@@ -425,7 +280,7 @@ class App extends React.Component {
                             <Tab.Pane eventKey="summary">
                                 <InfoPanel
                                     backAddr={this.state.backAddr}
-                                    activeVersionCard={this.state.activeVersionCard}
+                                    activeVersionCard={this.state.versionCardsO.activeCard}
                                     handleClickVersionCard = {this.handleClickVersionCard}
                                     handleUpdateStats= {this.handleUpdateStats}
                     
@@ -445,7 +300,7 @@ class App extends React.Component {
                                     handleAddVersionCard = {this.handleAddVersionCard}
                                     handleRemoveVersionCard = {this.handleRemoveVersionCard}
                                     handleClickVersionCard = {this.handleClickVersionCard}
-                                    activeVersionCard={this.state.activeVersionCard}
+                                    activeVersionCard={this.state.versionCardsO.activeCard}
                                     
                                     
                                     versionCardsO={this.state.versionCardsO}
@@ -462,7 +317,7 @@ class App extends React.Component {
                                     handleAddVersionCard = {this.handleAddVersionCard}
                                     handleRemoveVersionCard = {this.handleRemoveVersionCard}
                                     handleClickVersionCard = {this.handleClickVersionCard}
-                                    activeVersionCard={this.state.activeVersionCard}
+                                    activeVersionCard={this.state.versionCardsO.activeCard}
                                    
                                     versionCardsO={this.state.versionCardsO}
                                     elementNames = {this.state.elementNames}
@@ -484,7 +339,7 @@ class App extends React.Component {
                                     handleAddVersionCard = {this.handleAddVersionCard}
                                     handleRemoveVersionCard = {this.handleRemoveVersionCard}
                                     handleClickVersionCard = {this.handleClickVersionCard}
-                                    activeVersionCard={this.state.activeVersionCard}
+                                    activeVersionCard={this.state.versionCardsO.activeCard}
                                     
                                     handleNodeLookup={this.handleNodeLookup}
                                     
@@ -510,7 +365,7 @@ class App extends React.Component {
                                     selectedNodes={this.state.nodes_s}
                                     
                                     versionCardsO={this.state.versionCardsO}
-                                    activeVersionCard={this.state.activeVersionCard}
+                                    activeVersionCard={this.state.versionCardsO.activeCard}
                                     elementNames = {this.state.elementNames}
                                 />
                             </Tab.Pane>
@@ -541,7 +396,7 @@ class App extends React.Component {
     render(){
 //         console.log("RE", this.state.graphData.vertexData)
         return(
-            <div> 
+            <StrictMode> 
                
                 <div className= "fixed-top border-bottom titleBar bg-dark">
                 </div>
@@ -552,7 +407,7 @@ class App extends React.Component {
                 </div>
 
 
-            </div> 
+            </StrictMode> 
         );
     }
     

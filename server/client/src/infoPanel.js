@@ -2,18 +2,13 @@ import {} from 'react-bootstrap'
 import React from 'react';
 import Axios from 'axios';
 
-import {SelectedElementDeck}  from './selectedElementDeck.js'
 
-import {Button, Card, ListGroup} from 'react-bootstrap';
+
+import {Card, ListGroup} from 'react-bootstrap';
 
 import './infoPanel.css';
 
 class GraphViewDisplay extends React.Component{
-    constructor(props){
-        super(props);
-    }
-    
-
     
     render(){
         return(
@@ -26,7 +21,7 @@ class GraphViewDisplay extends React.Component{
                     )}
                     className={e.isStale ? 
                         "  border border-warning graphViewElementBase staleGraphViewElement"
-                        : i == this.props.activeVersionCard ? " border border-primary graphViewElementBase activeGraphViewElement": " border  graphViewElementBase"
+                        : i === this.props.activeVersionCard ? " border border-primary graphViewElementBase activeGraphViewElement": " border  graphViewElementBase"
                         
                     } >
                         <div className="border bg-light  gveHeader">
@@ -44,11 +39,7 @@ class GraphViewDisplay extends React.Component{
 }
 
 class InfoPanel extends React.Component {
-    constructor(props) {
-        super(props);
 
-    }
-    
     handleUpdate=(id)=>{
 
         if(this.props.versionCardsO.cards[id].isStale){

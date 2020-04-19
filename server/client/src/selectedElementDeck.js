@@ -1,6 +1,6 @@
 import React from 'react';
 
-import {CardDeck, Card, ListGroup, ListGroupItem} from 'react-bootstrap'
+import {Card, ListGroup, ListGroupItem} from 'react-bootstrap'
 
 import './selectedElementDeck.css'
 

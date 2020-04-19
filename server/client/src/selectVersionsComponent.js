@@ -1,7 +1,7 @@
 import React from 'react';
 
 
-import {CardDeck, Card, ListGroup, ListGroupItem} from 'react-bootstrap'
+import {Card} from 'react-bootstrap'
 
 import {SelectedElementDeck}  from './selectedElementDeck.js'
 
