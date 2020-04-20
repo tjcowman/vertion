@@ -15,7 +15,7 @@ const  SelectedElementDeck = (props) =>{
                     
                     
                     
-                        <div key={cardI} className= {props.activeCard===cardI ? "card cardC border-primary border-bold  " : "card cardC "} onClick={() => props.handleCardClick(cardI)}>
+                        <div key={cardI} className= {props.activeCard===cardI ? "card cardC border-primary border-bold  " : "card cardC "} onClick={() => props.versionCardHandlers.click(cardI)}>
                         <Card.Header>Set {cardI}</Card.Header>
                         <Card.Body className="card-bodyC">
 
@@ -42,11 +42,11 @@ const  SelectedElementDeck = (props) =>{
                 
               
                 <div className="card cardC  cardBlank bg-light">
-                    <div className="cardBlankAdd btn border" onClick={()=>props.handleClickAddVersionCard()}>
+                    <div className="cardBlankAdd btn border" onClick={()=>props.versionCardHandlers.add()}>
                         
                     </div>
                     
-                    <div className="cardBlankRemove btn border" onClick={()=>props.handleClickRemoveVersionCard()}>
+                    <div className="cardBlankRemove btn border" onClick={()=>props.versionCardHandlers.remove()}>
                         
                     </div>
                 

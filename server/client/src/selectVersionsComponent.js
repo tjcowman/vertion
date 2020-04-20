@@ -12,12 +12,13 @@ class SelectVersionsComponent extends React.Component{
         super(props);
         this.state={
         }
+//         console.log("HHH", this.props.versionCardHandlers)
     }
     
     
-    handleCardClick=(cardId)=>{
-        this.props.handleClickVersionCard(cardId);
-    }
+//     handleCardClick=(cardId)=>{
+//         this.props.handleClickVersionCard(cardId);
+//     }
          
          
     renderVersionNames(){
@@ -36,9 +37,12 @@ class SelectVersionsComponent extends React.Component{
                                     <button  key={ii}
 
                                      
-                                        className={this.props.handleCheckToggle("versions_s",this.props.activeVersionCard,ee.index) ? "active btn btn-outline-secondary m-1 btn-sm vName " : "btn btn-outline-secondary m-1 btn-sm vName"}
+                                        className={this.props.handleCheckToggle("versions_s",this.props.versionCardsO.activeCard,ee.index) ? "active btn btn-outline-secondary m-1 btn-sm vName " : "btn btn-outline-secondary m-1 btn-sm vName"}
                                         onClick={(event) =>
-                                            this.props.handleToggle("versions_s", this.props.activeVersionCard, ee.index)
+                                            (this.props.handleToggle("versions_s", this.props.versionCardsO.activeCard, ee.index),  
+                                             console.log(this.props.labelsUsed.getUsedLabelSum([...this.props.versionCardsO.getSelectedVersions()] ))                                                 
+                                            )
+                                                 
                                         }
                                     > 
                                     {ee.name} 
@@ -65,16 +69,14 @@ class SelectVersionsComponent extends React.Component{
             
                
                 <Card.Body>
-               
-                    <SelectedElementDeck activeCard={this.props.activeVersionCard}
+             
+                    <SelectedElementDeck activeCard={this.props.versionCardsO.activeCard}
                         versionCardsO={this.props.versionCardsO}
                         displayKeys={["versions_s"]}
                         partitionHeadings={["Versions"]}
                         displayLookup={[this.props.elementNames.versions]}
                         
-                        handleCardClick={this.handleCardClick} 
-                        handleClickAddVersionCard={this.props.handleAddVersionCard}
-                        handleClickRemoveVersionCard={this.props.handleRemoveVersionCard}
+                        versionCardHandlers = {this.props.versionCardHandlers}
                     />
                 </Card.Body>
                 

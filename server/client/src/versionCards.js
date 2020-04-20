@@ -6,6 +6,8 @@ class VersionCard{
         this.labelsV_s = new Set();
         this.labelsE_s = new Set();
         
+        this.displayLabels = {nodes: new Set(), edges : new Set()};
+        
         this.stats = {
             nodes: [
                 
@@ -45,6 +47,10 @@ class VersionCards{
         this.activeCard = 0;
     }
     
+    
+    getSelectedVersions=()=>{
+        return this.cards[this.activeCard].versions_s;
+    }
     
     push=()=>{
         this.cards.push(new VersionCard());

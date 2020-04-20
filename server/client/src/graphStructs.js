@@ -1,4 +1,8 @@
 
+//This stores the bits corresponding to labels that exist in each version returned to the front end 
+
+
+
 class LabelSet{
     constructor(names){
         this.names = []
@@ -36,6 +40,44 @@ class LabelSet{
         return this.bitsToNames(labelBits).map((e)=>(e.name));
     }
 }
+
+class LabelsUsed{
+    constructor(serverResponse){
+        this.nodeNames = new LabelSet();
+        this.edgeNames = new LabelSet();
+        this.edges = [];
+        this.nodes = [];
+        
+        
+        if(typeof serverResponse != 'undefined'){
+            this.nodeNames = new LabelSet(serverResponse.labels.vertex.names);
+            this.edgeNames = new LabelSet(serverResponse.labels.edge);
+            
+            this.edges= serverResponse.labelsUsed.edges;
+            this.nodes = serverResponse.labelsUsed.nodes;
+        
+        }
+    }
+    
+     getUsedLabelSum(versionsArray){
+         let nodeLabelSum=0;
+         let edgeLabelSum=0;
+         for(let i in versionsArray){
+            nodeLabelSum = nodeLabelSum | this.nodes[versionsArray[i]];
+            edgeLabelSum = edgeLabelSum | this.nodes[versionsArray[i]];
+         }
+         
+         return({
+             nodes : new Set(this.edgeNames.bitsToArray(nodeLabelSum)), 
+             edges : new Set(this.nodeNames.bitsToArray(edgeLabelSum))
+             
+        })
+         
+     }
+
+    
+}
+
 
 //Holds the result of nodeLookup queries to the server so the same node name isn't queried twice
 class NodeData{
@@ -87,4 +129,4 @@ class NodeData{
 }
 
 
-export {LabelSet, NodeData};
+export {LabelSet, LabelsUsed, NodeData};

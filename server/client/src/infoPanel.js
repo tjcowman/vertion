@@ -21,7 +21,7 @@ class GraphViewDisplay extends React.Component{
                     )}
                     className={e.isStale ? 
                         "  border border-warning graphViewElementBase staleGraphViewElement"
-                        : i === this.props.activeVersionCard ? " border border-primary graphViewElementBase activeGraphViewElement": " border  graphViewElementBase"
+                        : i === this.props.versionCardsO.activeCard ? " border border-primary graphViewElementBase activeGraphViewElement": " border  graphViewElementBase"
                         
                     } >
                         <div className="border bg-light  gveHeader">
@@ -45,9 +45,9 @@ class InfoPanel extends React.Component {
         if(this.props.versionCardsO.cards[id].isStale){
             let command = { 
                 cmd: 'lsv',
-                versions:  [...this.props.versionCardsO.cards[this.props.activeVersionCard].versions_s],//[...this.props.selectedVersions[id]]
-                vertexLabels: [...this.props.versionCardsO.cards[this.props.activeVersionCard].labelsV_s],
-                edgeLabels: [...this.props.versionCardsO.cards[this.props.activeVersionCard].labelsE_s],
+                versions:  [...this.props.versionCardsO.cards[this.props.versionCardsO.activeCard].versions_s],//[...this.props.selectedVersions[id]]
+                vertexLabels: [...this.props.versionCardsO.cards[this.props.versionCardsO.activeCard].labelsV_s],
+                edgeLabels: [...this.props.versionCardsO.cards[this.props.versionCardsO.activeCard].labelsE_s],
             }
             console.log("command",command)
             
@@ -88,14 +88,14 @@ class InfoPanel extends React.Component {
                 <Card.Body>
                 
                 <ListGroup>
-                    {this.props.versionCardsO.cards[this.props.activeVersionCard].stats.nodes.map((e,i)=>(
+                    {this.props.versionCardsO.cards[this.props.versionCardsO.activeCard].stats.nodes.map((e,i)=>(
                         < ListGroup.Item key={i}>{e.labels + " : " + e.count }</ListGroup.Item>
                     ))}
                 </ListGroup>
                 
         
                 <ListGroup>
-                    {this.props.versionCardsO.cards[this.props.activeVersionCard].stats.edges.map((e,i)=>(
+                    {this.props.versionCardsO.cards[this.props.versionCardsO.activeCard].stats.edges.map((e,i)=>(
                         <ListGroup.Item key={i}>{e.labels + " : " + e.count}</ListGroup.Item>
                     ))}
                 </ListGroup>
@@ -108,7 +108,7 @@ class InfoPanel extends React.Component {
    
     render(){
         return(
-            console.log("rendering main", this.props),
+//             console.log("rendering main", this.props),
             <Card>
                 <Card.Body>
                 <Card>
@@ -117,7 +117,7 @@ class InfoPanel extends React.Component {
                 
                     <GraphViewDisplay
                         versionCardsO={this.props.versionCardsO}
-                        activeVersionCard={this.props.activeVersionCard}
+                        activeVersionCard={this.props.versionCardsO.activeCard}
                         handleClickVersionCard = {this.handleUpdate}
 
                     />

@@ -1,15 +1,15 @@
 import React from 'react';
 
-import BootstrapTable from 'react-bootstrap-table-next';
-import paginationFactory from 'react-bootstrap-table2-paginator';
+// import BootstrapTable from 'react-bootstrap-table-next';
+// import paginationFactory from 'react-bootstrap-table2-paginator';
 
 import {Card, CardDeck, ListGroup, ListGroupItem, Button, Row, Col} from 'react-bootstrap'
 
 import {SelectedElementDeck}  from './selectedElementDeck.js'
 
-import ToolkitProvider, { Search } from 'react-bootstrap-table2-toolkit';
+// import ToolkitProvider, { Search } from 'react-bootstrap-table2-toolkit';
 import Axios from 'axios';
-const { SearchBar } = Search;
+// const { SearchBar } = Search;
 
 function getColumns(){
     let col = [
@@ -37,9 +37,9 @@ class SelectNodesComponent extends React.Component{
         }
     }
     
-    handleCardClick=(cardId)=>{
-        this.props.handleClickVersionCard(cardId);
-    }
+//     handleCardClick=(cardId)=>{
+//         this.props.handleClickVersionCard(cardId);
+//     }
     
     handleBatchInput=(event)=>{
         this.setState({
@@ -59,7 +59,7 @@ class SelectNodesComponent extends React.Component{
             
             
             let  selectFn =()=> {names.forEach((n) => (
-                this.props.handleSelect("nodes_s", this.props.activeVersionCard, this.props.nodeData.getIndex(n))
+                this.props.handleSelect("nodes_s", this.props.versionCardsO.activeCard, this.props.nodeData.getIndex(n))
 
             ))}
             
@@ -118,19 +118,15 @@ class SelectNodesComponent extends React.Component{
     RenderSelectedNodes(){
         return (
 
-            <SelectedElementDeck activeCard={this.props.activeVersionCard} 
+            <SelectedElementDeck activeCard={this.props.versionCardsO.activeCard} 
             
                 versionCardsO={this.props.versionCardsO}
                 displayKeys={["nodes_s"]}
                 partitionHeadings={[""]}
-            
-
-
-                handleCardClick={this.handleCardClick} 
 
                 displayLookup={[ this.props.nodeData.indexes]}
-                handleClickAddVersionCard={this.props.handleAddVersionCard}
-                handleClickRemoveVersionCard={this.props.handleRemoveVersionCard}
+          
+                versionCardHandlers = {this.props.versionCardHandlers}
 //                 showDiff={true}
             />
            

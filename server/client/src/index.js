@@ -18,7 +18,7 @@ import {SelectLabelsComponent} from './selectLabelsComponent.js'
 import {QueryComponentRWR} from './queryComponentRWR.js';
 import QueryComponentMotif from './queryComponentMotif.js';
 
-import {LabelSet, NodeData} from './graphStructs.js';
+import {LabelSet, LabelsUsed, NodeData} from './graphStructs.js';
 import {VersionCards, VersionCard} from './versionCards.js';
 
 import './index.css';
@@ -48,6 +48,8 @@ class GraphData{
 
 
 //Holds the plaintext representations of each element index 
+
+//TODO: Try to deprecate labelnames and such in labelsUsed
 class ElementNames{
     constructor(serverResponse){
         this.versions = [];
@@ -70,11 +72,7 @@ class ElementNames{
 
         }
     }
-    
-    
-    
 }
-
 
 
 class App extends React.Component {
@@ -86,22 +84,32 @@ class App extends React.Component {
 
             serverProps : {},
             
-            versionCardsO: new VersionCards(),
+
             elementNames: new ElementNames(),
             
-            //Combine in versionCards?
-//             activeVersionCard: 0,
-
             nodeData: new NodeData(),
+            labelsUsed: new LabelsUsed(),
             
             nodeLookup: new Map(),
             versionTagDisplay : new Map(),
-            backAddr  : "192.168.1.19:9060"
+            backAddr  : "192.168.1.19:9060",
+            
+            
+            versionCardsO: new VersionCards(),
+            versionCardHandlers : {
+                add : this.handleAddVersionCard,
+                remove : this.handleRemoveVersionCard, 
+                click : this.handleClickVersionCard
+            }
         }
         
+
+        
+//         console.log(versionCardHandlers);
+        
         var date = new Date();
-         Axios.get('http://'+this.state.backAddr+'/ls', date.getTime()).then((response)=>{
-             console.log("lsResponse", response)
+        Axios.get('http://'+this.state.backAddr+'/ls', date.getTime()).then((response)=>{
+            console.log("lsResponse", response)
           
             let serverProps = JSON.parse(response.data.serverProps);
 
@@ -121,6 +129,7 @@ class App extends React.Component {
                 serverProps : serverProps,
                 versionTagDisplay: versionTagDisplay,
                 graphData: new GraphData(response.data),
+                labelsUsed: new LabelsUsed(response.data),
 //                 nodeLookup : nodeLookup,
                 nodeData: new NodeData(response.data.nodes),
                 elementNames: new ElementNames(response)
@@ -156,7 +165,6 @@ class App extends React.Component {
     }
     
     handleNodeLookupIndex=(indexes, afterLookupFn)=>{
-//          return new Promise((resolve) =>{
             let queryIndexes = this.state.nodeData.filterKnownIndex(indexes);
     
             //Only need to make request if names are unknown
@@ -165,7 +173,7 @@ class App extends React.Component {
 
                     console.log("R", response.data)
                     let nodeData = this.state.nodeData.updateIndex(queryIndexes, response.data);
-//                     
+          
                     this.setState({nodeData: nodeData}, afterLookupFn
 
                     );
@@ -179,22 +187,19 @@ class App extends React.Component {
     }
 
     
+    
     handleAddVersionCard=()=>{
-
         let versionCardsO = this.state.versionCardsO;
-//         versionCardsO.push();
         this.state.versionCardsO.handleAddVersionCard();
         
         this.setState({versionCardsO: versionCardsO});
     }
     
     handleRemoveVersionCard=()=>{
-        
         if(this.state.versionCardsO.cards.length <= 1)
             return;
 
         let versionCardsO = this.state.versionCardsO;
-//         versionCardsO.pop();
         this.state.versionCardsO.handleRemoveVersionCard();
         
         this.setState({
@@ -204,18 +209,24 @@ class App extends React.Component {
     }
     
     handleClickVersionCard=(id)=>{
-         let versionCardsO = this.state.versionCardsO;
-         this.state.versionCardsO.handleClickVersionCard(id);
+        let versionCardsO = this.state.versionCardsO;
+        this.state.versionCardsO.handleClickVersionCard(id);
         this.setState({versionCardsO: versionCardsO});
-//         this.setState({activeVersionCard: id})
     }
 
     
+    
+    
     handleToggle=(name, cardId, elementId)=>{
 
-        console.log("DB", name, cardId, elementId)
+//         console.log("DB", name, cardId, elementId)
         let versionCardsO = this.state.versionCardsO;
         versionCardsO.cards[cardId].toggle(name,elementId);
+        
+        //check to see whta else needs to be updated
+        if(name =="versions_s"){
+            versionCardsO.cards[cardId].displayLabels = this.state.labelsUsed.getUsedLabelSum([...this.state.versionCardsO.getSelectedVersions()]); 
+        }
         
         this.setState({versionCardsO: versionCardsO});
 //         console.log("VC ", this.state.versionCardsO)
@@ -280,7 +291,7 @@ class App extends React.Component {
                             <Tab.Pane eventKey="summary">
                                 <InfoPanel
                                     backAddr={this.state.backAddr}
-                                    activeVersionCard={this.state.versionCardsO.activeCard}
+
                                     handleClickVersionCard = {this.handleClickVersionCard}
                                     handleUpdateStats= {this.handleUpdateStats}
                     
@@ -297,13 +308,13 @@ class App extends React.Component {
                                     handleCheckToggle={this.handleCheckToggle}
                                     handleToggle={this.handleToggle}
                                     
-                                    handleAddVersionCard = {this.handleAddVersionCard}
-                                    handleRemoveVersionCard = {this.handleRemoveVersionCard}
-                                    handleClickVersionCard = {this.handleClickVersionCard}
-                                    activeVersionCard={this.state.versionCardsO.activeCard}
-                                    
                                     
                                     versionCardsO={this.state.versionCardsO}
+                                    versionCardHandlers={this.state.versionCardHandlers}
+                                    
+                                    //temp
+                                    labelsUsed = {this.state.labelsUsed}
+                                    
                                     elementNames = {this.state.elementNames}
                                 />
                             </Tab.Pane>
@@ -314,12 +325,12 @@ class App extends React.Component {
                                     handleCheckToggle={this.handleCheckToggle}
                                     handleToggle={this.handleToggle}
                                     
-                                    handleAddVersionCard = {this.handleAddVersionCard}
-                                    handleRemoveVersionCard = {this.handleRemoveVersionCard}
-                                    handleClickVersionCard = {this.handleClickVersionCard}
-                                    activeVersionCard={this.state.versionCardsO.activeCard}
                                    
                                     versionCardsO={this.state.versionCardsO}
+                                    versionCardHandlers={this.state.versionCardHandlers}
+                                    
+                                    labelsUsed = {this.state.labelsUsed}
+                                    
                                     elementNames = {this.state.elementNames}
                                 /> 
                             </Tab.Pane>
@@ -335,15 +346,12 @@ class App extends React.Component {
                                     handleSelect={this.handleSelect}
 
                                     
-                                    
-                                    handleAddVersionCard = {this.handleAddVersionCard}
-                                    handleRemoveVersionCard = {this.handleRemoveVersionCard}
-                                    handleClickVersionCard = {this.handleClickVersionCard}
-                                    activeVersionCard={this.state.versionCardsO.activeCard}
-                                    
+
                                     handleNodeLookup={this.handleNodeLookup}
                                     
                                     versionCardsO={this.state.versionCardsO}
+                                    versionCardHandlers={this.state.versionCardHandlers}
+                                    
                                     nodeLookup={this.state.nodeLookup}
                                     elementNames = {this.state.elementNames}
                                     
@@ -360,12 +368,9 @@ class App extends React.Component {
                                     
                                     nodeData = {this.state.nodeData}
                                     
-                                    selectedVertexLabels={this.state.labelsV_s}
-                                    selectedEdgeLabels={this.state.labelsE_s}
-                                    selectedNodes={this.state.nodes_s}
                                     
                                     versionCardsO={this.state.versionCardsO}
-                                    activeVersionCard={this.state.versionCardsO.activeCard}
+//                                    
                                     elementNames = {this.state.elementNames}
                                 />
                             </Tab.Pane>
