@@ -1,8 +1,5 @@
 
 //This stores the bits corresponding to labels that exist in each version returned to the front end 
-
-
-
 class LabelSet{
     constructor(names){
         this.names = []

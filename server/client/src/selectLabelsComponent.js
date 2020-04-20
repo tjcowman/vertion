@@ -55,7 +55,7 @@ class SelectLabelsComponent extends React.Component{
                         <div className=" card-body "> {
 
 //                             this.props.elementNames.labelsE.names.map((e,i)=>(
-                            this.props.elementNames.labelsV.names.filter((e,i) => this.props.versionCardsO.cards[this.props.versionCardsO.activeCard].displayLabels.edges.has(i) ).map((e,i)=>(
+                            this.props.elementNames.labelsE.names.filter((e,i) => this.props.versionCardsO.cards[this.props.versionCardsO.activeCard].displayLabels.edges.has(i) ).map((e,i)=>(
                                 <button  key={i}
                                     value={e.name} 
                                     name={i} 

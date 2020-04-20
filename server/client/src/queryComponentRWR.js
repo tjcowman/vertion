@@ -1,7 +1,7 @@
 import React from 'react';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { Button, Form,Col,Row, Card} from 'react-bootstrap';
+import { Button, Form,Col,Row, Card, Alert} from 'react-bootstrap';
 
 
 // import ReactDOM from 'react-dom'; 
@@ -97,6 +97,7 @@ class QueryComponentRWR extends React.Component{
   handleSubmit=(event)=>{
 
     try{
+//         {<Alert>test</Alert>}
 //         console.log("VRB", this)
         //let versions = [...this.props.selectedVersions[0]];
         let versions = [...this.props.versionCardsO.cards[this.props.activeVersionCard].versions_s];

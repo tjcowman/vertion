@@ -10,6 +10,7 @@ import ReactDOM from 'react-dom';
 import Axios from 'axios';
 
 import {InfoPanel} from  './infoPanel.js';
+import {LogPanel} from './logPanel.js';
 
 import SelectVersionsComponent from './selectVersionsComponent.js';
 import SelectNodesComponent from './selectNodesComponent.js';
@@ -21,30 +22,32 @@ import QueryComponentMotif from './queryComponentMotif.js';
 import {LabelSet, LabelsUsed, NodeData} from './graphStructs.js';
 import {VersionCards, VersionCard} from './versionCards.js';
 
+import * as setLib from './setLib.js'
+
 import './index.css';
 import './sideBarMenu.css';
 
 
 
-class GraphData{
-    constructor(serverResponse){
-
-        this.data={
-            labelNames: {
-                vertex: [],
-                edge: [],
-            },
-            
-            labels: {
-                vertex: new LabelSet([]),
-                edge: new LabelSet([])
-                
-            },
-            versions: [],
-            vertexData: []
-        }
-    }
-}
+// class GraphData{
+//     constructor(serverResponse){
+// 
+//         this.data={
+//             labelNames: {
+//                 vertex: [],
+//                 edge: [],
+//             },
+//             
+//             labels: {
+//                 vertex: new LabelSet([]),
+//                 edge: new LabelSet([])
+//                 
+//             },
+//             versions: [],
+//             vertexData: []
+//         }
+//     }
+// }
 
 
 //Holds the plaintext representations of each element index 
@@ -80,7 +83,7 @@ class App extends React.Component {
         
         super(props);
         this.state={
-            graphData: new GraphData(),
+//             graphData: new GraphData(),
 
             serverProps : {},
             
@@ -128,7 +131,7 @@ class App extends React.Component {
             this.setState({
                 serverProps : serverProps,
                 versionTagDisplay: versionTagDisplay,
-                graphData: new GraphData(response.data),
+//                 graphData: new GraphData(response.data),
                 labelsUsed: new LabelsUsed(response.data),
 //                 nodeLookup : nodeLookup,
                 nodeData: new NodeData(response.data.nodes),
@@ -225,7 +228,18 @@ class App extends React.Component {
         
         //check to see whta else needs to be updated
         if(name =="versions_s"){
-            versionCardsO.cards[cardId].displayLabels = this.state.labelsUsed.getUsedLabelSum([...this.state.versionCardsO.getSelectedVersions()]); 
+            let l = this.state.labelsUsed.getUsedLabelSum([...this.state.versionCardsO.getSelectedVersions()]); 
+            
+            //deselect labels that don't exist in the chosen integration
+            versionCardsO.cards[cardId].labelsV_s = setLib.intersection(versionCardsO.cards[cardId].labelsV_s, l.nodes);
+            versionCardsO.cards[cardId].labelsE_s = setLib.intersection(versionCardsO.cards[cardId].labelsE_s, l.edges);
+
+            
+            //Select the edges in the chosen integration by default
+            versionCardsO.cards[cardId].labelsV_s = setLib.union(versionCardsO.cards[cardId].labelsV_s, l.nodes);
+            versionCardsO.cards[cardId].labelsE_s = setLib.union(versionCardsO.cards[cardId].labelsE_s, l.edges);
+            
+            versionCardsO.cards[cardId].displayLabels = l; 
         }
         
         this.setState({versionCardsO: versionCardsO});
@@ -252,14 +266,14 @@ class App extends React.Component {
         this.setState((prevState) =>({versionCardsO: versionCardsO}));
     }
     
-    getLabels = () => {
-        return [this.state.graphData.data.labels.vertex, this.state.graphData.data.labels.edge]
-    }
+//     getLabels = () => {
+//         return [this.state.graphData.data.labels.vertex, this.state.graphData.data.labels.edge]
+//     }
     
 
-    getVertexDataRow=(rowIndex)=>{
-        return this.state.graphData.data.vertexData[rowIndex];
-    }
+//     getVertexDataRow=(rowIndex)=>{
+//         return this.state.graphData.data.vertexData[rowIndex];
+//     }
 
 
     renderMainPanel5(){
@@ -282,8 +296,11 @@ class App extends React.Component {
                             <Nav.Link eventKey="query_rwr" className=" sideElement">RWR</Nav.Link>
                             <Nav.Link eventKey="query_motif" className=" sideElement">Motifs</Nav.Link>
                                 
-        
                        
+                    </div>
+                    
+                    <div>
+                    <LogPanel/>
                     </div>
                     
                     <div className= "displayPanel">
@@ -338,7 +355,7 @@ class App extends React.Component {
                             <Tab.Pane eventKey="nodes">
                                 <SelectNodesComponent 
                                     backAddr={this.state.backAddr}
-                                    allNodes={this.state.graphData.data.vertexData} 
+//                                     allNodes={this.state.graphData.data.vertexData} 
                                     nodeData={this.state.nodeData}
                                     
                                     handleCheckToggle={this.handleCheckToggle}
