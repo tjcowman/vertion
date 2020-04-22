@@ -6,7 +6,7 @@ import {Tab, Nav,} from 'react-bootstrap';
 
 import React from 'react';
 import ReactDOM from 'react-dom';
-// import Axios from 'axios';
+
 import Axios from 'axios';
 
 import {InfoPanel} from  './infoPanel.js';
@@ -52,18 +52,35 @@ class LogStruct{
 }
 
 
-//Holds versoion names, TODO: deprecate
-class ElementNames{
-    constructor(serverResponse){
-        this.versions = [];
 
-        if(typeof serverResponse !== 'undefined'){
-            this.versions = serverResponse.data.versions.map((e) => ({name:e.name, tags:e.tags}));
 
-        }
+class VersionsData{
+  constructor(serverResponse){
+    this.versions = [];
+    this.tags = new Map();
+
+    if(typeof serverResponse !== 'undefined'){
+      this.versions = serverResponse.versions.map((e) => ({name:e.name, tags:e.tags}));
+
+
+      serverResponse.versions.forEach((e) => {
+          e.tags.forEach((t) => {
+              if (!this.tags.has(t)){
+                  this.tags.set(t,  [])
+              }
+             this.tags.get(t).push({index: e.index, name: e.name})
+          })
+      });
     }
-}
+  }
 
+  //Filters out the empty tagged versions when obtaining an array of all tags w/ their versions 
+  getDisplayedTags(){
+    return [...this.tags].filter(e => e[0] != "Empty");
+  }
+
+
+}
 
 class App extends React.Component {
     constructor(props){
@@ -75,13 +92,11 @@ class App extends React.Component {
             serverProps : {},
 
 
-            elementNames: new ElementNames(),
-
-            nodeData: new NodeData(),
+            versionsData: new VersionsData(),
+            nodeData: new NodeData(), //TODO change to labelsData
             labelsUsed: new LabelsUsed(),
 
-            nodeLookup: new Map(),
-            versionTagDisplay : new Map(),
+
             backAddr  : "192.168.1.19:9060",
 
 
@@ -102,28 +117,15 @@ class App extends React.Component {
             //Not used currently, for various future settings?
             let serverProps = JSON.parse(response.data.serverProps);
 
-            let versionTagDisplay = new Map();
-            response.data.versions.forEach((e) => {
-                e.tags.forEach((t) => {
-                    if (!versionTagDisplay.has(t)){
-                        versionTagDisplay.set(t,  [])
-                    }
-                    versionTagDisplay.get(t).push({index: e.index, name: e.name})
-                })
-
-            });
 
 
             this.setState({
                 serverProps : serverProps,
-                versionTagDisplay: versionTagDisplay,
-//                 graphData: new GraphData(response.data),
+                versionsData : new VersionsData(response.data),
                 labelsUsed: new LabelsUsed(response.data),
-//                 nodeLookup : nodeLookup,
                 nodeData: new NodeData(response.data.nodes),
-                elementNames: new ElementNames(response)
 
-            }, () =>{console.log("initstate", this.state); this.handleLog("i","Ready") })
+            }, () =>{console.log("initstate", this.state); this.handleLog("i","Ready")})
 
          })
 
@@ -131,7 +133,6 @@ class App extends React.Component {
 
     //TODO: Split the lookup and fill in nodeData from the handleSelect card
     handleNodeLookup=(names, afterLookupFn)=>{
-//          return new Promise((resolve) =>{
             let queryNames = this.state.nodeData.filterKnown(names);
 
             //Only need to make request if names are unknown
@@ -234,7 +235,6 @@ class App extends React.Component {
 
     handleCheckToggle=(name,cardId, elementId)=>{
         return this.state.versionCardsO.cards[cardId][name].has(elementId);
-//          return this.state[name][cardId].has(elementId);
     }
 
     handleSelect=(name, cardId, elementId)=>{
@@ -295,16 +295,13 @@ class App extends React.Component {
 
                             <Tab.Pane eventKey="versions">
                                 <SelectVersionsComponent
-                                    versionTagDisplay={this.state.versionTagDisplay}
-
                                     handleCheckToggle={this.handleCheckToggle}
                                     handleToggle={this.handleToggle}
 
                                     versionCardsO={this.state.versionCardsO}
                                     versionCardHandlers={this.state.versionCardHandlers}
 
-
-                                    elementNames = {this.state.elementNames} //for versionNames
+                                    versionsData= {this.state.versionsData}
                                 />
                             </Tab.Pane>
 
@@ -317,8 +314,6 @@ class App extends React.Component {
                                     versionCardHandlers={this.state.versionCardHandlers}
 
                                     labelsUsed = {this.state.labelsUsed}
-
-                                    elementNames = {this.state.elementNames}
                                 />
                             </Tab.Pane>
 
@@ -335,10 +330,6 @@ class App extends React.Component {
 
                                     versionCardsO={this.state.versionCardsO}
                                     versionCardHandlers={this.state.versionCardHandlers}
-
-                              //      nodeLookup={this.state.nodeLookup}
-                                //    elementNames = {this.state.elementNames}
-
                                 />
 
                             </Tab.Pane>
@@ -354,8 +345,6 @@ class App extends React.Component {
 
 
                                     versionCardsO={this.state.versionCardsO}
-//
-                                    elementNames = {this.state.elementNames}
 
                                     handleLog={this.handleLog}
                                 />
