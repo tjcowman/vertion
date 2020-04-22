@@ -62,7 +62,7 @@ class SelectVersionsComponent extends React.Component{
          
     render(){
         return(
-            <Card>
+            <>
             <Card.Body>
                 {this.renderVersionNames()}
             </Card.Body>
@@ -81,7 +81,7 @@ class SelectVersionsComponent extends React.Component{
                 </Card.Body>
                 
 
-            </Card>
+            </>
             
            
         );

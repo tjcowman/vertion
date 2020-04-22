@@ -1,4 +1,4 @@
 -The empty root version should not show up as a selectable version
 -Selected nodes on the front end can't be deselected
--Node selection is global as to whether the name exists at all, but the node may not exist in the speicified view
--Implement some form of window response for returing error messages, e.g. empty query return
+-Node selection is global as to whether the name exists at all, but the node may not exist in the specified view
+-Implement some form of window response for returning error messages, e.g. empty query return

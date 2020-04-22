@@ -136,7 +136,7 @@ class SelectNodesComponent extends React.Component{
     render(){
 
         return(
-            <Card>
+            <>
             
 
                 
@@ -163,7 +163,7 @@ class SelectNodesComponent extends React.Component{
                     {this.renderTable1()}
                 </Card.Body>
                 */}
-            </Card>
+            </>
             
         );
     }
