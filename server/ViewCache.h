@@ -95,6 +95,8 @@ class ViewSummary{
             connectedComponents.compute();
             componentMean_ = connectedComponents.meanSize();
             componentMax_= connectedComponents.maxSize();
+            componentNum_ = connectedComponents.size();
+            componentMin_ = connectedComponents.minSize();
         }
 
 
@@ -119,8 +121,15 @@ class ViewSummary{
                     {"count", e.second}
 
                 });
-              j["componentMean"] = vs.componentMean_;
-              j["componentMax"] = vs.componentMax_;
+
+            j["components"]={
+              {"num",  vs.componentNum_},
+              {"mean", vs.componentMean_},
+              {"max",  vs.componentMax_},
+              {"min", vs.componentMin_}
+            };
+
+
 
         }
 
@@ -133,6 +142,8 @@ class ViewSummary{
 
         float componentMean_;
         typename GT::Index componentMax_;
+        typename GT::Index componentNum_;
+        typename GT::Index componentMin_;
 };
 
 

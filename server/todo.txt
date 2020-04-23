@@ -1,3 +1,7 @@
 -Selected nodes on the front end can't be deselected
 -Node selection is global as to whether the name exists at all, but the node may not exist in the specified view
--Implement some form of window response for returning error messages, e.g. empty query return
+-Implement some form of window response for returning error messages, e.g. empty query return (technically started)
+-Allow selection of union/intersection of versions within a version tag group
+-Implement some graphing of returned statistics
+
+-Change summary to select a set of defined versions, then update and plot them

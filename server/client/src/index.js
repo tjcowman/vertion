@@ -74,7 +74,7 @@ class VersionsData{
     }
   }
 
-  //Filters out the empty tagged versions when obtaining an array of all tags w/ their versions 
+  //Filters out the empty tagged versions when obtaining an array of all tags w/ their versions
   getDisplayedTags(){
     return [...this.tags].filter(e => e[0] != "Empty");
   }
@@ -242,6 +242,7 @@ class App extends React.Component {
             this.handleToggle(name, cardId, elementId)
     }
 
+    //DEPRECATE
     handleUpdateStats=(cardId, stats)=>{
         let versionCardsO = this.state.versionCardsO;
 
@@ -252,6 +253,18 @@ class App extends React.Component {
         this.setState((prevState) =>({versionCardsO: versionCardsO}));
     }
 
+    handleUpdateCardSummary=(cardId, stats)=>{
+      let versionCardsO = this.state.versionCardsO;
+
+      versionCardsO.updateSummary(cardId, stats);
+
+    //  versionCardsO.cards[cardId].stats.name = cardId;
+      versionCardsO.cards[cardId].isStale=false;
+
+      //I think this handles making sure it doesnt set stale false with old selection values
+      this.setState((prevState) =>({versionCardsO: versionCardsO}));
+
+    }
 
 
     renderMainPanel5(){
@@ -287,6 +300,7 @@ class App extends React.Component {
 
                                     handleClickVersionCard = {this.handleClickVersionCard}
                                     handleUpdateStats= {this.handleUpdateStats}
+                                    handleUpdateCardSummary={this.handleUpdateCardSummary}
 
                                     versionCardsO={this.state.versionCardsO}
                                     labelsUsed = {this.state.labelsUsed}

@@ -1,3 +1,20 @@
+class CardSummary{
+  constructor(serverResponse){
+
+    this.nodes = [];
+    this.edges = [];
+    this.components = [];
+
+    if(serverResponse !== undefined ){
+
+      this.nodes = serverResponse.nodes;
+      this.edges = serverResponse.edges;
+      this.components = serverResponse.components;
+    }
+  }
+
+}
+
 class VersionCard{
     constructor(){
         this.isStale = false;
@@ -7,6 +24,8 @@ class VersionCard{
         this.labelsE_s = new Set();
 
         this.displayLabels = {nodes: new Set(), edges : new Set()};
+
+        this.summary = new CardSummary();
 
         this.stats = {
             nodes: [
@@ -45,6 +64,10 @@ class VersionCards{
     constructor(){
         this.cards = [new VersionCard()];
         this.activeCard = 0;
+    }
+
+    updateSummary=(cardId,data)=>{
+      this.cards[cardId].summary = new CardSummary(data);
     }
 
     getActiveCard=()=>{

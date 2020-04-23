@@ -33,6 +33,7 @@ class Components
         void describe();
         double meanSize(bool includeUnary=true)const;
         size_t maxSize()const;
+        size_t minSize()const;
 
         friend std::ostream& operator<<(std::ostream& os, const Components<GT>& e)
         {
@@ -175,5 +176,19 @@ size_t Components<GT>::maxSize()const
     size_t m = 0;
     for(const auto& component : componentList_)
         m = std::max(m,component.size());
+
+    return m;
+}
+
+template<class GT>
+size_t Components<GT>::minSize()const
+{
+    size_t m = std::numeric_limits<size_t>::max();
+    if (unaryComponents_.size()> 1)
+      return 1;
+
+    for(const auto& component : componentList_)
+        m = std::min(m,component.size());
+
     return m;
 }
