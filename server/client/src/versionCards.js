@@ -1,12 +1,12 @@
 class CardSummary{
-  constructor(serverResponse){
+  constructor(serverResponse, cardId){
 
     this.nodes = [];
     this.edges = [];
     this.components = [];
 
     if(serverResponse !== undefined ){
-
+      this.cardId = cardId;
       this.nodes = serverResponse.nodes;
       this.edges = serverResponse.edges;
       this.components = serverResponse.components;
@@ -67,7 +67,7 @@ class VersionCards{
     }
 
     updateSummary=(cardId,data)=>{
-      this.cards[cardId].summary = new CardSummary(data);
+      this.cards[cardId].summary = new CardSummary(data, cardId);
     }
 
     getActiveCard=()=>{

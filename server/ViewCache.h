@@ -49,6 +49,8 @@ struct TrackerEntry
 template<class GT>
 struct ViewKey{
 
+
+
     ViewKey(const std::vector<typename GT::VersionIndex>& versions, const VertexLabel<GT>& nodeLabels, const EdgeLabel<GT>& edgeLabels)
     {
         versions_ = versions;
@@ -71,6 +73,10 @@ struct ViewKey{
         return s;
     }
 
+    bool valid()
+    {
+      return key_ != "";
+    }
 
     std::string key_;
     std::vector<typename GT::VersionIndex> versions_;

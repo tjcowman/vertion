@@ -5,3 +5,4 @@
 -Implement some graphing of returned statistics
 
 -Change summary to select a set of defined versions, then update and plot them
+-Make consistent syntax for returning server errors as json

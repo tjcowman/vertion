@@ -242,16 +242,6 @@ class App extends React.Component {
             this.handleToggle(name, cardId, elementId)
     }
 
-    //DEPRECATE
-    handleUpdateStats=(cardId, stats)=>{
-        let versionCardsO = this.state.versionCardsO;
-
-        versionCardsO.cards[cardId].stats = stats;
-        versionCardsO.cards[cardId].isStale=false;
-
-        //I think this handles making sure it doesnt set stale false with old selection values
-        this.setState((prevState) =>({versionCardsO: versionCardsO}));
-    }
 
     handleUpdateCardSummary=(cardId, stats)=>{
       let versionCardsO = this.state.versionCardsO;
@@ -263,6 +253,44 @@ class App extends React.Component {
 
       //I think this handles making sure it doesnt set stale false with old selection values
       this.setState((prevState) =>({versionCardsO: versionCardsO}));
+
+    }
+
+    ust=(id)=>{
+      if(this.state.versionCardsO.cards[id].isStale){
+          let command = {
+              cmd: 'lsv',
+              versions:  [...this.state.versionCardsO.cards[id].versions_s],
+              vertexLabels: [...this.state.versionCardsO.cards[id].labelsV_s],
+              edgeLabels: [...this.state.versionCardsO.cards[id].labelsE_s],
+          }
+          console.log("command",command)
+
+          Axios.post('http://'+this.state.backAddr, JSON.stringify(command)).then((response)=>{
+              //console.log("DR", response);
+              //return response;
+              this.handleUpdateCardSummary(id, response.data);
+          });
+      }
+    }
+
+    handleUpdateCardSummaryt=()=>{
+    //  let versionCardsO = this.state.versionCardsO;
+
+      for(let c in this.state.versionCardsO.cards){
+        console.log("c",c)
+        this.ust(c)
+        //  versionCardsO.updateSummary(c, this.ust(c));
+        //  versionCardsO.cards[c].isStale=false;
+      }
+
+      //versionCardsO.updateSummary(cardId, stats);
+
+    //  versionCardsO.cards[cardId].stats.name = cardId;
+
+//console.log("hi")
+      //I think this handles making sure it doesnt set stale false with old selection values
+    //  this.setState((prevState) =>({versionCardsO: versionCardsO}));
 
     }
 
@@ -280,7 +308,7 @@ class App extends React.Component {
 
                             <Nav.Link eventKey="versions" className=" sideElement">Versions</Nav.Link>
                             <Nav.Link eventKey="labels" className=" sideElement">Labels</Nav.Link>
-                            <Nav.Link eventKey="summary" className="sideElement" >Summary</Nav.Link>
+                            <Nav.Link eventKey="summary" className="sideElement" onClick={  this.handleUpdateCardSummaryt} >Summary</Nav.Link>
 
                         <div className=" text-dark sideElementHeading border-bottom">Queries</div>
                             <Nav.Link eventKey="nodes" className="sideElement">Nodes</Nav.Link>
