@@ -1,38 +1,38 @@
 
-//This stores the bits corresponding to labels that exist in each version returned to the front end 
+//This stores the bits corresponding to labels that exist in each version returned to the front end
 class LabelSet{
     constructor(names){
         this.names = []
-        
+
         if(typeof names != 'undefined'){
             this.names = names.map((e)=>({name:e}));
         }
     }
-    
+
     bitsToArray(labelBits){
         let indexes = [];
         for(let i=0; i<this.names.length; ++i) {
             if (labelBits & 0x1)
                 indexes.push(i);
-        
+
             labelBits = labelBits >> 1;
         }
         return indexes;
     }
-  
+
     arrayToNames(labelArray){
         let names=[];
 
         for(let e in labelArray)
             names.push(this.names[labelArray[e]]);
-            
+
         return names;
     }
-    
+
     bitsToNames(labelBits){
         return this.arrayToNames(this.bitsToArray(labelBits));
     }
-  
+
     bitsToNamesFlat(labelBits){
         return this.bitsToNames(labelBits).map((e)=>(e.name));
     }
@@ -44,18 +44,25 @@ class LabelsUsed{
         this.edgeNames = new LabelSet();
         this.edges = [];
         this.nodes = [];
-        
-        
+
+
         if(typeof serverResponse != 'undefined'){
             this.nodeNames = new LabelSet(serverResponse.labels.vertex.names);
             this.edgeNames = new LabelSet(serverResponse.labels.edge);
-            
+
             this.edges= serverResponse.labelsUsed.edges;
             this.nodes = serverResponse.labelsUsed.nodes;
-        
+
         }
     }
-    
+
+    nameLookupNode(bits){
+      return this.nodeNames.bitsToNamesFlat(bits);
+    }
+    nameLookupEdge(bits){
+      return this.edgeNames.bitsToNamesFlat(bits);
+    }
+
      getUsedLabelSum(versionsArray){
          let nodeLabelSum=0;
          let edgeLabelSum=0;
@@ -63,16 +70,16 @@ class LabelsUsed{
             nodeLabelSum = nodeLabelSum | this.nodes[versionsArray[i]];
             edgeLabelSum = edgeLabelSum | this.nodes[versionsArray[i]];
          }
-         
+
          return({
-             nodes : new Set(this.edgeNames.bitsToArray(nodeLabelSum)), 
+             nodes : new Set(this.edgeNames.bitsToArray(nodeLabelSum)),
              edges : new Set(this.nodeNames.bitsToArray(edgeLabelSum))
-             
+
         })
-         
+
      }
 
-    
+
 }
 
 
@@ -82,26 +89,26 @@ class NodeData{
 //         this.indexes = new Map();
         this.indexes = new Array(numNodes)
         this.names = new Map();
-            
+
     }
-    
+
     getIndex(name){
         return this.names.get(name);
     }
     getEntry(index){
         return this.indexes[index];
     }
-    
+
     //Returns the names that have not been looked up yet
     filterKnown(names){
         let unknownNames = names.filter((e) => (!this.names.has(e)))
         return unknownNames;
     }
-    
+
     filterKnownIndex(indexes){
         return indexes.filter((e)=>(this.indexes[e]) == null )
     }
-    
+
     //Takes a array of pairs corresponding to the name : index of nodes
     update(names, serverResponse){
         for (let i=0; i< names.length; ++i){
@@ -112,7 +119,7 @@ class NodeData{
         }
         return this;
     }
-    
+
     updateIndex(indexes, serverResponse){
         for (let i=0; i< indexes.length; ++i){
             this.names.set(indexes[i], serverResponse[i].name);
@@ -122,7 +129,7 @@ class NodeData{
         }
         return this;
     }
-    
+
 }
 
 

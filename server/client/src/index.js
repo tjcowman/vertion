@@ -182,7 +182,7 @@ class App extends React.Component {
         let versionCardsO = this.state.versionCardsO;
         this.state.versionCardsO.handleAddVersionCard();
 
-        this.setState({versionCardsO: versionCardsO});
+        this.setState({versionCardsO: versionCardsO}, this.handleClickVersionCard(this.state.versionCardsO.cards.length-1));
     }
 
     handleRemoveVersionCard=()=>{
@@ -267,31 +267,20 @@ class App extends React.Component {
           console.log("command",command)
 
           Axios.post('http://'+this.state.backAddr, JSON.stringify(command)).then((response)=>{
-              //console.log("DR", response);
-              //return response;
               this.handleUpdateCardSummary(id, response.data);
           });
       }
     }
 
+    //Is called when the summary tab is clicked to update all of the now stale cards
     handleUpdateCardSummaryt=()=>{
     //  let versionCardsO = this.state.versionCardsO;
 
       for(let c in this.state.versionCardsO.cards){
         console.log("c",c)
         this.ust(c)
-        //  versionCardsO.updateSummary(c, this.ust(c));
-        //  versionCardsO.cards[c].isStale=false;
+
       }
-
-      //versionCardsO.updateSummary(cardId, stats);
-
-    //  versionCardsO.cards[cardId].stats.name = cardId;
-
-//console.log("hi")
-      //I think this handles making sure it doesnt set stale false with old selection values
-    //  this.setState((prevState) =>({versionCardsO: versionCardsO}));
-
     }
 
 

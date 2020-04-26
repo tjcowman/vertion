@@ -87,6 +87,19 @@ class VersionCards{
         this.cards.pop();
     }
 
+    getSummaryLabelsUsed=(kind, by, cardIds)=>{
+      let labels = new Set();
+  //    console.log(cardIds)
+      if(by === "any"){
+        for(let i of cardIds){
+        //  console.log('cards',this.cards,i)
+        this.cards[i].summary[kind].forEach((n) => (labels.add(n.labels)))
+      //    labels.add(this.cards[i].summary[kind]);
+        }
+      }
+      console.log('sumlab', labels)
+      return labels;
+    }
 
     handleAddVersionCard=()=>{
         this.push();
