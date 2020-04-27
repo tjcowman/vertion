@@ -57,6 +57,7 @@ class LabelsUsed{
     }
 
     nameLookupNode(bits){
+      //console.log("nameLookupRes",this.nodeNames.bitsToNamesFlat(bits))
       return this.nodeNames.bitsToNamesFlat(bits);
     }
     nameLookupEdge(bits){

@@ -10,7 +10,7 @@ import './infoPanel.css';
 //tmp const data = [
 
 
-
+import * as setLib from './setLib.js'
 
 
 
@@ -47,6 +47,8 @@ class GraphViewDisplay extends React.Component{
 }
 
 const NodePlot=(props)=>{
+    console.log("PLT", props)
+
   return(
     <div>
       <div>
@@ -59,42 +61,27 @@ const NodePlot=(props)=>{
             <Legend />
             <Tooltip />
             <CartesianGrid stroke="#ccc" />
-            <Bar dataKey="mean"  fill="#8884d8" barSize={20} />
+            {[...props.nodeDisplayLabels ].map((e,i)=>
+                <Bar dataKey={e}  fill="#8884d8" barSize={20} />
+            )}
+
+
+
           </BarChart>
       </div>,
-      <div>
-          {[...props.potentialNodeDisplayLabels].map((label,i)=>(
-            <Button key={i}>{props.labelsUsed.nameLookupNode(label)}</Button>
-          ))}
-      </div>
+
     </div>
 
   )
 }
 
+/*
+{ //console.log(nodes.count),
+  [...props.potentialNodeDisplayLabels].map((label) =>(
+  <Bar dataKey="nodes.count"  fill="#8884d8" barSize={20} />
+))}
+*/
 
-//Takes a data [ {measure,value}]
-const Plot1=(props)=>{
-  return(
-
-    <ComposedChart width={600} height={300} data={props.data} margin={{
-          top: 20, right: 20, bottom: 20, left: 20
-        }}
-    >
-      {console.log("pprops",props)}
-
-        <XAxis dataKey="name" stroke="#8884d8" type='category'/>
-        <YAxis yAxisId="left" orientation="left"  />
-        <YAxis yAxisId="right" orientation="right" allowDecimals={false}/>
-        <Legend />
-        <Tooltip />
-        <CartesianGrid stroke="#ccc" />
-        <Bar dataKey="mean" yAxisId="left"  fill="#8884d8" barSize={20} />
-        <Scatter type='monotone' yAxisId="right" dataKey='number' />
-
-    </ComposedChart>
-  )
-}
 
 class InfoPanel extends React.Component {
   constructor(props){
@@ -102,11 +89,49 @@ class InfoPanel extends React.Component {
 
     this.state={
       plotDisplayIVs :new Set(),
+      potentialNodeDisplayLabels : new Set(),
       nodeDisplayLabels : new Set(),
       edgeDisplayLabels : new Set()
     };
 
 
+  }
+
+  componentDidUpdate(prevProps, prevState){
+  //  console.log("CDUO",prevProps, prevState);
+
+      let potentialNodeDisplayLabels = new Set();
+    //  console.log("PLOTCWRDS",  this.getPlottedCards());
+      this.getPlottedCards().forEach((c)=> c.nodes.forEach((n)=>
+          potentialNodeDisplayLabels.add(this.props.labelsUsed.nameLookupNode(n.labels).join(':'))
+        )
+      )
+      //console.log("potSet:", potentialNodeDisplayLabels);
+      //if(typeof(prevProps.potentialNodeDisplayLabels) != 'undefined')
+        if( !setLib.equals(prevState.potentialNodeDisplayLabels,potentialNodeDisplayLabels))
+        {
+      //    console.log("set state called")
+          this.setState({potentialNodeDisplayLabels: potentialNodeDisplayLabels});
+        }
+  //  }
+
+  }
+
+  checkNodeLabelToggle=(name)=>{
+    return this.state.nodeDisplayLabels.has(name);
+  }
+
+  handleNodeLabelToggle=(name)=>{
+    console.log("NL",this.state.nodeDisplayLabels)
+
+    let nodeDisplayLabels= this.state.nodeDisplayLabels;
+
+    if(!this.checkNodeLabelToggle(name))
+      nodeDisplayLabels.add(name);
+    else
+      nodeDisplayLabels.delete(name);
+
+    this.setState({nodeDisplayLabels:nodeDisplayLabels});
   }
 
   handleVersionClick=(versionId)=>{
@@ -118,34 +143,41 @@ class InfoPanel extends React.Component {
     }
     this.setState({plotDisplayIVs: plotDisplayIVs});
 
-    //calculate the potential nodeLabels that could be plotted
-    let potentialNodeDisplayLabels = new Set();
-    this.getPlottedCards().forEach((c)=> c.nodes.forEach((n)=>
-        potentialNodeDisplayLabels.add(n.labels)
-      )
-    )
-    this.setState({potentialNodeDisplayLabels: potentialNodeDisplayLabels});
 
   }
 
-  //calculate the potential nodeLabels that could be plotted
-  /*
-  let potentialNodeDisplayLabels = new Set();
-  this.getPlottedCards().forEach((c)=> c.nodes.forEach((n)=>
-      potentialNodeDisplayLabels.add(n.labels)
-    )
-  )
-  this.setState({potentialNodeDisplayLabels: potentialNodeDisplayLabels});
-*/
-
     //Gets the versionCards that should be plotted
     getPlottedCards=()=>{
-      return this.props.versionCardsO.cards.filter((vc,i)=>this.state.plotDisplayIVs.has(i)).map((vc) => vc.summary);
+  //    console.log( "vercard",this.props.versionCardsO.cards)
+      return this.props.versionCardsO.cards.filter((vc,i)=>this.state.plotDisplayIVs.has(i) && vc.summary ).map((vc) => vc.summary);
     }
+
+
+
+    formatNodeSummarys=()=>{
+      let formattedSummarys=[];
+      //console.log("FNS", this.getPlottedCards())
+      let cards = this.getPlottedCards();
+
+      for (let ci=0; ci<cards.length; ++ci){
+        formattedSummarys.push({name: cards[ci].name});
+    //    console.log("ci",ci);
+        for(let ni=0; ni<cards[ci].nodes.length; ++ni ){
+          let name =this.props.labelsUsed.nameLookupNode(cards[ci].nodes[ni].labels);
+          //console.log("n",name)
+          formattedSummarys[ci][name] = cards[ci].nodes[ni].count;
+        }
+
+
+      }
+      return(formattedSummarys);
+    }
+
 
     render(){
         return(
 //             console.log("rendering main", this.props),
+//this.formatNodeSummarsy(),
             <>
                 <Card.Body>
                 <Card>
@@ -164,12 +196,15 @@ class InfoPanel extends React.Component {
                 {/*}<Button onClick={this.handlePlot}>Generate Plot</Button>*/}
                 </Card.Body>
 
-                <NodePlot data={this.getPlottedCards().map((c,i)=>(
-                  {name:'set '+i, nodes :c.nodes}
-                  ))}
-                  labelsUsed={this.props.labelsUsed}
-                  potentialNodeDisplayLabels ={this.props.versionCardsO.getSummaryLabelsUsed('nodes','any',this.state.plotDisplayIVs)}
+                <div>
+                    {[...this.state.potentialNodeDisplayLabels].map((label,i)=>(
+                      <Button onClick={()=>this.handleNodeLabelToggle(label)} className = {this.checkNodeLabelToggle(label) ? "active btn " : "btn " } key={i}>{label}</Button>
+                    ))}
+                </div>
 
+                <NodePlot data={this.formatNodeSummarys()}
+                  potentialNodeDisplayLabels ={this.state.potentialNodeDisplayLabels}
+                  nodeDisplayLabels = {this.state.nodeDisplayLabels}
                 />
 
                 {/*<Plot1
