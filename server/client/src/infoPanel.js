@@ -46,11 +46,10 @@ class GraphViewDisplay extends React.Component{
     }
 }
 
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 const NodePlot=(props)=>{
-    console.log("PLT", props)
-
+    //console.log("PLT", props)
   return(
-    <div>
       <div>
           <BarChart
             width={600} height={300} data={props.data}
@@ -62,16 +61,30 @@ const NodePlot=(props)=>{
             <Tooltip />
             <CartesianGrid stroke="#ccc" />
             {[...props.nodeDisplayLabels ].map((e,i)=>
-                <Bar dataKey={e}  fill="#8884d8" barSize={20} />
+                <Bar dataKey={e}  fill={COLORS[i % COLORS.length]} barSize={20} />
             )}
-
-
-
           </BarChart>
-      </div>,
+      </div>
+  )
+}
 
-    </div>
-
+const EdgePlot=(props)=>{
+  return(
+      <div>
+          <BarChart
+            width={600} height={300} data={props.data}
+          >
+            {console.log("pprops",props)}
+            <XAxis dataKey="name" stroke="#8884d8" type='category'/>
+            <YAxis />
+            <Legend />
+            <Tooltip />
+            <CartesianGrid stroke="#ccc" />
+            {[...props.edgeDisplayLabels ].map((e,i)=>
+                <Bar dataKey={e}  fill={COLORS[i % COLORS.length]} barSize={20} />
+            )}
+          </BarChart>
+      </div>
   )
 }
 
@@ -91,6 +104,7 @@ class InfoPanel extends React.Component {
       plotDisplayIVs :new Set(),
       potentialNodeDisplayLabels : new Set(),
       nodeDisplayLabels : new Set(),
+      potentialEdgeDisplayLabels : new Set(),
       edgeDisplayLabels : new Set()
     };
 
@@ -101,17 +115,34 @@ class InfoPanel extends React.Component {
   //  console.log("CDUO",prevProps, prevState);
 
       let potentialNodeDisplayLabels = new Set();
+      let potentialEdgeDisplayLabels = new Set();
     //  console.log("PLOTCWRDS",  this.getPlottedCards());
       this.getPlottedCards().forEach((c)=> c.nodes.forEach((n)=>
           potentialNodeDisplayLabels.add(this.props.labelsUsed.nameLookupNode(n.labels).join(':'))
         )
       )
-      //console.log("potSet:", potentialNodeDisplayLabels);
+
+      this.getPlottedCards().forEach((c)=> c.edges.forEach((e)=>
+          potentialEdgeDisplayLabels.add(this.props.labelsUsed.nameLookupEdge(e.labels).join(':'))
+        )
+      )
+
+      //potentialEdgeDisplayLabels = setLib.intersection(potentialNodeDisplayLabels, )
+
+      //console.log("potSet:", potentialEdgeDisplayLabels);
       //if(typeof(prevProps.potentialNodeDisplayLabels) != 'undefined')
         if( !setLib.equals(prevState.potentialNodeDisplayLabels,potentialNodeDisplayLabels))
         {
       //    console.log("set state called")
-          this.setState({potentialNodeDisplayLabels: potentialNodeDisplayLabels});
+        let nodeDisplayLabels = setLib.intersection(potentialNodeDisplayLabels, prevState.nodeDisplayLabels);
+
+          this.setState({potentialNodeDisplayLabels: potentialNodeDisplayLabels, nodeDisplayLabels: nodeDisplayLabels});
+        }
+        if( !setLib.equals(prevState.potentialEdgeDisplayLabels,potentialEdgeDisplayLabels))
+        {
+            let edgeDisplayLabels = setLib.intersection(potentialEdgeDisplayLabels, prevState.edgeDisplayLabels);
+
+            this.setState({potentialEdgeDisplayLabels: potentialEdgeDisplayLabels, edgeDisplayLabels: edgeDisplayLabels});
         }
   //  }
 
@@ -122,7 +153,7 @@ class InfoPanel extends React.Component {
   }
 
   handleNodeLabelToggle=(name)=>{
-    console.log("NL",this.state.nodeDisplayLabels)
+  //  console.log("NL",this.state.nodeDisplayLabels)
 
     let nodeDisplayLabels= this.state.nodeDisplayLabels;
 
@@ -132,6 +163,21 @@ class InfoPanel extends React.Component {
       nodeDisplayLabels.delete(name);
 
     this.setState({nodeDisplayLabels:nodeDisplayLabels});
+  }
+
+  checkEdgeLabelToggle=(name)=>{
+    return this.state.edgeDisplayLabels.has(name);
+  }
+
+  handleEdgeLabelToggle=(name)=>{
+    let edgeDisplayLabels= this.state.edgeDisplayLabels;
+
+    if(!this.checkEdgeLabelToggle(name))
+      edgeDisplayLabels.add(name);
+    else
+      edgeDisplayLabels.delete(name);
+
+    this.setState({edgeDisplayLabels:edgeDisplayLabels});
   }
 
   handleVersionClick=(versionId)=>{
@@ -174,6 +220,26 @@ class InfoPanel extends React.Component {
     }
 
 
+    formatEdgeSummarys=()=>{
+      let formattedSummarys=[];
+      //console.log("FNS", this.getPlottedCards())
+      let cards = this.getPlottedCards();
+
+      for (let ci=0; ci<cards.length; ++ci){
+        formattedSummarys.push({name: cards[ci].name});
+    //    console.log("ci",ci);
+        for(let ni=0; ni<cards[ci].edges.length; ++ni ){
+          let name =this.props.labelsUsed.nameLookupEdge(cards[ci].edges[ni].labels);
+          //console.log("n",name)
+          formattedSummarys[ci][name] = cards[ci].edges[ni].count;
+        }
+
+
+      }
+      return(formattedSummarys);
+    }
+
+
     render(){
         return(
 //             console.log("rendering main", this.props),
@@ -205,6 +271,18 @@ class InfoPanel extends React.Component {
                 <NodePlot data={this.formatNodeSummarys()}
                   potentialNodeDisplayLabels ={this.state.potentialNodeDisplayLabels}
                   nodeDisplayLabels = {this.state.nodeDisplayLabels}
+                />
+
+
+                <div>
+                    {[...this.state.potentialEdgeDisplayLabels].map((label,i)=>(
+                      <Button onClick={()=>this.handleEdgeLabelToggle(label)} className = {this.checkEdgeLabelToggle(label) ? "active btn " : "btn " } key={i}>{label}</Button>
+                    ))}
+                </div>
+
+                <EdgePlot data={this.formatEdgeSummarys()}
+                  potentialEdgeDisplayLabels ={this.state.potentialEdgeDisplayLabels}
+                  edgeDisplayLabels = {this.state.edgeDisplayLabels}
                 />
 
                 {/*<Plot1

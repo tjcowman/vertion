@@ -18,16 +18,18 @@ class SelectLabelsComponent extends React.Component{
                         <Card.Header>Vertex Labels</Card.Header>
                         <div className=" card-body "> {
 
-                      this.props.labelsUsed.nodeNames.arrayToNames([...this.props.versionCardsO.getActiveCard().labelsV_s]).map((e,i) =>(
-                                <button  key={i}
-                                    value={e.name}
-                                    name={i}
-                                    className={this.props.handleCheckToggle("labelsV_s",this.props.versionCardsO.activeCard, i) ? "active btn btn-outline-secondary m-1 btn-sm vName " : "btn btn-outline-secondary m-1 btn-sm vName"}
+//                      this.props.labelsUsed.nodeNames.arrayToNames([...this.props.versionCardsO.getActiveCard().displayLabels.nodes]).map((e,i) =>(
+              [...this.props.versionCardsO.getActiveCard().displayLabels.nodes].map((nameIndex, listIndex)=>(
+
+                                <button  key={listIndex}
+                                    value={nameIndex}
+                                    name={nameIndex}
+                                    className={this.props.handleCheckToggle("labelsV_s",this.props.versionCardsO.activeCard, nameIndex) ? "active btn btn-outline-secondary m-1 btn-sm vName " : "btn btn-outline-secondary m-1 btn-sm vName"}
                                     onClick={(event) =>
-                                            this.props.handleToggle("labelsV_s",this.props.versionCardsO.activeCard,i)
+                                            this.props.handleToggle("labelsV_s",this.props.versionCardsO.activeCard,nameIndex)
                                     }
                                 >
-                                {e.name}
+                                {this.props.labelsUsed.nodeNames.indexToName(nameIndex)}
                                 </button>
                         ))}
                         </div>
@@ -40,17 +42,18 @@ class SelectLabelsComponent extends React.Component{
                         <Card.Header>Edge Labels</Card.Header>
                         <div className=" card-body "> {
 
-                        this.props.labelsUsed.edgeNames.arrayToNames([...this.props.versionCardsO.getActiveCard().labelsE_s]).map((e,i) =>(
-
-                                <button  key={i}
-                                    value={e.name}
-                                    name={i}
-                                    className={this.props.handleCheckToggle("labelsE_s",this.props.versionCardsO.activeCard, i) ? "active btn btn-outline-secondary m-1 btn-sm vName " : "btn btn-outline-secondary m-1 btn-sm vName"}
+                        //this.props.labelsUsed.edgeNames.arrayToNames([...this.props.versionCardsO.getActiveCard().displayLabels.edges]).map((e,i) =>(
+                          [...this.props.versionCardsO.getActiveCard().displayLabels.edges].map((nameIndex, listIndex)=>(
+                              //console.log(nameIndex),
+                                <button  key={listIndex}
+                                    value={nameIndex}
+                                    name={nameIndex}
+                                    className={this.props.handleCheckToggle("labelsE_s",this.props.versionCardsO.activeCard, nameIndex) ? "active btn btn-outline-secondary m-1 btn-sm vName " : "btn btn-outline-secondary m-1 btn-sm vName"}
                                     onClick={(event) =>
-                                         this.props.handleToggle("labelsE_s",this.props.versionCardsO.activeCard,i)
+                                         this.props.handleToggle("labelsE_s",this.props.versionCardsO.activeCard,nameIndex)
                                     }
                                 >
-                                {e.name}
+                                {this.props.labelsUsed.edgeNames.indexToName(nameIndex)}
                                 </button>
                         ))}
                         </div>

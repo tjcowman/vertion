@@ -29,6 +29,10 @@ class LabelSet{
         return names;
     }
 
+    indexToName(index){
+      return this.names[index].name;
+    }
+
     bitsToNames(labelBits){
         return this.arrayToNames(this.bitsToArray(labelBits));
     }
@@ -68,13 +72,15 @@ class LabelsUsed{
          let nodeLabelSum=0;
          let edgeLabelSum=0;
          for(let i in versionsArray){
+          // console.log("i", i, this.edges[versionsArray[i]])
             nodeLabelSum = nodeLabelSum | this.nodes[versionsArray[i]];
-            edgeLabelSum = edgeLabelSum | this.nodes[versionsArray[i]];
+            edgeLabelSum = edgeLabelSum | this.edges[versionsArray[i]];
          }
+      //   console.log(edgeLabelSum)
 
          return({
-             nodes : new Set(this.edgeNames.bitsToArray(nodeLabelSum)),
-             edges : new Set(this.nodeNames.bitsToArray(edgeLabelSum))
+           nodes : new Set(this.nodeNames.bitsToArray(nodeLabelSum)),
+           edges : new Set(this.edgeNames.bitsToArray(edgeLabelSum))
 
         })
 

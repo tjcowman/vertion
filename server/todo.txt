@@ -6,3 +6,7 @@
 
 -Change summary to select a set of defined versions, then update and plot them
 -Make consistent syntax for returning server errors as json
+
+
+!!!
+Server crashes when lsv has no versions./edgelabels/nodelabels requested

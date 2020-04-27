@@ -216,6 +216,7 @@ class App extends React.Component {
         //check to see whta else needs to be updated
         if(name =="versions_s"){
             let l = this.state.labelsUsed.getUsedLabelSum([...this.state.versionCardsO.getSelectedVersions()]);
+            console.log("labelset", l)
 
             //deselect labels that don't exist in the chosen integration
             versionCardsO.cards[cardId].labelsV_s = setLib.intersection(versionCardsO.cards[cardId].labelsV_s, l.nodes);
@@ -226,6 +227,7 @@ class App extends React.Component {
             versionCardsO.cards[cardId].labelsV_s = setLib.union(versionCardsO.cards[cardId].labelsV_s, l.nodes);
             versionCardsO.cards[cardId].labelsE_s = setLib.union(versionCardsO.cards[cardId].labelsE_s, l.edges);
 
+            console.log("displayLabels",l)
             versionCardsO.cards[cardId].displayLabels = l;
         }
 
@@ -247,7 +249,7 @@ class App extends React.Component {
       let versionCardsO = this.state.versionCardsO;
 
       versionCardsO.updateSummary(cardId, stats);
-
+console.log("newStats",stats)
     //  versionCardsO.cards[cardId].stats.name = cardId;
       versionCardsO.cards[cardId].isStale=false;
 
@@ -268,6 +270,7 @@ class App extends React.Component {
 
           Axios.post('http://'+this.state.backAddr, JSON.stringify(command)).then((response)=>{
               this.handleUpdateCardSummary(id, response.data);
+              console.log("lsv", response.data)
           });
       }
     }
