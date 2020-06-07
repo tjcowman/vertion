@@ -34,6 +34,8 @@ namespace Reduce
 {
      static const auto sub = [](auto e1, auto e2){return e1-e2.value_;};
      static const auto diff = [](auto it1, auto it2){return std::accumulate(it1, it2, 0.0, sub);};
+     static const auto sum_p = [](auto e1,  auto e2){return e1 + e2.value_;};
+    static const auto mean = [](auto it1, auto it2){return std::accumulate(it1, it2, 0.0, sum_p)/std::distance(it1,it2);};
 }
 
 namespace EdgeSort
@@ -143,6 +145,12 @@ class GraphList
         
         //Type specific functions
         /*---------------*/
+        
+        const auto lookupIndex(typename T::Index index)const; //Assumes sorted
+        
+        //modify the vertexList by applying the provided funtion to equivalent indexes
+        template<typename F>
+        GraphList<T>& reduce(F f);
         
         template<typename F>
         GraphList<T>& makeValid(F f);
@@ -601,6 +609,9 @@ GraphList<T>& GraphList<T>::makeValid(F f)
             
             //Put identical edges together (default is to sort on vertex indexes)
             sort(EdgeSort::indexInc);
+            
+           // std::cout<<*this<<std::endl;
+            
             //Look for the first group
             auto groupIt = elements_.begin(); 
             //equal range uses < operator, elements do not take weight into account for default
@@ -652,4 +663,42 @@ void GraphList<T>::labelEdges(int labelIndex)
 {
     for(auto& e : elements_)
         e.labels_.add(labelIndex);
+}
+
+template<class T>
+template<typename F>
+GraphList<T>& GraphList<T>::reduce(F f)
+{
+    //Put identical vertexes together 
+   //sort();
+    std::sort(elements_.begin(), elements_.end());
+    
+    auto groupIt = elements_.begin(); 
+    //equal range uses < operator, elements do not take weight into account for default
+    while(groupIt != elements_.end())
+    {
+        auto rangePair = std::equal_range(groupIt, elements_.end(), *groupIt); //Need to only consider node indexes
+
+        auto aggValue =  rangePair.first;
+        //Apply the passed function to each range
+        aggValue->value_ = f(rangePair.first, rangePair.second);
+        
+        //aggValue->labels_ = std::accumulate(rangePair.first, rangePair.second, VertexLabel<typename T::graph_type>(), [](const auto& e1, const auto& e2){return e1.makeUnion(e2.labels_);});
+aggValue->labels_ = std::accumulate(rangePair.first, rangePair.second, typename T::label_type(), [](const auto& e1, const auto& e2){return e1.makeUnion(e2.labels_);});
+        
+        
+        groupIt = rangePair.second;
+    }
+    //Make each edge unique by removing all but the first instance (which now has the aggregated value)
+    //auto newEnd = std::unique(elements_.begin(), elements_.end(), [](auto e1, auto e2){return e1.index_ == e2.index_;});
+    auto newEnd = std::unique(elements_.begin(), elements_.end(), T::equalIndex);
+    elements_.resize(std::distance(elements_.begin(), newEnd) );
+    
+    return *this;
+}
+
+template<class T>
+const auto GraphList<T>::lookupIndex(typename T::Index index)const
+{
+    return std::lower_bound(elements_.begin(), elements_.end(), index, [](const auto& e, const auto& v){return e.index_<v;});
 }

@@ -8,6 +8,10 @@ template<class GT>
 struct EdgeElement
 {
     using graph_type = GT;
+    using label_type = EdgeLabel<GT>;
+    
+   // static sortIndex = [](){;}
+    
     typedef typename GT::Index Index;
     
     typename GT::Index index1_;
@@ -52,9 +56,9 @@ struct EdgeElement
          return std::tie(index1_, index2_) < std::tie(rhs.index1_, rhs.index2_);
     }
     
-    bool equalIndex(const EdgeElement& rhs)const
+    static bool equalIndex(const EdgeElement& rhs, const EdgeElement& lhs)
     {
-        return std::tie(index1_, index2_) == std::tie(rhs.index1_, rhs.index2_);
+        return std::tie(lhs.index1_, lhs.index2_) == std::tie(rhs.index1_, rhs.index2_);
     }
     
     bool operator ==(const EdgeElement & rhs)const 
@@ -80,6 +84,7 @@ struct EdgeElement
 template<class T, class GT> struct VertexElement
 {
     using graph_type = GT;
+    using label_type = VertexLabel<GT>;
     using Index = typename GT::Index;
     using Value = T;
     
@@ -115,9 +120,9 @@ template<class T, class GT> struct VertexElement
         return index_ < rhs.index_;
     }
     
-    bool equalIndex(const VertexElement& rhs)const
+    static bool equalIndex(const VertexElement& rhs, const VertexElement& lhs)
     {
-        return index_ == rhs.index_;
+        return lhs.index_ == rhs.index_;
     }
     
     friend std::ostream & operator<<(std::ostream & out, const VertexElement & e)

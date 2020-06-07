@@ -148,7 +148,7 @@ const std::vector<AugIA<T>> & VectorIA<T>::getIA(typename T::VersionIndex versio
     }
     else
     {
-        std::cout<<"tmp IA Cache Ins"<<std::endl;
+        //std::cout<<"tmp IA Cache Ins"<<std::endl;
         cacheInsert(version);
         it = cacheIA_.find(version);
         

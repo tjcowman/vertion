@@ -34,7 +34,7 @@ class VertexController
         auto lookup(Index index)const;
         std::string lookupURL(Index index)const;
         
-        VertexLabel<GT> lookupLabels(Index index)const;
+        const VertexLabel<GT>& lookupLabels(Index index)const;
         
         //Calls insert with VertexId through parseFromStream
         void insert(const std::string& filename, const VertexLabel<GT>& labels);
@@ -114,7 +114,7 @@ auto VertexController<GT>::lookup(Index index)const
 }
 
 template<class GT>
-VertexLabel<GT> VertexController<GT>::lookupLabels(Index index)const
+const VertexLabel<GT>& VertexController<GT>::lookupLabels(Index index)const
 {
     return ids_[index].second;
 }

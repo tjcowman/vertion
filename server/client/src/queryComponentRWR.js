@@ -11,6 +11,8 @@ import BootstrapTable from 'react-bootstrap-table-next';
 import paginationFactory from 'react-bootstrap-table2-paginator';
 import filterFactory, { textFilter } from 'react-bootstrap-table2-filter';
 
+import {RolloverPanel} from './rolloverPanel.js'
+
 
 function getColumns(){
     return [
@@ -37,32 +39,34 @@ class SettingsRWR extends React.Component{
 
     render(){
         return (
+            
+            console.log("hi"),
             <Card>
                 <Card.Header>Settings</Card.Header>
                 <Card.Body>
-                    <Row>
-                        <Col>Locality = {this.props.alpha}
+                    
+                       Locality = {this.props.alpha}
                             <input type="range" name="alpha" className="custom-range" min=".05" max="1"
                                 value={this.props.alpha} step=".05" id="customRange1"
                                 onChange={(e) =>this.props.handleChange(e)} >
                             </input>
-                        </Col>
+                        
 
-                        <Col>Convergence = 1x10<sup>-{this.props.epsilon}</sup>
+                        Convergence = 1x10<sup>-{this.props.epsilon}</sup>
                             <input type="range" name="epsilon" className="custom-range" min="1" max="10"
                                 value={this.props.epsilon} step="1" id="customRange1"
                                 onChange={(e) =>this.props.handleChange(e)} >
                             </input>
-                        </Col>
+                        
 
-                        <Col>Top k
+                        Top k
                             <Form.Control name="topk"
                                 value={this.props.topk}
                                 onChange={(e) =>this.props.handleChange(e)}
                             />
-                        </Col>
+                        
 
-                    </Row>
+                    
                 </Card.Body>
 
             </Card>
@@ -172,14 +176,18 @@ class QueryComponentRWR extends React.Component{
   render() {
     return(
         <>
-            <Card.Body>
-                <SettingsRWR handleChange={this.handleChange} alpha={this.state.alpha} epsilon={this.state.epsilon} topk={this.state.topk}/>
-                <Button className="form-control" variant="primary" onClick={(e) =>this.handleSubmit(e)} >Submit</Button>
-            </Card.Body>
-
+        
+            <div>
+      
+            <Button className="form-control" variant="primary" onClick={(e) =>this.handleSubmit(e)} >Submit</Button>
             <Card.Body>
                 {this.renderResults()}
-             </Card.Body>
+            </Card.Body>
+            </div>
+            
+            
+            <RolloverPanel component= { <SettingsRWR handleChange={this.handleChange} alpha={this.state.alpha} epsilon={this.state.epsilon} topk={this.state.topk}/>}/>
+            
 
 
         </>

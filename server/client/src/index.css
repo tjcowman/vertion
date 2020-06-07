@@ -5,6 +5,24 @@
     background-color: red;*/
 }
 
+.pageContentArgsRight{
+    z-index: 0;
+    width: calc(100% - 20px);
+/*       display:inline-block; */
+/*     flex-wrap: nowrap; */
+/*     background-color: red; */
+}
+
+/* Probably remove */
+.argsPlaceholder{
+    position: absolute;
+    right: 0px;
+    background-color: red;
+    width: 20px;
+    height: 100vh;
+    z-index: 1;
+}
+
 .versionDisplaySelect{
     float:left;
     padding: 5px;

@@ -1,0 +1,35 @@
+.expander{
+    position: fixed;
+/* display:inline-block; */
+/* float: right; */
+/*     flex: 0 0 100px;    */
+    width: 20px;
+    height: 100vh;
+    right: 0px;
+    z-index: 2;
+    top:75px;
+    background-color: blue;
+}
+
+.collapsed{
+/*     visible: hidden; */
+display:none;
+/*     background-color: blue; */
+/*     height: 100vh; */
+    right: 0px;
+    z-index: 2;
+    top:75px;
+}
+
+.expanded{
+    position:fixed;
+/*     width: 200px; */
+max-width: 50%;
+/*     background-color: green; */
+     height: 100vh;
+     right: 20px;
+/*     float:right; */
+    z-index: 3;
+    overflow-y: scroll;
+    top:75px;
+}

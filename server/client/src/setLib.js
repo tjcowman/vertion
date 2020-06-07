@@ -14,7 +14,7 @@ export function intersection(set1, set2){
 }
 
 export function equals(set1, set2){
-  console.log("EQ TEST",set1, set2)
+  //console.log("EQ TEST",set1, set2)
   if(set1.size !== set2.size){
     return false;
   }

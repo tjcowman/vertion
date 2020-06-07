@@ -272,5 +272,110 @@ namespace Commands
         }
         return ret;
     }
+    
+    
+    struct Phos{
+        std::string name;
+        int pos;
+        float score;
 
+        friend std::istream& operator>>(std::istream& is, Phos& e)
+        {
+            is>>e.name>>e.pos>>e.score;
+            return is;
+        }
+    };
+    
+    
+    struct PhosphorylationFold{
+        std::string name_;
+        int pos_;
+        float score_;
+    };
+
+    void from_json(const json& j, PhosphorylationFold& p)
+    {
+        j[0].get_to(p.name_);
+        j[1].get_to(p.pos_);
+        j[2].get_to(p.score_);
+    }
+
+    
+    template<class GT>
+    json pths(const VGraph<GT>& graph, ViewCache<GT>& viewCache, const json& args)
+    {
+        json ret;
+        
+        ViewKey<GT> key = viewKeyFromArgs<GT>(args);
+        IntegratedViewer<GT> IV = viewCache.lookup(key);
+        // IV.viewUnion(versions);
+    // 
+    //         
+        KinasePaths KP(IV);
+        KP.arg_minWeight_ = args["minWeight"];
+        
+        auto sourceIndex = graph.lookupVertex(args["kinase"].get<std::string>());
+        GraphList<VertexS<GT>> sinkList;
+//         for(const auto& e : args["sites"].get<std::vector<PhosphorylationFold>>())
+//         {
+//             auto graphIndex = graph.lookupVertex(e.name_);
+//             if(graphIndex != GraphType::GD::invalidIndex)
+//             {
+//                 sinkList.push_back(VertexS<GraphType::GD>(graphIndex, e.score_));
+//                 //usedIndexes.insert(graphIndex);
+//             }
+//         }
+        for(const auto& e : args["sites"])
+        {
+            auto graphIndex = graph.lookupVertex((std::string)e[0]);
+            if(graphIndex != GraphType::GD::invalidIndex)
+            {
+                sinkList.push_back(VertexS<GraphType::GD>(graphIndex, e[2]));
+                //usedIndexes.insert(graphIndex);
+            }
+        }
+        
+  //  std::cout<<"HERE"<<std::endl;
+   // std::cout<<sourceIndex<<std::endl;
+  //  std::cout<<sinkList<<std::endl;
+        sinkList.sort(Sort::indexInc);
+        KP.compute(VertexI<GraphType::GD>(sourceIndex), sinkList);
+   // std::cout<<"CMPTED"<<std::endl;    
+        int pNum=0;
+        for(const auto& path : KP.getPaths())
+        {
+            ret[pNum]["name"] =  "path-"+std::to_string(pNum);
+            ret[pNum]["nodes"] = std::vector<int>(); 
+            ret[pNum]["edgeLabels"] = std::vector<long>();
+            
+            for(const auto & e : path.visitOrder_)
+                ret[pNum]["nodes"].push_back(e);
+            
+            for(const auto& e : path.edgeLabels_)
+                ret[pNum]["edgeLabels"].push_back(e.getBits().to_ulong());
+                
+            ++pNum;
+        }
+    //         //KP.printPathEdgeLists(std::cout);
+    //         KP.printPathJson(std::cout);
+        
+            
+        return ret;
+    }
+
+    template<class GT>
+    json dpth(const VGraph<GT>& graph, ViewCache<GT>& viewCache, const json& args)
+    {
+        json ret;
+        ViewKey<GT> key = viewKeyFromArgs<GT>(args);
+        IntegratedViewer<GT> IV = viewCache.lookup(key);
+        
+        KinasePaths KP(IV);
+        auto edges = KP.computeDense(args["nodes"].get<std::vector<typename GT::Index>>());
+        
+        for(const auto& e : edges)
+            ret.push_back(e);
+        
+        return ret;
+    }
 };

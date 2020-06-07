@@ -2,7 +2,7 @@ import { StrictMode} from 'react';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 
-import {Tab, Nav,} from 'react-bootstrap';
+import {Tab, Nav, Button} from 'react-bootstrap';
 
 import React from 'react';
 import ReactDOM from 'react-dom';
@@ -18,6 +18,8 @@ import {SelectLabelsComponent} from './selectLabelsComponent.js'
 
 import {QueryComponentRWR} from './queryComponentRWR.js';
 import QueryComponentMotif from './queryComponentMotif.js';
+
+import {PathSearchComponent} from './pathSearch.js'
 
 import {LabelSet, LabelsUsed, NodeData} from './graphStructs.js';
 import {VersionCards, VersionCard} from './versionCards.js';
@@ -87,6 +89,9 @@ class App extends React.Component {
 
         super(props);
         this.state={
+            
+            navCollapsed: false,
+            
             logStruct : new LogStruct(),
 
             serverProps : {},
@@ -97,7 +102,7 @@ class App extends React.Component {
             labelsUsed: new LabelsUsed(),
 
 
-            backAddr  : "192.168.1.19:9060",
+            backAddr  : "192.168.1.70:9060", //"localhost:9060",
 
 
             versionCardsO: new VersionCards(),
@@ -139,7 +144,7 @@ class App extends React.Component {
             if(queryNames.length > 0){
                 Axios.post('http://'+this.state.backAddr,JSON.stringify({cmd:"lkpn", names:queryNames})).then((response)=>{
 
-                    console.log("R", response.data)
+                   // console.log("R", response.data)
                     let nodeData = this.state.nodeData.update(queryNames, response.data);
 
                     this.setState({nodeData: nodeData}, afterLookupFn
@@ -158,7 +163,7 @@ class App extends React.Component {
         if(queryIndexes.length > 0){
             Axios.post('http://'+this.state.backAddr,JSON.stringify({cmd:"lkpi", ids:queryIndexes})).then((response)=>{
 
-                console.log("R", response.data)
+               // console.log("R", response.data)
                 let nodeData = this.state.nodeData.updateIndex(queryIndexes, response.data);
 
                 this.setState({nodeData: nodeData}, afterLookupFn
@@ -216,7 +221,7 @@ class App extends React.Component {
         //check to see whta else needs to be updated
         if(name =="versions_s"){
             let l = this.state.labelsUsed.getUsedLabelSum([...this.state.versionCardsO.getSelectedVersions()]);
-            console.log("labelset", l)
+            //console.log("labelset", l)
 
             //deselect labels that don't exist in the chosen integration
             versionCardsO.cards[cardId].labelsV_s = setLib.intersection(versionCardsO.cards[cardId].labelsV_s, l.nodes);
@@ -227,7 +232,7 @@ class App extends React.Component {
             versionCardsO.cards[cardId].labelsV_s = setLib.union(versionCardsO.cards[cardId].labelsV_s, l.nodes);
             versionCardsO.cards[cardId].labelsE_s = setLib.union(versionCardsO.cards[cardId].labelsE_s, l.edges);
 
-            console.log("displayLabels",l)
+            //console.log("displayLabels",l)
             versionCardsO.cards[cardId].displayLabels = l;
         }
 
@@ -249,7 +254,7 @@ class App extends React.Component {
       let versionCardsO = this.state.versionCardsO;
 
       versionCardsO.updateSummary(cardId, stats);
-console.log("newStats",stats)
+//console.log("newStats",stats)
     //  versionCardsO.cards[cardId].stats.name = cardId;
       versionCardsO.cards[cardId].isStale=false;
 
@@ -270,7 +275,7 @@ console.log("newStats",stats)
 
           Axios.post('http://'+this.state.backAddr, JSON.stringify(command)).then((response)=>{
               this.handleUpdateCardSummary(id, response.data);
-              console.log("lsv", response.data)
+            //  console.log("lsv", response.data)
           });
       }
     }
@@ -287,16 +292,19 @@ console.log("newStats",stats)
     }
 
 
-    renderMainPanel5(){
+    renderAll(){
         return(
+            
+            <>
+            {console.log(this.state)}
+
             <div className="mainContent">
+                <div style={{left: this.state.navCollapsed ? 0 : 180}} className=" btn-secondary menuToggleButton"   onClick= {()=> {this.setState({navCollapsed: !this.state.navCollapsed}) } }></div>
                 <Tab.Container id="menu" defaultActiveKey="versions" >
 
-                    <div className=" border-right menuContainer bg-light">
-
-
+                    <div className={this.state.navCollapsed ? " border-right menuContainerClosed bg-light":" border-right menuContainerOpen bg-light" } >
+                   
                         <div className=" text-dark sideElementHeading border-bottom">GraphView</div>
-
 
                             <Nav.Link eventKey="versions" className=" sideElement">Versions</Nav.Link>
                             <Nav.Link eventKey="labels" className=" sideElement">Labels</Nav.Link>
@@ -306,13 +314,13 @@ console.log("newStats",stats)
                             <Nav.Link eventKey="nodes" className="sideElement">Nodes</Nav.Link>
                             <Nav.Link eventKey="query_rwr" className=" sideElement">RWR</Nav.Link>
                             <Nav.Link eventKey="query_motif" className=" sideElement">Motifs</Nav.Link>
-
+                            <Nav.Link eventKey="path_search" className=" sideElement">Paths</Nav.Link>
 
                     </div>
 
 
 
-                    <div className= "displayPanel">
+                    <div className= "displayPanel"  style={{left: this.state.navCollapsed ? 20 : 200, width: this.state.navCollapsed ? 'calc(100% - 0px)' : 'calc(100% - 180px)'}}>
                         <Tab.Content>
                             <Tab.Pane eventKey="summary">
                                 <InfoPanel
@@ -368,7 +376,7 @@ console.log("newStats",stats)
 
                             </Tab.Pane>
 
-                            <Tab.Pane eventKey="query_rwr">
+                            <Tab.Pane eventKey="query_rwr" className="pageContentArgsRight">
                                 <QueryComponentRWR
                                     backAddr={this.state.backAddr}
                                     selectedVersions={this.state.versions_s}
@@ -383,37 +391,32 @@ console.log("newStats",stats)
                                     handleLog={this.handleLog}
                                 />
                             </Tab.Pane>
-                                {/*
-                            <Tab.Pane eventKey="query_motif">
-                                <QueryComponentMotif
+                            
+                            <Tab.Pane eventKey="path_search" className="pageContentArgsRight">
+                                <PathSearchComponent
+                                    backAddr={this.state.backAddr}
                                     selectedVersions={this.state.versions_s}
-                                    getVertexDataRow={this.getVertexDataRow}
-                                    getLabels={this.getLabels}
-                                    selectedNodes={this.state.nodes_s}
-                                />
-                            </Tab.Pane>
-                            */}
 
+                                    handleNodeLookupIndex={this.handleNodeLookupIndex}
+
+                                    nodeData = {this.state.nodeData}
+
+
+                                    versionCardsO={this.state.versionCardsO}
+                                    handleLog={this.handleLog}
+                                />
+                            
+                            </Tab.Pane>
+                            
                         </Tab.Content>
 
 
                     </div>
 
                 </Tab.Container>
-
-                    <div className="rightBar border-left bg-light">
-
-                    </div>
-
-                <div className="logBar border-top">
-                    <LogPanel
-                        logStruct={this.state.logStruct}
-                    />
-                </div>
-
             </div>
 
-
+        </>
         );
 
     }
@@ -421,17 +424,15 @@ console.log("newStats",stats)
 
 
     render(){
-//         console.log("RE", this.state.graphData.vertexData)
         return(
             <StrictMode>
+            
                 <div className="windowAll">
-                    <div className= "fixed-top border-bottom titleBar bg-dark">
-                    </div>
-
-
-                    <div className= "displayPanel2">
-                        {this.renderMainPanel5()}
-                    </div>
+                
+                    <div className= "fixed-top border-bottom titleBar bg-dark"></div>
+                    <div>{this.renderAll()}</div>
+                  {/*  <div className="argsPlaceholder"></div>*/}
+                    
                 </div>
 
             </StrictMode>

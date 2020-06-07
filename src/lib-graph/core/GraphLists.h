@@ -6,7 +6,7 @@
  *  @return An Index Sorted VertexList of all indexes referenced in the passed edgeList
  */
 template<class GT>
-GraphList<VertexS<GT>> edgeListToVertexList(const EdgeList & edgeList);
+GraphList<VertexI<GT>> edgeListToVertexList(const GraphList<EdgeElement<GT>> & edgeList);
 
 /*
  * Restrictive being true means both indexes in the edge have to appear in the vertexlist rather than only one
@@ -22,9 +22,9 @@ std::pair<std::vector<typename GT::Index>, std::vector<typename GT::Index> > ind
 
 
 template<class GT>
-GraphList<VertexS<GT>> edgeListToVertexList(const EdgeList & edgeList)
+GraphList<VertexI<GT>> edgeListToVertexList(const  GraphList<EdgeElement<GT>> & edgeList)
 {
-    GraphList<VertexS<GT>> retVal;
+    GraphList<VertexI<GT>> retVal;
     
     std::vector<typename GT::Index> nodes;
     

@@ -21,7 +21,7 @@ class GraphViewDisplay extends React.Component{
         return(
             <div className="graphViewContainer ">
 
-                {console.log("HCV", this),
+                {
 
                   this.props.versionCardsO.cards.map((e,i) =>(
                   <div key={i}
@@ -54,7 +54,6 @@ const NodePlot=(props)=>{
           <BarChart
             width={600} height={300} data={props.data}
           >
-            {console.log("pprops",props)}
             <XAxis dataKey="name" stroke="#8884d8" type='category'/>
             <YAxis />
             <Legend />
@@ -74,7 +73,6 @@ const EdgePlot=(props)=>{
           <BarChart
             width={600} height={300} data={props.data}
           >
-            {console.log("pprops",props)}
             <XAxis dataKey="name" stroke="#8884d8" type='category'/>
             <YAxis />
             <Legend />

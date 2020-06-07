@@ -1,5 +1,4 @@
 .titleBar{
-
     color: white;
     height:75px;
 /*     margin: 20px; */
@@ -10,26 +9,19 @@
 }
 
 .displayPanel{
-/*     float:left; */
-/* display: inline-block; */
-/*     min-width: 800px; */
     position:fixed;
-    left:200px;
-    height: calc(100vh - 275px);
-    width: calc(100% - 400px);
+    height: calc(100vh - 75px);
+    width: calc(100% - 200px);
     overflow-y:scroll;
     overflow-x:scroll;
-/*     min-width: 600px; */
-/*     overflow-x:scroll; */
     
 }
 
 
 
 .mainContent{
-    position:relative;
+    position:fixed;
     top:75px;
-    
 }
 
 .rightBar{
@@ -40,27 +32,37 @@
     right: 0px;
 }
 
-.logBar{
+/*.logBar{
     position: fixed;
     left:200px;
     width: calc(100% - 400px);
     height: 200px;
     bottom: 0px;
-/*     background-color: red; */
     overflow-y: scroll;
+}*/
+
+.menuToggleButton{
+    position:fixed;
+    width:20px;
+    left: 180px;
+    height: 100vh;
 }
 
-.menuContainer{
+.menuContainerOpen{
     position:fixed;
-/*   float:left; */
-  overflow-y: scroll;
+    overflow-y: scroll;
     padding:  20px;
-/*     float:left; */
-/*      background-color: light;  */
-/*     border: solid 1px; */
-    height: 100vh;
-    width: 200px;
+    height: calc(100vh - 75px);
+    width: 180px;
+}
 
+.menuContainerClosed{
+    position:fixed;
+    display: none;
+    overflow-y: scroll;
+    padding:  20px;
+    height: calc(100vh - 75px);
+    width: 180px;
 }
 
 
@@ -68,14 +70,11 @@
     border: none;
     text-align: left;
     background-color: transparent; 
-/*     font-size: small; */
     color: grey;
     padding : 4px; 
-/*     32px; */
 }
 
 .sideElement:hover{
-/*     background-color:red; */
     color: black;
 }
 
@@ -85,13 +84,10 @@
 
 .sideElementHeading{
     background-color: transparent; 
-/*     font-size: small; */
     border: none;
     font-weight: bold;
-/*     color: black; */
     padding : 4px;
     padding-top: 15px;
-/*      32px; */
 }
     
     

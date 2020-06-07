@@ -1,4 +1,4 @@
-CC = clang++-8  
+CC = clang++-8
 CF = -std=c++17 -O3 -Wfatal-errors  -fopenmp -g
 INC = -I../src/lib -I../src/lib-graph
 
@@ -28,7 +28,9 @@ query_components: | $(BINDIR)
 
 query_motifTriangles: | $(BINDIR)
 	$(CC) $(INC) $(CF) query_motifTriangles.cpp -o $(BINDIR)/query_motifTriangles
-	
+
+query_sp_subgraph: | $(BINDIR)
+	$(CC) $(INC) -I../src/phd $(CF) query_sp_subgraph.cpp -o $(BINDIR)/query_sp_subgraph
 
 merger: | $(BINDIR)
 	$(CC) $(INC) $(CF) merger.cpp -o $(BINDIR)/merger

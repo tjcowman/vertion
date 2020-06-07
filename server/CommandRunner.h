@@ -5,6 +5,7 @@
 #include "query/RandomWalker.h"
 #include "query/IntegratedViewer.h"
 #include "motifs/Triangles.h"
+#include "KinasePaths.h"
 
 #include "Commands.h"
 
@@ -23,6 +24,13 @@ void from_json(const json& j, VertexS<GT>& v)
     j["i"].get_to(v.index_);
     j["v"].get_to(v.value_);
 }
+
+template<class GT>
+void to_json(json& j, const EdgeElement<GT>& e)
+{
+    j = json{{"i1", e.index1_}, {"i2", e.index2_}, {"w", e.value_}, {"l", e.labels_.getBits().to_ulong()}};
+}
+
 
 
 template<class GT>
@@ -68,6 +76,10 @@ json CommandRunner<GT>::run(const json& command)const
             return Commands::lsv<GT>(*graph_, *viewCache_, command);
         else if(command["cmd"] == "mft")
             return Commands::mft<GT>(*graph_, *viewCache_, command);
+        else if(command["cmd"] == "pths")
+            return Commands::pths<GT>(*graph_, *viewCache_, command);
+        else if(command["cmd"] == "dpth")
+            return Commands::dpth<GT>(*graph_, *viewCache_, command);
     }
     else
     {

@@ -1,6 +1,8 @@
 /bin
 examples/bin
 examples/input/graph
+examples/output
+
 utilities/bin
 documentation
 

@@ -14,6 +14,9 @@ template<class GT>
 using ZippedRowIT = typename std::vector<std::tuple<typename GT::Index, typename GT::Value, EdgeLabel<GT>>>::iterator;
 //using ZippedRowIT = typename std::vector<std::tuple<typename GT::Index, typename GT::Value, EdgeLabel<GT>>>::iterator;
 
+// template<class GT>
+// using ViewIndex = GT::Index;
+
 template<class GT>
 class IntegratedViewer
 {
@@ -27,7 +30,15 @@ class IntegratedViewer
 
         void describe(std::ostream& os);
 
+        //Get the labels associated with the node index, (converts from IV index)
+        const auto& getLabels(typename GT::Index index)const ;
+        //Get the edge labels, not exactly efficient, need to find the outgoing index for index1 if it exists  (converts from Global index)
+        const auto getLabels(typename GT::Index index1, typename GT::Index index2)const;
+        
         auto getOutgoingNodes(typename GT::Index node)const;
+        
+        //Get a vector of node Indexes that are incident on two nodes (finds triangles*)
+        std::vector<typename GT::Index> getSharedConnections(typename GT::Index index1, typename GT::Index index2)const;
 
 
         std::map<VertexLabel<GT>, typename GT::Index> countVertexLabels()const;
@@ -94,10 +105,48 @@ void IntegratedViewer<GT>::describe(std::ostream& os)
 }
 
 template<class GT>
+const auto& IntegratedViewer<GT>::getLabels(typename GT::Index index)const 
+{
+    return graph_->getVertexData().lookupLabels(viewIndexes_[index]);
+}
+
+template<class GT>
+const auto IntegratedViewer<GT>::getLabels(typename GT::Index index1, typename GT::Index index2)const
+{
+    auto viewIndex1 = originalIndexes_[index1];
+    auto viewIndex2 = originalIndexes_[index2];
+    
+    auto rowBounds = getOutgoingNodes(viewIndex1);
+    
+    auto it = std::lower_bound(rowBounds.first, rowBounds.second, viewIndex2);
+    std::cout<<"{} "<<*it<<" "<<viewIndex2<<std::endl;
+    if(*it == viewIndex2)
+    {
+        std::cout<<"LIU"<<std::endl;
+        return(L_[std::distance(JA_.cbegin(), it)]);
+    }
+    else
+        return EdgeLabel<GT>();
+}
+
+
+template<class GT>
 auto IntegratedViewer<GT>::getOutgoingNodes(typename GT::Index node)const
 {
     return std::make_pair(JA_.begin()+IA_[node].s1() , JA_.begin()+IA_[node].s1()+IA_[node].s2());
 
+}
+
+template<class GT>
+std::vector<typename GT::Index> IntegratedViewer<GT>::getSharedConnections(typename GT::Index index1, typename GT::Index index2)const
+{
+    std::vector<typename GT::Index> res;
+    auto row1 = getOutgoingNodes(index1);
+    auto row2 = getOutgoingNodes(index2);
+    
+    std::set_intersection(row1.first, row1.second, row2.first, row2.second, std::back_inserter(res));
+    
+    return res;
 }
 
 template<class GT>
