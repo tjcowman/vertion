@@ -35,7 +35,8 @@ class Settings extends React.Component{
                 <Card>
                     <Card.Header>Settings</Card.Header>
                     <Card.Body>
-                    
+                        Minimum Weight
+                        <input className="form-control" value={this.props.minWeight} name="minWeight" onChange={this.props.handleChange}></input>
                     </Card.Body>
                 </Card>
             </>
@@ -54,6 +55,9 @@ class PathSearchComponent extends React.Component{
             pathTreeResponse: [],
             densePathResponse: [],
 
+//             args: [minWeight : 0]
+            minWeight: 0,
+            
             
             elements: [],
             elementsDense: []
@@ -84,17 +88,23 @@ class PathSearchComponent extends React.Component{
             return;
         }
         
+        let sites =  this.state.siteText.split("\n").map((r) => (r.split("\t")) ).map((e) => [e[0], Number(e[1]), Number(e[2])]);
+        let sitesMap = {}; // 
+        this.state.siteText.split("\n").map((r) => (r.split("\t")) ).forEach((es) => (sitesMap[es[0]] = [Number(es[1]), Number(es[2])]));
+        
+//         console.log(sitesParsed)
         
         
         let command = {cmd:"pths", versions:versions, 
             vertexLabels: [0,1],// [...this.props.versionCardsO.cards[this.props.versionCardsO.activeCard].labelsV_s],
             edgeLabels:  [0,1,2,3], //[...this.props.versionCardsO.cards[this.props.versionCardsO.activeCard].labelsE_s],
-            minWeight: 2,
-            kinase: this.state.kinaseText ,
-            sites: this.state.siteText.split("\n").map((r) => (r.split("\t")) ).map((e) => [e[0], Number(e[1]), Number(e[2])])
+            minWeight: Number(this.state.minWeight),
+            kinase: this.state.kinaseText,
+            sites: sites
         };
+        console.log("CMSENT", command)
         
-      
+      //BUG:  SOME TERMINAL NODES ARE ALSO INTERNAL NODES ON PATH FARTHER OUT
          Axios.post('http://'+this.props.backAddr, JSON.stringify(command)).then((response)=>{
             console.log("cmd",response.data)
              
@@ -106,6 +116,7 @@ class PathSearchComponent extends React.Component{
                     ))
                     
                 ))
+//                 console.log( response.data)
                 
                 //makes the terminal nodes with their pathNumber and flattens to array of node elements
                 elements.forEach((pp, pi)=> (pp[0].data.pathTerm =pi));
@@ -117,7 +128,23 @@ class PathSearchComponent extends React.Component{
                     }
                 })
 
+//                 console.log("EM", elements)
+//                 console.log(sitesMap)
                 
+                elements.forEach((e) => {
+//                     console.log(e.label)
+                    if( e.data.label in sitesMap){
+                        console.log(e);
+                        e.data.normScore = Math.abs(sitesMap[e.data.label][1]);
+                        e.data.direction = (sitesMap[e.data.label] > 0 ? 'up' : 'down');
+                        e.data.scored = 1;
+                    }
+                    else{
+                        e.data.scored = 0;
+//                          e.data.normScore = 10;
+//                          e.data.direction = 
+                    }
+                });
                 
                 
                 this.setState({
@@ -128,7 +155,8 @@ class PathSearchComponent extends React.Component{
                 console.log(this.state)
             }
              
-            this.props.handleNodeLookupIndex(response.data.map((p) => p.nodes).flat(), formatResponse );
+          
+                this.props.handleNodeLookupIndex(response.data.map((p) => p.nodes).flat(), formatResponse );
         });
         
     }
@@ -145,6 +173,8 @@ class PathSearchComponent extends React.Component{
     }
     
     handleNodeClick=(event)=>{
+        console.log(event.target._private.data)
+        
         if(typeof event.target._private.data.pathTerm !== 'undefined' && event.target._private.data.pathTerm !== -1){
             let versions = [1,20,21,22];// [...this.props.versionCardsO.cards[this.props.versionCardsO.activeCard].versions_s];
             if(versions.length === 0)
@@ -203,11 +233,11 @@ class PathSearchComponent extends React.Component{
     
         return (
             <>
-            <RolloverPanel component={<Settings handleSubmit={this.handleSubmit} handleChange={this.handleChange} siteText={this.state.siteText} kinaseText={this.state.kinaseText}/>} />
+            <RolloverPanel component={<Settings minWeight={this.state.minWeight} handleSubmit={this.handleSubmit} handleChange={this.handleChange} siteText={this.state.siteText} kinaseText={this.state.kinaseText}/>} />
            
             <Row>
                 <Col><CytoscapeCustom elements={this.state.elements} handleNodeClick={this.handleNodeClick}/></Col>
-                <Col><CytoscapeCustom elements={this.state.elementsDense}/></Col>
+                {/*<Col><CytoscapeCustom elements={this.state.elementsDense}/></Col>*/}
             </Row>
             
             </>

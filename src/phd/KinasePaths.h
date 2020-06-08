@@ -54,9 +54,13 @@ void KinasePaths<GT>::computeNodeScores(const GraphList<VertexS<GT>>& sinks)
 {
     //for each node index
     auto rangeit = std::equal_range(sinks.begin(), sinks.end(), *sinks.begin());
+    
+    std::cout<<sinks<<std::endl;
+    
    // while(rangeit.first != sinks.end())
     while(true)
     {
+        auto viewIndex = viewer_->getViewIndex(rangeit.first->index_);
         typename GT::Value posTotal = 0.0;
         typename GT::Index posNum = 0;
         
@@ -78,9 +82,9 @@ void KinasePaths<GT>::computeNodeScores(const GraphList<VertexS<GT>>& sinks)
             }
              ++rangeit.first;
                 
+//              std::cout<<posTotal<<" "<<negTotal<<std::endl;
         }
-        if(rangeit.first == sinks.end())
-            break;
+
 
        // std::cout<<posNum<<" "<<negNum<<" "<<posTotal<<" "<<negTotal<<std::endl;
         
@@ -88,8 +92,8 @@ void KinasePaths<GT>::computeNodeScores(const GraphList<VertexS<GT>>& sinks)
         typename GT::Value negAvg = negNum > 0 ? negTotal/negNum : 0;
         
        // std::cout<<"BFVI "<<rangeit.first->index_<<" "<<rangeit.first->value_<<std::endl;
-        auto viewIndex = viewer_->getViewIndex(rangeit.first->index_);
-      //  std::cout<<"VI "<<viewIndex<<std::endl;
+        
+//         std::cout<<"VI "<<rangeit.first->index_<<" -> "<<viewIndex<<std::endl;
         
         //compute the magnitude and place in correct nodeScores bin
         if(posNum > 0 && negNum > 0)
@@ -99,6 +103,9 @@ void KinasePaths<GT>::computeNodeScores(const GraphList<VertexS<GT>>& sinks)
         else
             nodeScores_[1].push_back(VertexS<GT>(viewIndex, negAvg));
         
+        if(rangeit.second == sinks.end())
+            break;
+        
         rangeit = std::equal_range(rangeit.second, sinks.end(), *rangeit.second);
         
     }
@@ -107,9 +114,10 @@ void KinasePaths<GT>::computeNodeScores(const GraphList<VertexS<GT>>& sinks)
     
     for(int i=0; i<3; ++i)
         for(const auto& e : nodeScores_[i])
-            //nodeScoreLookup_.insert(std::make_pair(e.index_, e.value_));
             nodeScoreLookup_.insert(std::make_pair(e.index_, e.value_));
-            
+          
+//     std::cout<<"NODELOOKUPSIZE "<<nodeScoreLookup_.size()<<std::endl;
+        
     //for(
     //std::cout<<nodeScores_[0]<<nodeScores_[1]<<nodeScores_[2];
     
@@ -241,8 +249,11 @@ void KinasePaths<GT>::compute(const VertexI<GT>& source, const GraphList<VertexS
             typename GT::Index i=e.index_;
             
             if(nodeScoreLookup_[i] < arg_minWeight_)
+            {
+//                 std::cout<<"WEIGHT NOT PATHED "<<nodeScoreLookup_[i]<<" "<<i<<std::endl;
                 continue;
-            
+            }
+                
            // std::cout<<"SPWEIGHT "<<shortestPathLengths[i]<<std::endl;
             
         // std::cout<<"j= "<<j<<" i= "<<i<<" SPL "<<shortestPathLengths[i]<<" FNS "<<fromNodes_.size()<<std::endl;
@@ -260,6 +271,10 @@ void KinasePaths<GT>::compute(const VertexI<GT>& source, const GraphList<VertexS
                 paths_[paths_.size()-1].push_back_source(viewer_->getOriginalIndex(sourceIndex) );
                 
                 //break;
+            }
+            else
+            {
+//                    std::cout<<"NOT PATHED "<<nodeScoreLookup_[i]<<" "<<i<<std::endl;
             }
         }
     }

@@ -14,10 +14,29 @@ let stylesheet = [
         }
     },
     {
-        selector: 'node',
+        selector: 'node[normScore]',
         style: {
-            'label': 'data(label)'
-        }
+            'label': 'data(label)',
+//             'width' : 'data(normScore)',
+//             'height' : 'data(normScore)',
+            }
+        
+    },
+    {
+        selector: "node[scored = 0 ]",
+            style: {
+                'background-color' : 'white',
+                'border-color' : 'black',
+                'border-width' : '2'
+            }
+    },
+    {
+        selector: "node[scored = 1 ]",
+            style: {
+                'background-color' : 'blue',
+                'border-color' : 'black',
+                'border-width' : '2'
+            }
     }
 ]
 
@@ -32,8 +51,10 @@ class CytoscapeCustom extends React.Component{
     }
     
     componentDidUpdate(prevProps){
-        if(this.props.elements.length > 0 ) //make sure elements actually exist
+        if(this.props.elements.length > 0  && this.props.elements !== prevProps.elements){ //make sure elements actually exist
              this.cy.layout({name:'fcose'}).run();
+             console.log("lll", this.cy._private)
+        }
     }
     
     componentDidMount = () => {
@@ -42,7 +63,7 @@ class CytoscapeCustom extends React.Component{
     
 
     render(){
-        console.log("lll", this)
+        
       
         return(
             <>

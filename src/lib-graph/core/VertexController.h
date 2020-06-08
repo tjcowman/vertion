@@ -52,7 +52,7 @@ class VertexController
         void write_serial(std::ostream& os)const;
         
    
-        const static typename GT::Index invalidIndex = std::numeric_limits<typename GT::Index>::max(); //TODO: Find appropriate place for this
+        //const static typename GT::Index invalidIndex = std::numeric_limits<typename GT::Index>::max(); //TODO: Find appropriate place for this
     private:
         
         void parseFromStream(std::istream& is, const VertexLabel<GT>& labels);
@@ -103,7 +103,7 @@ auto VertexController<GT>::lookup(const std::string& id)const
     else
     {
         missingIds_.insert(id);
-        return invalidIndex;
+        return (GT::invalidIndex);
     }
 }
 
@@ -212,7 +212,7 @@ auto  VertexController<GT>::select(const  GraphList<VertexU<GT>>& vertexlist)con
     //std::pair< VertexController<GT>  std::vector <Index>>  //, std::map<Index, Index> > 
     
     VertexController<GT> selected;
-    std::vector<Index> prevMapping(ids_.size(), invalidIndex);
+    std::vector<Index> prevMapping(ids_.size(), GT::invalidIndex);
     
     Index count=0;
     for(const auto& e : vertexlist)

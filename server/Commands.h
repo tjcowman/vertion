@@ -304,7 +304,7 @@ namespace Commands
     template<class GT>
     json pths(const VGraph<GT>& graph, ViewCache<GT>& viewCache, const json& args)
     {
-        json ret;
+        auto ret = json::array();
         
         ViewKey<GT> key = viewKeyFromArgs<GT>(args);
         IntegratedViewer<GT> IV = viewCache.lookup(key);
@@ -315,31 +315,22 @@ namespace Commands
         KP.arg_minWeight_ = args["minWeight"];
         
         auto sourceIndex = graph.lookupVertex(args["kinase"].get<std::string>());
+        
         GraphList<VertexS<GT>> sinkList;
-//         for(const auto& e : args["sites"].get<std::vector<PhosphorylationFold>>())
-//         {
-//             auto graphIndex = graph.lookupVertex(e.name_);
-//             if(graphIndex != GraphType::GD::invalidIndex)
-//             {
-//                 sinkList.push_back(VertexS<GraphType::GD>(graphIndex, e.score_));
-//                 //usedIndexes.insert(graphIndex);
-//             }
-//         }
         for(const auto& e : args["sites"])
         {
             auto graphIndex = graph.lookupVertex((std::string)e[0]);
-            if(graphIndex != GraphType::GD::invalidIndex)
+            if(graphIndex != GT::invalidIndex)
             {
-                sinkList.push_back(VertexS<GraphType::GD>(graphIndex, e[2]));
+                sinkList.push_back(VertexS<GT>(graphIndex, e[2]));
                 //usedIndexes.insert(graphIndex);
             }
         }
         
-  //  std::cout<<"HERE"<<std::endl;
-   // std::cout<<sourceIndex<<std::endl;
-  //  std::cout<<sinkList<<std::endl;
+//         std::cout<<sinkList<<std::endl;
+        
         sinkList.sort(Sort::indexInc);
-        KP.compute(VertexI<GraphType::GD>(sourceIndex), sinkList);
+        KP.compute(VertexI<GT>(sourceIndex), sinkList);
    // std::cout<<"CMPTED"<<std::endl;    
         int pNum=0;
         for(const auto& path : KP.getPaths())
@@ -356,9 +347,6 @@ namespace Commands
                 
             ++pNum;
         }
-    //         //KP.printPathEdgeLists(std::cout);
-    //         KP.printPathJson(std::cout);
-        
             
         return ret;
     }
