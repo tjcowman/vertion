@@ -19,7 +19,7 @@ function getColumns(){
         {
             dataField: "name",
             text: "name",
-            filter: textFilter()
+//             filter: textFilter()
         },
         {
             dataField: "labels",
@@ -40,7 +40,7 @@ class SettingsRWR extends React.Component{
     render(){
         return (
             
-            console.log("hi"),
+            <>
             <Card>
                 <Card.Header>Settings</Card.Header>
                 <Card.Body>
@@ -66,11 +66,12 @@ class SettingsRWR extends React.Component{
                             />
                         
 
-                    
+                    <Button style={{marginTop: '10px'}} className="form-control" variant="primary" onClick={(e) =>this.props.handleSubmit(e)} >Submit</Button>
                 </Card.Body>
 
             </Card>
-
+            
+            </>
         );
     }
 
@@ -166,7 +167,7 @@ class QueryComponentRWR extends React.Component{
             <Card.Header>Results</Card.Header>
             <Card.Body>
 
-                <BootstrapTable striped keyField='row' data={ this.state.result.nodes} columns={ getColumns()}  pagination={ paginationFactory()} filter={ filterFactory() }   />
+                <BootstrapTable striped keyField='row' data={ this.state.result.nodes} columns={ getColumns()}  pagination={ paginationFactory()}   />
 
             </Card.Body>
         </Card>
@@ -178,15 +179,16 @@ class QueryComponentRWR extends React.Component{
         <>
         
             <div>
-      
-            <Button className="form-control" variant="primary" onClick={(e) =>this.handleSubmit(e)} >Submit</Button>
+              <RolloverPanel component= { <SettingsRWR handleSubmit={this.handleSubmit} handleChange={this.handleChange} alpha={this.state.alpha} epsilon={this.state.epsilon} topk={this.state.topk}/>}/>
+           
             <Card.Body>
+                
                 {this.renderResults()}
             </Card.Body>
             </div>
             
             
-            <RolloverPanel component= { <SettingsRWR handleChange={this.handleChange} alpha={this.state.alpha} epsilon={this.state.epsilon} topk={this.state.topk}/>}/>
+          
             
 
 

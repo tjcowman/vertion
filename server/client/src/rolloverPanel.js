@@ -25,9 +25,15 @@ class RolloverPanel extends React.Component{
     render(){
         return(
             <>
-               
+                <div className={this.state.collapsed ? "" : "displayBlur"}></div>
                 <div className="expander" onMouseEnter={this.handleEnter}></div>
-                <div className={this.state.collapsed ? "collapsed" : "expanded" } onMouseLeave={this.handleLeave} >{this.props.component}</div>
+                <div className={this.state.collapsed ? "collapsed" : "expanded " } onMouseLeave={this.handleLeave} >
+                    <Card style={{ borderRadius : 0}}>
+                    <Card.Body>
+                    {this.props.component}
+                    </Card.Body>
+                    </Card>
+                </div>
 
             </>
         )

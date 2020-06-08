@@ -13,15 +13,7 @@
 /*     background-color: red; */
 }
 
-/* Probably remove */
-.argsPlaceholder{
-    position: absolute;
-    right: 0px;
-    background-color: red;
-    width: 20px;
-    height: 100vh;
-    z-index: 1;
-}
+
 
 .versionDisplaySelect{
     float:left;

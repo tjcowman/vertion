@@ -10,7 +10,9 @@ import fcose from 'cytoscape-fcose';
 
 import Axios from 'axios';
 
+import {CytoscapeCustom} from './cytoscapeCustom.js'
 import {RolloverPanel} from './rolloverPanel.js'
+import './pathSearch.css'
 
 Cytoscape.use( fcose );
 
@@ -19,9 +21,23 @@ class Settings extends React.Component{
     render(){
         return(
             <>
-                <textarea value={this.props.kinaseText} className="form-control" name="kinaseText"  onChange={this.props.handleChange} ></textarea>
-                <textarea value={this.props.siteText} className="form-control" id="siteTex"   onChange={(e) =>this.handleChange} ></textarea>
-            
+                <Card style={{marginBottom: '10px'}}>
+                    <Card.Header>Input</Card.Header>
+                    <Card.Body>
+                        Kinase
+                        <input value={this.props.kinaseText} className="inputKinase form-control" name="kinaseText"  onChange={this.props.handleChange} ></input>
+                        Sites
+                        <textarea value={this.props.siteText} className="inputSites form-control" name="siteText"   onChange={this.props.handleChange} ></textarea>
+                        <Button className="form-control" variant="primary" onClick={(e) =>this.props.handleSubmit(e)} >Submit</Button>
+                    </Card.Body>
+                </Card>
+                
+                <Card>
+                    <Card.Header>Settings</Card.Header>
+                    <Card.Body>
+                    
+                    </Card.Body>
+                </Card>
             </>
         );
     }
@@ -37,8 +53,7 @@ class PathSearchComponent extends React.Component{
             siteText: "Q15459	359	-1.3219\nQ15459	451	0.5352\nP28482	185	4.4463\nP28482	187	4.4195\nQ8N3F8	273	-0.3219",
             pathTreeResponse: [],
             densePathResponse: [],
-            
-            //denseNodeIds: Set(),
+
             
             elements: [],
             elementsDense: []
@@ -50,6 +65,8 @@ class PathSearchComponent extends React.Component{
         let name = event.target.name;
         let value= event.target.value;
 
+       // console.log("CH", name)
+        
         this.setState({
             [name]: value,
         })
@@ -57,15 +74,8 @@ class PathSearchComponent extends React.Component{
     }
 
     
-    handleLayoutClick=()=>{
-     //   if(this.state.elements.length > 0)
-        //    this.cy.layout({name:'fcose'}).run();
-        
-        if(this.state.elementsDense.length > 0)
-            this.cyd.layout({name:'fcose'}).run();
-    }
     
-    handleRunClick=()=>{
+    handleSubmit=()=>{
         let versions = [1,20,21,22];// [...this.props.versionCardsO.cards[this.props.versionCardsO.activeCard].versions_s];
         if(versions.length === 0)
         {
@@ -113,12 +123,8 @@ class PathSearchComponent extends React.Component{
                 this.setState({
                     pathTreeResponse : response.data,
                     elements: elements
-                    
-                }, () =>  this.cy.layout({name:'fcose'}).run());
-                console.log("cy", this.cy)
-                this.cy.edges().style('line-color',  'data(labelType)');
-                
-                
+                });
+     
                 console.log(this.state)
             }
              
@@ -139,9 +145,6 @@ class PathSearchComponent extends React.Component{
     }
     
     handleNodeClick=(event)=>{
-        console.log("ELE", event.target._private.data);
-        
-        console.log("E", event)
         if(typeof event.target._private.data.pathTerm !== 'undefined' && event.target._private.data.pathTerm !== -1){
             let versions = [1,20,21,22];// [...this.props.versionCardsO.cards[this.props.versionCardsO.activeCard].versions_s];
             if(versions.length === 0)
@@ -160,7 +163,7 @@ class PathSearchComponent extends React.Component{
             
             
             Axios.post('http://'+this.props.backAddr, JSON.stringify(command)).then((response)=>{
-                console.log("dense", response)
+//                 console.log("dense", response)
                 
                 
                              
@@ -178,7 +181,7 @@ class PathSearchComponent extends React.Component{
                     this.setState({
                         densePathResponse : response,
                         elementsDense : elementsDense
-                    }, () => this.cyd.layout({name:'fcose'}).run());
+                    });
                     console.log(this.state)
                 }
                 
@@ -192,59 +195,21 @@ class PathSearchComponent extends React.Component{
         }
             
             
-      //     console.log("hi")
     }
-    
-    componentDidMount = () => {
-     //  this.cy.on('add', (event) => (this.cy.layout({name:'random'}).run(), console.log(event)))
-       // this.cy.on('add', (event) => {this.cy.layout({name:'fcose'}).run()})
-        this.cy.on('click', (event) => {this.handleNodeClick(event)});
-    }
-    
     
 
     
     render(){
     
-    let stylesheet = [
-
-        {
-            selector: 'edge',
-            style: {
-                'line-color' : 'mapData(labelType, 0, 8, red, blue)'
-            }
-        },
-        {
-            selector: 'node',
-            style: {
-                'label': 'data(label)'
-            }
-        }
-    ]
-    console.log("SS",stylesheet)
-        
-        
         return (
             <>
-            <RolloverPanel component={<Settings handleChange={this.handleChange} siteText={this.state.siteText} kinaseText={this.state.kinaseText}/>} />
-            
-            
-            <div>
+            <RolloverPanel component={<Settings handleSubmit={this.handleSubmit} handleChange={this.handleChange} siteText={this.state.siteText} kinaseText={this.state.kinaseText}/>} />
+           
             <Row>
-            
-            {/*
-                <Col className="col-6"><textarea value={this.state.kinaseText} className="form-control" id="kinaseTextBox" rows="3"  onChange={(e) =>this.handleKinaseInput(e)} ></textarea></Col>
-                <Col className="col-6"><textarea value={this.state.siteText} className="form-control" id="siteTextBox" rows="3"  onChange={(e) =>this.handleSiteInput(e)} ></textarea></Col>
-                
-                <Col className="col-2"><Button onClick={(e) => (this.handleLayoutClick(e))}>Layout</Button></Col>*/}
-                <Col className="col-2"><Button onClick={(e) => (this.handleRunClick(e))}>Run</Button></Col>
+                <Col><CytoscapeCustom elements={this.state.elements} handleNodeClick={this.handleNodeClick}/></Col>
+                <Col><CytoscapeCustom elements={this.state.elementsDense}/></Col>
             </Row>
             
-            <Row>
-                <Col className="col-6"> <CytoscapeComponent className="border" layout={{name: 'random'}}cy={(cy) => {this.cy = cy}} elements={this.state.elements} stylesheet={ stylesheet } style={ { width: '600px', height: '600px' } }/></Col>
-                <Col className="col-6"> <CytoscapeComponent className="border" cy={(cy) => {this.cyd = cy}} elements={this.state.elementsDense} stylesheet={stylesheet} style={ { width: '600px', height: '600px' } }/> </Col>
-            </Row>
-            </div>
             </>
         )
     }
