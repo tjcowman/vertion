@@ -14,11 +14,17 @@ let stylesheet = [
         }
     },
     {
+      selector: 'node',
+      style: {
+           'label': 'data(label)',
+      }
+      
+    },
+    {
         selector: 'node[normScore]',
         style: {
-            'label': 'data(label)',
-//             'width' : 'data(normScore)',
-//             'height' : 'data(normScore)',
+            'width' : 'data(normScore)',
+            'height' : 'data(normScore)',
             }
         
     },

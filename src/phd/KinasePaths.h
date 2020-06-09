@@ -21,6 +21,8 @@ class KinasePaths
         
         //calculates the shortest paths given the current settings
         void compute(const VertexI<GT>& source, const GraphList<VertexS<GT>>& sinks);
+        void scorePaths();
+        
         GraphList<EdgeElement<GT>> computeDense(const std::vector<typename GT::Index> & pathNodes)const;
         
         void printPathEdgeLists(std::ostream& os)const;
@@ -48,6 +50,23 @@ class KinasePaths
         //const VGraph<GT>* graph_;
         const IntegratedViewer<GT>* viewer_;
 };
+
+//Calculates the values used to assign order to the paths based on "most interesting"
+template<class GT> 
+void KinasePaths<GT>::scorePaths()
+{
+    for(auto& path : paths_)
+    {
+        path.length_ = path.visitOrder_.size();
+        
+        path.nonMech_ = 0;
+        for(const auto& el : path.edgeLabels_)
+            if((el.getBits()  & std::bitset< GT::LabelSize>(9)).any()) //non mechech_
+                ++path.nonMech_;
+        
+        path.nodeScore_ = 0;
+    }
+}
 
 template<class GT> 
 void KinasePaths<GT>::computeNodeScores(const GraphList<VertexS<GT>>& sinks)
@@ -116,7 +135,7 @@ void KinasePaths<GT>::computeNodeScores(const GraphList<VertexS<GT>>& sinks)
         for(const auto& e : nodeScores_[i])
             nodeScoreLookup_.insert(std::make_pair(e.index_, e.value_));
           
-//     std::cout<<"NODELOOKUPSIZE "<<nodeScoreLookup_.size()<<std::endl;
+    std::cout<<"NODELOOKUPSIZE "<<nodeScoreLookup_.size()<<std::endl;
         
     //for(
     //std::cout<<nodeScores_[0]<<nodeScores_[1]<<nodeScores_[2];
@@ -248,6 +267,7 @@ void KinasePaths<GT>::compute(const VertexI<GT>& source, const GraphList<VertexS
         {
             typename GT::Index i=e.index_;
             
+            //scorelookup is based on viewIndexes
             if(nodeScoreLookup_[i] < arg_minWeight_)
             {
 //                 std::cout<<"WEIGHT NOT PATHED "<<nodeScoreLookup_[i]<<" "<<i<<std::endl;
@@ -278,6 +298,13 @@ void KinasePaths<GT>::compute(const VertexI<GT>& source, const GraphList<VertexS
             }
         }
     }
+    
+    scorePaths();
+    std::sort(paths_.begin(), paths_.end(), [](const auto& lhs, const auto& rhs){
+        return(   std::tie(lhs.nonMech_, lhs.length_/*, lhs.nodeScore_*/) 
+                < std::tie(rhs.nonMech_, rhs.length_/*, rhs.nodeScore_*/)             
+        );
+    });
    // std::cout<<"num paths "<<paths_.size()<<std::endl;
 
 }
@@ -291,18 +318,18 @@ GraphList<EdgeElement<GT>> KinasePaths<GT>::computeDense(const std::vector<typen
     
     for(int i=0; i<pathNodes.size()-1; ++i)
     {
-        auto currentIndex = pathNodes[i];
-        auto nextIndex = pathNodes[i+1];
+        auto currentIndex_G = pathNodes[i];
+        auto nextIndex_G = pathNodes[i+1];
         
         //Add the root branch
-        densePath.push_back(EdgeElement<GT>(currentIndex, nextIndex, 1,  viewer_->getLabels(currentIndex,nextIndex)));
+        densePath.push_back(EdgeElement<GT>(currentIndex_G, nextIndex_G, 1,  viewer_->getLabels(currentIndex_G, nextIndex_G)));
         
         for(int j=i+1; j<pathNodes.size(); ++j)
         {
-            auto fromIndex = pathNodes[j];
+            auto fromIndex_G = pathNodes[j];
             
-            //get the intersections
-            auto shared = viewer_->getSharedConnections(currentIndex, fromIndex);
+            //get the intersections (needs ViewIndex)
+            auto shared = viewer_->getSharedConnections(viewer_->getViewIndex(currentIndex_G), viewer_->getViewIndex(fromIndex_G));
             
             
             for(const auto& e : shared)
@@ -311,8 +338,8 @@ GraphList<EdgeElement<GT>> KinasePaths<GT>::computeDense(const std::vector<typen
                 //if(!paths[pathIndex].has(e))
                 {
                 //TODO: implement the edge label lookup
-                    densePath.push_back(EdgeElement<GT>(e,currentIndex, 1, viewer_->getLabels(fromIndex, currentIndex)));
-                    densePath.push_back(EdgeElement<GT>(e,fromIndex, 1, viewer_->getLabels(fromIndex, currentIndex)));
+                    densePath.push_back(EdgeElement<GT>(viewer_->getOriginalIndex(e), currentIndex_G, 1, viewer_->getLabels(viewer_->getOriginalIndex(e), currentIndex_G)));
+                    densePath.push_back(EdgeElement<GT>(viewer_->getOriginalIndex(e), fromIndex_G, 1, viewer_->getLabels(viewer_->getOriginalIndex(e), fromIndex_G)));
                 }
             }
         }

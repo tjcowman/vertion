@@ -338,6 +338,8 @@ namespace Commands
             ret[pNum]["name"] =  "path-"+std::to_string(pNum);
             ret[pNum]["nodes"] = std::vector<int>(); 
             ret[pNum]["edgeLabels"] = std::vector<long>();
+            //ret[pNum]["score"] = path.score_;
+            
             
             for(const auto & e : path.visitOrder_)
                 ret[pNum]["nodes"].push_back(e);

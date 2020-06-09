@@ -134,8 +134,8 @@ class PathSearchComponent extends React.Component{
                 elements.forEach((e) => {
 //                     console.log(e.label)
                     if( e.data.label in sitesMap){
-                        console.log(e);
-                        e.data.normScore = Math.abs(sitesMap[e.data.label][1]);
+//                         console.log(e);
+                        e.data.normScore = Math.abs(sitesMap[e.data.label][1])*10;
                         e.data.direction = (sitesMap[e.data.label] > 0 ? 'up' : 'down');
                         e.data.scored = 1;
                     }
