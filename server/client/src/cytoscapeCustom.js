@@ -10,7 +10,7 @@ let stylesheet = [
     {
         selector: 'edge',
         style: {
-            'line-color' : 'mapData(labelType, 0, 8, red, blue)'
+            'line-color' : 'data(color)'  //'mapData(edgeType, 0, 8, red, blue)'
         }
     },
     {
@@ -65,6 +65,7 @@ class CytoscapeCustom extends React.Component{
     
     componentDidMount = () => {
         this.cy.on('click', 'node', this.props.handleNodeClick);
+        this.cy.on('click', 'edge', this.props.handleEdgeClick);
     }
     
 

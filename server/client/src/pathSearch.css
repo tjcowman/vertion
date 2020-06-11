@@ -7,3 +7,7 @@
     margin-bottom: 10px;
     font-size: small;
 }
+
+.range-pathDisplay{
+    max-width: 50%;
+}

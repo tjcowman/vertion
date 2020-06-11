@@ -87,6 +87,9 @@ class VersionsData{
 class App extends React.Component {
     constructor(props){
 
+ 
+      
+        
         super(props);
         this.state={
             
@@ -102,7 +105,7 @@ class App extends React.Component {
             labelsUsed: new LabelsUsed(),
 
 
-            backAddr  : "192.168.1.70:9060", //"localhost:9060",
+            backAddr  : "localhost:9060", //"129.22.31.155:28340", //"192.168.1.70:9060", //"localhost:9060",
 
 
             versionCardsO: new VersionCards(),
@@ -144,7 +147,7 @@ class App extends React.Component {
             if(queryNames.length > 0){
                 Axios.post('http://'+this.state.backAddr,JSON.stringify({cmd:"lkpn", names:queryNames})).then((response)=>{
 
-                   // console.log("R", response.data)
+//                     console.log("R", response.data)
                     let nodeData = this.state.nodeData.update(queryNames, response.data);
 
                     this.setState({nodeData: nodeData}, afterLookupFn
@@ -163,7 +166,7 @@ class App extends React.Component {
         if(queryIndexes.length > 0){
             Axios.post('http://'+this.state.backAddr,JSON.stringify({cmd:"lkpi", ids:queryIndexes})).then((response)=>{
 
-               // console.log("R", response.data)
+                console.log("R", response.data)
                 let nodeData = this.state.nodeData.updateIndex(queryIndexes, response.data);
 
                 this.setState({nodeData: nodeData}, afterLookupFn
@@ -404,6 +407,7 @@ class App extends React.Component {
 
                                     versionCardsO={this.state.versionCardsO}
                                     handleLog={this.handleLog}
+                                    labelsUsed = {this.state.labelsUsed}
                                 />
                             
                             </Tab.Pane>

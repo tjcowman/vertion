@@ -44,6 +44,20 @@ class Settings extends React.Component{
     }
 }
 
+const ggcol=(n)=>{
+    let hues = [...Array(n)].map((e,i) => ((15 + 360/(n))*i)%360 );
+    return  hues.map((h) => 'hsl('+h+',65%,65%)' )
+}
+
+const ggColMap=(labelSet)=>{
+    let hues = [...Array(labelSet.size)].map((e,i) => ((15 + 360/(labelSet.size))*i)%360 );
+    let cMap = {};
+//     console.log("HUES", hues);
+    
+    [...labelSet].forEach( (e,i) =>  {console.log(e,i); cMap[e] = 'hsl('+hues[i]+',65%,65%)'}  );// hues.map((h) => 'hsl('+h+',65%,65%)' )
+    return cMap;
+}
+
 
 class PathSearchComponent extends React.Component{
     constructor(props){
@@ -59,7 +73,11 @@ class PathSearchComponent extends React.Component{
             minWeight: 0,
             
             
+            topk: 0,
+            sitesMap:  new Set(),
+            
             elements: [],
+            elementsRendered: [],
             elementsDense: []
         }
         
@@ -76,7 +94,74 @@ class PathSearchComponent extends React.Component{
         })
 
     }
+    
+    handleSliderChange=(event)=>{
+        let name = event.target.name;
+        let value= event.target.value;
+        
+        this.setState({
+            [name]: value,
+        }, this.handleUpdateElementsRendered())
+    }
 
+    handleUpdateElementsRendered=()=>{
+        let elements = this.state.pathTreeResponse.slice(0,this.state.topk).map((p, pi)=>(
+            
+            p.nodes.map((id, count) => (
+                {data: {id: id, nodeType: this.props.labelsUsed.nameLookupNode(this.props.nodeData.getEntry(id).labels).toString(), label: this.props.nodeData.getEntry(id).name, pathTerm: -1}, position:{x:0, y:0} }
+            ))
+            
+        ))
+        
+        //makes the terminal nodes with their pathNumber and flattens to array of node elements
+        elements.forEach((pp, pi)=> (pp[0].data.pathTerm =pi));
+        elements = elements.flat();//.flat()
+
+        //Pushes the edge elements to the array
+        let edgeTypeSet = new Set();
+        this.state.pathTreeResponse.slice(0,this.state.topk).forEach((p)=>{
+            for(let i=0; i<p.nodes.length-1; ++i ){
+                elements.push({data:{source: p.nodes[i], target: p.nodes[i+1], edgeType: this.props.labelsUsed.nameLookupEdge(p.edgeLabels[i]).toString() }});
+                edgeTypeSet.add(this.props.labelsUsed.nameLookupEdge(p.edgeLabels[i]).toString());
+                
+            }
+        })
+
+        elements.forEach((e) => {
+            if( e.data.label in this.state.sitesMap){
+                e.data.normScore = Math.abs(this.state.sitesMap[e.data.label][1])*10;
+                e.data.direction = (this.state.sitesMap[e.data.label] > 0 ? 'up' : 'down');
+                e.data.scored = 1;
+            }
+            else{
+                e.data.scored = 0;
+
+            }
+        });
+        
+        //Create color property for edges
+//         let edgeNameArray = this.props.labelsUsed.edgeNames.names;
+        //color test
+        
+
+        
+        
+        //console.log(edgeNameArray);
+        let colorMap = ggColMap(edgeTypeSet);
+//         console.log("CMAP", colorMap);
+        
+        elements.forEach((e) =>{
+            if(e.data.edgeType in colorMap)
+                e.data.color = colorMap[e.data.edgeType];
+        });
+        
+        console.log(elements)
+        
+        this.setState({
+            elementsRendered: elements
+        });
+                
+    }
     
     
     handleSubmit=()=>{
@@ -92,6 +177,8 @@ class PathSearchComponent extends React.Component{
         let sitesMap = {}; // 
         this.state.siteText.split("\n").map((r) => (r.split("\t")) ).forEach((es) => (sitesMap[es[0]] = [Number(es[1]), Number(es[2])]));
         
+        this.setState({sitesMap: sitesMap});
+        
 //         console.log(sitesParsed)
         
         
@@ -104,59 +191,10 @@ class PathSearchComponent extends React.Component{
         };
         console.log("CMSENT", command)
         
-      //BUG:  SOME TERMINAL NODES ARE ALSO INTERNAL NODES ON PATH FARTHER OUT
-         Axios.post('http://'+this.props.backAddr, JSON.stringify(command)).then((response)=>{
+        Axios.post('http://'+this.props.backAddr, JSON.stringify(command)).then((response)=>{
             console.log("cmd",response.data)
-             
-            let formatResponse=()=>{
-                
-                let elements = response.data.map((p)=>(
-                    p.nodes.map((id, count) => (
-                        {data: {id: id, label: this.props.nodeData.getEntry(id).name, pathTerm: -1}, position:{x:0, y:0} }
-                    ))
-                    
-                ))
-//                 console.log( response.data)
-                
-                //makes the terminal nodes with their pathNumber and flattens to array of node elements
-                elements.forEach((pp, pi)=> (pp[0].data.pathTerm =pi));
-                elements = elements.flat();//.flat()
-
-                response.data.forEach((p)=>{
-                    for(let i=0; i<p.nodes.length-1; ++i ){
-                        elements.push({data:{source: p.nodes[i], target: p.nodes[i+1], labelType: p.edgeLabels[i] }});
-                    }
-                })
-
-//                 console.log("EM", elements)
-//                 console.log(sitesMap)
-                
-                elements.forEach((e) => {
-//                     console.log(e.label)
-                    if( e.data.label in sitesMap){
-//                         console.log(e);
-                        e.data.normScore = Math.abs(sitesMap[e.data.label][1])*10;
-                        e.data.direction = (sitesMap[e.data.label] > 0 ? 'up' : 'down');
-                        e.data.scored = 1;
-                    }
-                    else{
-                        e.data.scored = 0;
-//                          e.data.normScore = 10;
-//                          e.data.direction = 
-                    }
-                });
-                
-                
-                this.setState({
-                    pathTreeResponse : response.data,
-                    elements: elements
-                });
-     
-                console.log(this.state)
-            }
-             
           
-                this.props.handleNodeLookupIndex(response.data.map((p) => p.nodes).flat(), formatResponse );
+                this.props.handleNodeLookupIndex(response.data.map((p) => p.nodes).flat(), this.setState({pathTreeResponse: response.data}) /*, formatResponse*/ );
         });
         
     }
@@ -170,6 +208,10 @@ class PathSearchComponent extends React.Component{
         this.setState({
             siteText : event.target.value
         })
+    }
+    
+    handleEdgeClick=(event)=>{
+        console.log(event.target._private.data)
     }
     
     handleNodeClick=(event)=>{
@@ -235,8 +277,15 @@ class PathSearchComponent extends React.Component{
             <>
             <RolloverPanel component={<Settings minWeight={this.state.minWeight} handleSubmit={this.handleSubmit} handleChange={this.handleChange} siteText={this.state.siteText} kinaseText={this.state.kinaseText}/>} />
            
+           Top {this.state.topk} of {this.state.pathTreeResponse.length}
+            <input type="range" name="topk" className="range-pathDisplay" min="0" max={this.state.pathTreeResponse.length}
+                value={this.state.topk} step="1" id="customRange"
+                onChange={(e) => {this.handleChange(e)  }}
+                onMouseUp={(e)=> {this.handleUpdateElementsRendered()}} >
+            </input>
+           
             <Row>
-                <Col><CytoscapeCustom elements={this.state.elements} handleNodeClick={this.handleNodeClick}/></Col>
+                <Col><CytoscapeCustom elements={this.state.elementsRendered} handleNodeClick={this.handleNodeClick} handleEdgeClick={this.handleEdgeClick}/></Col>
                 {/*<Col><CytoscapeCustom elements={this.state.elementsDense}/></Col>*/}
             </Row>
             
