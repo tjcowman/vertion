@@ -74,7 +74,10 @@ class PathSearchComponent extends React.Component{
             
             
             topk: 0,
+            minWeightDisplay: 0,
             sitesMap:  new Set(),
+            
+            pathsPassing : [], //Retured paths that pass the specified cutoff of their log fold
             
             elements: [],
             elementsRendered: [],
@@ -104,8 +107,20 @@ class PathSearchComponent extends React.Component{
         }, this.handleUpdateElementsRendered())
     }
 
+    handleMinWeightSlider=(event)=>{
+        let pathsPassing = [];
+        
+        this.state.pathTreeResponse.map((p,i) => {if(p.nodeScore > this.state.minWeightDisplay) pathsPassing.push(i) });
+        
+        console.log(pathsPassing)
+        this.setState({pathsPassing: pathsPassing});
+    }
+    
     handleUpdateElementsRendered=()=>{
-        let elements = this.state.pathTreeResponse.slice(0,this.state.topk).map((p, pi)=>(
+        
+        let elements = this.state.pathsPassing.map((arrI) => (this.state.pathTreeResponse[arrI])).slice(0,this.state.topk).map((p)=>(
+        
+      //  let elements = this.state.pathTreeResponse.slice(0,this.state.topk).map((p)=>(
             
             p.nodes.map((id, count) => (
                 {data: {id: id, nodeType: this.props.labelsUsed.nameLookupNode(this.props.nodeData.getEntry(id).labels).toString(), label: this.props.nodeData.getEntry(id).name, pathTerm: -1}, position:{x:0, y:0} }
@@ -119,7 +134,8 @@ class PathSearchComponent extends React.Component{
 
         //Pushes the edge elements to the array
         let edgeTypeSet = new Set();
-        this.state.pathTreeResponse.slice(0,this.state.topk).forEach((p)=>{
+        //this.state.pathTreeResponse.slice(0,this.state.topk).forEach((p)=>{
+         this.state.pathsPassing.map((arrI) => (this.state.pathTreeResponse[arrI])).slice(0,this.state.topk).forEach((p)=>{
             for(let i=0; i<p.nodes.length-1; ++i ){
                 elements.push({data:{source: p.nodes[i], target: p.nodes[i+1], edgeType: this.props.labelsUsed.nameLookupEdge(p.edgeLabels[i]).toString() }});
                 edgeTypeSet.add(this.props.labelsUsed.nameLookupEdge(p.edgeLabels[i]).toString());
@@ -139,17 +155,9 @@ class PathSearchComponent extends React.Component{
             }
         });
         
-        //Create color property for edges
-//         let edgeNameArray = this.props.labelsUsed.edgeNames.names;
-        //color test
-        
 
-        
-        
-        //console.log(edgeNameArray);
-        let colorMap = ggColMap(edgeTypeSet);
-//         console.log("CMAP", colorMap);
-        
+        //Compute the edge colors
+        let colorMap = ggColMap(edgeTypeSet);        
         elements.forEach((e) =>{
             if(e.data.edgeType in colorMap)
                 e.data.color = colorMap[e.data.edgeType];
@@ -193,8 +201,8 @@ class PathSearchComponent extends React.Component{
         
         Axios.post('http://'+this.props.backAddr, JSON.stringify(command)).then((response)=>{
             console.log("cmd",response.data)
-          
-                this.props.handleNodeLookupIndex(response.data.map((p) => p.nodes).flat(), this.setState({pathTreeResponse: response.data}) /*, formatResponse*/ );
+
+                this.props.handleNodeLookupIndex(response.data.map((p) => p.nodes).flat(), this.setState({pathTreeResponse: response.data}, this.handleMinWeightSlider) /*, formatResponse*/ );
         });
         
     }
@@ -277,12 +285,21 @@ class PathSearchComponent extends React.Component{
             <>
             <RolloverPanel component={<Settings minWeight={this.state.minWeight} handleSubmit={this.handleSubmit} handleChange={this.handleChange} siteText={this.state.siteText} kinaseText={this.state.kinaseText}/>} />
            
-           Top {this.state.topk} of {this.state.pathTreeResponse.length}
-            <input type="range" name="topk" className="range-pathDisplay" min="0" max={this.state.pathTreeResponse.length}
+           
+            <div>Min Weight {this.state.minWeightDisplay}</div>
+            <input type="range" name="minWeightDisplay" className="range-pathDisplayMinWeight" min="0" max="5"
+                value={this.state.minWeightDisplay} step=".5" id="customRange2"
+                onChange={(e) => {this.handleChange(e)  }}
+                onMouseUp={(e)=> {this.handleMinWeightSlider(e)}} >
+            </input>
+           
+           <div>Top {this.state.topk} of {this.state.pathsPassing.length}</div>
+            <input type="range" name="topk" className="range-pathDisplay" min="0" max={this.state.pathsPassing.length}
                 value={this.state.topk} step="1" id="customRange"
                 onChange={(e) => {this.handleChange(e)  }}
                 onMouseUp={(e)=> {this.handleUpdateElementsRendered()}} >
             </input>
+            
            
             <Row>
                 <Col><CytoscapeCustom elements={this.state.elementsRendered} handleNodeClick={this.handleNodeClick} handleEdgeClick={this.handleEdgeClick}/></Col>

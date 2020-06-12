@@ -160,6 +160,7 @@ class App extends React.Component {
     }
 
     handleNodeLookupIndex=(indexes, afterLookupFn)=>{
+//         console.log("wut", afterLookupFn)
         let queryIndexes = this.state.nodeData.filterKnownIndex(indexes);
 
         //Only need to make request if names are unknown
@@ -175,7 +176,8 @@ class App extends React.Component {
             })
         }
         else
-            afterLookupFn()
+            if(typeof(afterLookupFn) != 'undefined')
+                afterLookupFn()
     }
 
     handleLog=(mtype, message)=>{

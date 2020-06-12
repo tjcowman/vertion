@@ -64,7 +64,7 @@ void KinasePaths<GT>::scorePaths()
             if((el.getBits()  & std::bitset< GT::LabelSize>(9)).any()) //non mechech_
                 ++path.nonMech_;
         
-        path.nodeScore_ = 0;
+        path.nodeScore_ = nodeScoreLookup_[viewer_->getViewIndex(path.visitOrder_[0])]; //Looks at the compute score of the protein node containing the sites
     }
 }
 
