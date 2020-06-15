@@ -43,7 +43,7 @@ class Settings extends React.Component{
         );
     }
 }
-
+/*
 const ggcol=(n)=>{
     let hues = [...Array(n)].map((e,i) => ((15 + 360/(n))*i)%360 );
     return  hues.map((h) => 'hsl('+h+',65%,65%)' )
@@ -56,7 +56,7 @@ const ggColMap=(labelSet)=>{
     
     [...labelSet].forEach( (e,i) =>  {console.log(e,i); cMap[e] = 'hsl('+hues[i]+',65%,65%)'}  );// hues.map((h) => 'hsl('+h+',65%,65%)' )
     return cMap;
-}
+}*/
 
 
 class PathSearchComponent extends React.Component{
@@ -123,7 +123,7 @@ class PathSearchComponent extends React.Component{
       //  let elements = this.state.pathTreeResponse.slice(0,this.state.topk).map((p)=>(
             
             p.nodes.map((id, count) => (
-                {data: {id: id, nodeType: this.props.labelsUsed.nameLookupNode(this.props.nodeData.getEntry(id).labels).toString(), label: this.props.nodeData.getEntry(id).name, pathTerm: -1}, position:{x:0, y:0} }
+                {data: {id: id, nodeType: this.props.labelsUsed.nameLookupNode(this.props.nodeData.getEntry(id).labels).toString(), color:'black', label: this.props.nodeData.getEntry(id).name, pathTerm: -1}, position:{x:0, y:0} }
             ))
             
         ))
@@ -133,12 +133,12 @@ class PathSearchComponent extends React.Component{
         elements = elements.flat();//.flat()
 
         //Pushes the edge elements to the array
-        let edgeTypeSet = new Set();
+//         let edgeTypeSet = new Set();
         //this.state.pathTreeResponse.slice(0,this.state.topk).forEach((p)=>{
          this.state.pathsPassing.map((arrI) => (this.state.pathTreeResponse[arrI])).slice(0,this.state.topk).forEach((p)=>{
             for(let i=0; i<p.nodes.length-1; ++i ){
-                elements.push({data:{source: p.nodes[i], target: p.nodes[i+1], edgeType: this.props.labelsUsed.nameLookupEdge(p.edgeLabels[i]).toString() }});
-                edgeTypeSet.add(this.props.labelsUsed.nameLookupEdge(p.edgeLabels[i]).toString());
+                elements.push({data:{source: p.nodes[i], target: p.nodes[i+1], edgeType: this.props.labelsUsed.nameLookupEdge(p.edgeLabels[i]).toString(), color : 'black' }});
+
                 
             }
         })
@@ -157,12 +157,12 @@ class PathSearchComponent extends React.Component{
         
 
         //Compute the edge colors
-        let colorMap = ggColMap(edgeTypeSet);        
-        elements.forEach((e) =>{
-            if(e.data.edgeType in colorMap)
-                e.data.color = colorMap[e.data.edgeType];
-        });
-        
+//         let colorMap = ggColMap(edgeTypeSet);        
+//         elements.forEach((e) =>{
+//             if(e.data.edgeType in colorMap)
+//                 e.data.color = colorMap[e.data.edgeType];
+//         });
+//         
         console.log(elements)
         
         this.setState({
@@ -243,7 +243,7 @@ class PathSearchComponent extends React.Component{
             
             
             Axios.post('http://'+this.props.backAddr, JSON.stringify(command)).then((response)=>{
-//                 console.log("dense", response)
+                console.log("dense", response)
                 
                 
                              
@@ -302,7 +302,13 @@ class PathSearchComponent extends React.Component{
             
            
             <Row>
-                <Col><CytoscapeCustom elements={this.state.elementsRendered} handleNodeClick={this.handleNodeClick} handleEdgeClick={this.handleEdgeClick}/></Col>
+                <Col>
+                    <CytoscapeCustom elements={this.state.elementsRendered} 
+                        handleNodeClick={this.handleNodeClick} 
+                        handleEdgeClick={this.handleEdgeClick}
+                    />
+                </Col>
+                
                 {/*<Col><CytoscapeCustom elements={this.state.elementsDense}/></Col>*/}
             </Row>
             

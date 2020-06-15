@@ -357,7 +357,7 @@ namespace Commands
     template<class GT>
     json dpth(const VGraph<GT>& graph, ViewCache<GT>& viewCache, const json& args)
     {
-        json ret;
+        json ret = json::array();;
         ViewKey<GT> key = viewKeyFromArgs<GT>(args);
         IntegratedViewer<GT> IV = viewCache.lookup(key);
         

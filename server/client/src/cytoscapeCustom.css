@@ -1,0 +1,20 @@
+.legend{
+    width: 600px;
+}
+
+.colorIcon{
+  float:left;
+  width:   20px;
+  height: 20px;
+  line-color: black;
+  border-width: 2px;
+    border-style: solid;  
+    margin-right: 5px;
+}
+
+.colorItem{
+    float:left;
+    font-size: small;
+    padding: 3px;
+    border-style:none;
+}
