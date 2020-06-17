@@ -14,6 +14,8 @@
 #include "VersionTagMap.h"
 #include "LabelMap.h"
 
+#include "BiMap.h"
+
 //TODO: make loading the full id mapping structure not default
 
 //TODO: COME UP WITH "UPDATE POLICY" SELECTION WHEN ATTEMPTING TO ADD AN EXISTING EDGE TO A VERSION
@@ -188,6 +190,9 @@ class VGraph
         bool checkNodeValid(Index node, typename T::VersionIndex version)const;
         bool checkVersionValid(typename T::VersionIndex version)const;
        
+        
+        
+        BiMap<typename T::Index, std::string> alternateMapping_; //TODO: fully integrate
     private:
         
         //Used to store configuration properties if the graph is going to be used in the vertion front end, formatted as json object

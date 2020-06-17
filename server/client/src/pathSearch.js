@@ -6,7 +6,8 @@ import CytoscapeComponent from 'react-cytoscapejs';
 
 import fcose from 'cytoscape-fcose';
 
-
+import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, CartesianGrid, ComposedChart, Line, Scatter, LineChart,ReferenceLine} from 'recharts';
+import DefaultTooltipContent from 'recharts/lib/component/DefaultTooltipContent';
 
 import Axios from 'axios';
 
@@ -43,20 +44,17 @@ class Settings extends React.Component{
         );
     }
 }
-/*
-const ggcol=(n)=>{
-    let hues = [...Array(n)].map((e,i) => ((15 + 360/(n))*i)%360 );
-    return  hues.map((h) => 'hsl('+h+',65%,65%)' )
-}
 
-const ggColMap=(labelSet)=>{
-    let hues = [...Array(labelSet.size)].map((e,i) => ((15 + 360/(labelSet.size))*i)%360 );
-    let cMap = {};
-//     console.log("HUES", hues);
-    
-    [...labelSet].forEach( (e,i) =>  {console.log(e,i); cMap[e] = 'hsl('+hues[i]+',65%,65%)'}  );// hues.map((h) => 'hsl('+h+',65%,65%)' )
-    return cMap;
-}*/
+    const testTT= function(props){
+        console.log(props)
+        console.log("1", props.payload);
+        const {score} = props.payload[0];
+        let payload = {score};
+        console.log("2", payload);
+        return(
+            <DefaultTooltipContent {...props} payload={[payload]}/>
+        )
+    }
 
 
 class PathSearchComponent extends React.Component{
@@ -67,6 +65,8 @@ class PathSearchComponent extends React.Component{
             kinaseText: "P00533",
             siteText: "Q15459	359	-1.3219\nQ15459	451	0.5352\nP28482	185	4.4463\nP28482	187	4.4195\nQ8N3F8	273	-0.3219",
             pathTreeResponse: [],
+            terminalScores: { sparseFactor :0, scores: []}, //the computed score value for the provided input set (basically avgs of sites / protein)
+            
             densePathResponse: [],
 
 //             args: [minWeight : 0]
@@ -90,8 +90,6 @@ class PathSearchComponent extends React.Component{
         let name = event.target.name;
         let value= event.target.value;
 
-       // console.log("CH", name)
-        
         this.setState({
             [name]: value,
         })
@@ -110,42 +108,46 @@ class PathSearchComponent extends React.Component{
     handleMinWeightSlider=(event)=>{
         let pathsPassing = [];
         
-        this.state.pathTreeResponse.map((p,i) => {if(p.nodeScore > this.state.minWeightDisplay) pathsPassing.push(i) });
+        this.state.pathTreeResponse.map((p,i) => {if(p.nodeScore >= this.state.minWeightDisplay) pathsPassing.push(i) });
         
         console.log(pathsPassing)
         this.setState({pathsPassing: pathsPassing});
     }
     
-    handleUpdateElementsRendered=()=>{
-        
+    handleUpdateElementsRendered=()=>{        
         let elements = this.state.pathsPassing.map((arrI) => (this.state.pathTreeResponse[arrI])).slice(0,this.state.topk).map((p)=>(
-        
-      //  let elements = this.state.pathTreeResponse.slice(0,this.state.topk).map((p)=>(
             
             p.nodes.map((id, count) => (
-                {data: {id: id, nodeType: this.props.labelsUsed.nameLookupNode(this.props.nodeData.getEntry(id).labels).toString(), color:'black', label: this.props.nodeData.getEntry(id).name, pathTerm: -1}, position:{x:0, y:0} }
+                {data: {
+                    id: id, 
+                    nodeType: this.props.labelsUsed.nameLookupNode(this.props.nodeData.getEntry(id).labels).toString(), 
+                    color:'black', 
+                    label: this.props.nodeData.getEntry(id).name, 
+                    pLabel: this.props.nodeData.getEntry(id).pname == "" ? undefined : this.props.nodeData.getEntry(id).pname,
+                    pathTerm: -1,
+                    terminalScore : p.nodeScore,
+                }, 
+                position:{x:0, y:0} 
+                }
             ))
             
         ))
         
         //makes the terminal nodes with their pathNumber and flattens to array of node elements
-        elements.forEach((pp, pi)=> (pp[0].data.pathTerm =pi));
+        elements.forEach((pp, pi)=> (pp[0].data.pathTerm =pi, pp[0].data.nodeScore = 10*pp[0].data.terminalScore ));
+        
         elements = elements.flat();//.flat()
 
         //Pushes the edge elements to the array
-//         let edgeTypeSet = new Set();
-        //this.state.pathTreeResponse.slice(0,this.state.topk).forEach((p)=>{
          this.state.pathsPassing.map((arrI) => (this.state.pathTreeResponse[arrI])).slice(0,this.state.topk).forEach((p)=>{
             for(let i=0; i<p.nodes.length-1; ++i ){
                 elements.push({data:{source: p.nodes[i], target: p.nodes[i+1], edgeType: this.props.labelsUsed.nameLookupEdge(p.edgeLabels[i]).toString(), color : 'black' }});
-
-                
             }
         })
 
         elements.forEach((e) => {
             if( e.data.label in this.state.sitesMap){
-                e.data.normScore = Math.abs(this.state.sitesMap[e.data.label][1])*10;
+//                 e.data.normScore = Math.abs(this.state.sitesMap[e.data.label][1])*10;
                 e.data.direction = (this.state.sitesMap[e.data.label] > 0 ? 'up' : 'down');
                 e.data.scored = 1;
             }
@@ -154,15 +156,7 @@ class PathSearchComponent extends React.Component{
 
             }
         });
-        
 
-        //Compute the edge colors
-//         let colorMap = ggColMap(edgeTypeSet);        
-//         elements.forEach((e) =>{
-//             if(e.data.edgeType in colorMap)
-//                 e.data.color = colorMap[e.data.edgeType];
-//         });
-//         
         console.log(elements)
         
         this.setState({
@@ -200,9 +194,19 @@ class PathSearchComponent extends React.Component{
         console.log("CMSENT", command)
         
         Axios.post('http://'+this.props.backAddr, JSON.stringify(command)).then((response)=>{
-            console.log("cmd",response.data)
+            console.log("cmd",response.data);
 
-                this.props.handleNodeLookupIndex(response.data.map((p) => p.nodes).flat(), this.setState({pathTreeResponse: response.data}, this.handleMinWeightSlider) /*, formatResponse*/ );
+            let terminalScores = { sparseFactor : 1, scores: response.data.map((p,i) => (p.nodeScore) ).sort()};
+            //sparsify the scores for plotting later
+            if(terminalScores.scores.length > 199){
+                let sparseFactor = Math.floor(terminalScores.scores.length/100);
+                
+                terminalScores = { sparseFactor : sparseFactor, scores: terminalScores.scores.filter((e, i) => {return i % sparseFactor === 0})};
+            }
+//         
+            
+            
+            this.props.handleNodeLookupIndex(response.data.map((p) => p.nodes).flat(), this.setState({pathTreeResponse: response.data, terminalScores: terminalScores}, this.handleMinWeightSlider) /*, formatResponse*/ );
         });
         
     }
@@ -277,29 +281,75 @@ class PathSearchComponent extends React.Component{
             
     }
     
+    handleClickScore=(event)=>{
+        console.log("HI", event, event.activePayload[0].value);
+        
+        this.setState({ minWeightDisplay: event.activePayload[0].value}, this.handleMinWeightSlider);
+    }
+    
 
     
     render(){
-    
+
+        {console.log(this.state.terminalScores)}
+        
+            let numScores = this.state.terminalScores.scores.length;
+            let scoreMax = this.state.terminalScores.scores[numScores-1];
+           
+        
         return (
             <>
+            
+
             <RolloverPanel component={<Settings minWeight={this.state.minWeight} handleSubmit={this.handleSubmit} handleChange={this.handleChange} siteText={this.state.siteText} kinaseText={this.state.kinaseText}/>} />
            
            
-            <div>Min Weight {this.state.minWeightDisplay}</div>
-            <input type="range" name="minWeightDisplay" className="range-pathDisplayMinWeight" min="0" max="5"
-                value={this.state.minWeightDisplay} step=".5" id="customRange2"
-                onChange={(e) => {this.handleChange(e)  }}
-                onMouseUp={(e)=> {this.handleMinWeightSlider(e)}} >
-            </input>
-           
-           <div>Top {this.state.topk} of {this.state.pathsPassing.length}</div>
-            <input type="range" name="topk" className="range-pathDisplay" min="0" max={this.state.pathsPassing.length}
-                value={this.state.topk} step="1" id="customRange"
-                onChange={(e) => {this.handleChange(e)  }}
-                onMouseUp={(e)=> {this.handleUpdateElementsRendered()}} >
-            </input>
+            <div style={{float:'left'}}>
+            <Card >
+                <Card.Body>
             
+                    <div className="border" >
+                        <LineChart
+                            margin={{top:0,right:0,bottom:0, left:0}}
+                        onClick={this.handleClickScore} width={200} height={100} data={this.state.terminalScores.scores.map((s, i) => ({rank: i*this.state.terminalScores.sparseFactor, score : s} ))}
+                        >
+                            {/*<XAxis dataKey="rank" type='number'/>*/}
+                            {/*<YAxis />*/}
+                            <YAxis hide={true} type="number" domain={[0, 'dataMax']} />
+                            <Line type='monotone' dataKey="score" stroke='#8884d8' strokeWidth={3} />
+                            <ReferenceLine  y={this.state.minWeightDisplay}/>
+                            {/*<Tooltip position={{x: 0, y: 0}} content={testTT} />*/}
+                        </LineChart>
+                    </div>
+                    
+                    <input type="range" name="minWeightDisplay" className="range-pathDisplayMinWeight" min="0" max={ numScores === 0 ? 0 :this.state.terminalScores.scores[this.state.terminalScores.scores.length-1]}
+                            value={this.state.minWeightDisplay} 
+                            step={ /*numScores < 100 ? scoreMax/numScores:*/ scoreMax/100} 
+                            id="customRange2"
+                            onChange={(e) => {this.handleChange(e)  }}
+                            onMouseUp={(e)=> {this.handleMinWeightSlider(e)}} >
+                    </input>
+                        
+                    <div>Score Cutoff = {Number(this.state.minWeightDisplay).toPrecision(5)}</div>
+                        
+                        
+                </Card.Body>
+            </Card>
+            
+
+            <Card>
+            <Card.Body>
+                
+                <input type="range" name="topk" className="range-pathDisplayMinWeight" min="0" max={this.state.pathsPassing.length}
+                    value={this.state.topk} step="1" id="customRange"
+                    onChange={(e) => {this.handleChange(e)  }}
+                    onMouseUp={(e)=> {this.handleUpdateElementsRendered()}} >
+                </input>
+                <div>Display Top {this.state.topk} of {this.state.pathsPassing.length}</div>
+                </Card.Body>
+            </Card>
+            
+            </div>
            
             <Row>
                 <Col>

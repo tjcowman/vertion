@@ -60,7 +60,7 @@ namespace Commands
         json ret;
         for(const auto& id : ids)
         {
-            ret.push_back({{"name", graph.lookupVertex(id)}, {"l", graph.getVertexData().lookupLabels(id).getBits().to_ulong()} });
+            ret.push_back({{"name", graph.lookupVertex(id)}, {"pname", graph.alternateMapping_.findf(id)->second}, {"l", graph.getVertexData().lookupLabels(id).getBits().to_ulong()} });
         }
 
         return ret;

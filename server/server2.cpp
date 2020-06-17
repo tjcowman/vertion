@@ -16,6 +16,7 @@
 #include "CommandRunner.h"
 #include "ViewCache.h"
 
+#include "BiMap.h"
 // #include "Response.h"
 #include "Http.h"
 
@@ -30,7 +31,7 @@
 
 namespace fs = std::experimental::filesystem;
 using json = nlohmann::json;
-
+//TODO: Make the alternative mappings extensible and part of the vgraph struture, currently very brittle
 
 // std::ofstream LOG("log.txt");
 
@@ -289,6 +290,8 @@ struct Args
     int cacheFactor = 2;
     
     int threads = 1;
+    
+    std::string alternateMapping;
 
 };
 
@@ -304,6 +307,8 @@ int main(int argc, char* argv[] )
         ARG(mode,)
         
         ARG(threads, stoi)
+        
+        ARG(alternateMapping, )
     );
      
 
@@ -314,6 +319,25 @@ int main(int argc, char* argv[] )
     
     ViewCache<GraphType::GD> VC(G, args.threads, args.cacheFactor);
     
+    //Load the plaintextMapping of nodeIndex to name
+    BiMap<typename GraphType::GD::Index, std::string> pNames; //(args.alternateMapping);
+    std::ifstream mapFile(args.alternateMapping);
+    while(true)
+    {
+        std::string key;
+        std::string val;
+        
+        mapFile>>key>>val;
+        
+            if(mapFile.eof())
+                break;
+            
+            pNames.insert(std::make_pair(G.lookupVertex(key),val));
+    }
+   
+//    for(const auto& e : pNames)
+//        std::cout<<e.first<<" "<<e.second<<"\n";
+    G.alternateMapping_ = std::move(pNames);
      std::cout<<G.size()<<std::endl;
      
 //      for(int i=0; i<G.versionsData_.size(); ++i)

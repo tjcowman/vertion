@@ -34,15 +34,24 @@ let stylesheet = [
       selector: 'node',
       style: {
            'label': 'data(label)',
-           'background-color' : 'data(color)'
+           'background-color' : 'data(color)',
+           'width': '20px',
+           'height': '20px'
       }
       
     },
     {
-        selector: 'node[normScore]',
+        selector: 'node[pLabel]',
+        style:{
+            'label': 'data(pLabel)',
+            'background-color' : 'data(color)'
+        }
+    },
+    {
+        selector: 'node[nodeScore]',
         style: {
-            'width' : 'data(normScore)',
-            'height' : 'data(normScore)',
+            'width' : 'data(nodeScore)',
+            'height' : 'data(nodeScore)',
             }
         
     },
@@ -113,14 +122,14 @@ class CytoscapeCustom extends React.Component{
     }
     
     colorElements=()=>{
-        console.log("YEAH")
+//         console.log("YEAH")
         this.cy.edges().forEach((n) => n.json({data :{color : this.state.colorMapEdges.get(n._private.data.edgeType)}}) );
         this.cy.nodes().forEach((n) => n.json({data :{color : this.state.colorMapNodes.get(n._private.data.nodeType)}}) );
                 
     }
     
     componentDidMount = () => {
-        this.cy.on('click', 'node', this.props.handleNodeClick);
+//         this.cy.on('click', 'node', this.props.handleNodeClick);
         this.cy.on('click', 'edge', this.props.handleEdgeClick);
     }
     
