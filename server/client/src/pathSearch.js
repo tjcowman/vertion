@@ -45,18 +45,6 @@ class Settings extends React.Component{
     }
 }
 
-    const testTT= function(props){
-        console.log(props)
-        console.log("1", props.payload);
-        const {score} = props.payload[0];
-        let payload = {score};
-        console.log("2", payload);
-        return(
-            <DefaultTooltipContent {...props} payload={[payload]}/>
-        )
-    }
-
-
 class PathSearchComponent extends React.Component{
     constructor(props){
         super(props);
@@ -107,11 +95,22 @@ class PathSearchComponent extends React.Component{
 
     handleMinWeightSlider=(event)=>{
         let pathsPassing = [];
+       
+        
         
         this.state.pathTreeResponse.map((p,i) => {if(p.nodeScore >= this.state.minWeightDisplay) pathsPassing.push(i) });
+        let nextTop = Math.min(this.state.topk, pathsPassing.length);
+        let prevTop = this.state.topk;
         
-        console.log(pathsPassing)
-        this.setState({pathsPassing: pathsPassing});
+//         const renderIfSmaller = function(prevTop, nextTop){
+//             console.log("THIS2" ,this)
+//             if(nextTop < prevTop)
+//                 this.handleUpdateElementsRendered();
+//         }
+        
+        //console.log("minweightslider", pathsPassing)
+        
+        this.setState({pathsPassing: pathsPassing, topk: nextTop}, ()=>{if(nextTop<prevTop)this.handleUpdateElementsRendered()} );
     }
     
     handleUpdateElementsRendered=()=>{        
@@ -157,7 +156,7 @@ class PathSearchComponent extends React.Component{
             }
         });
 
-        console.log(elements)
+//         console.log(elements)
         
         this.setState({
             elementsRendered: elements
@@ -229,54 +228,54 @@ class PathSearchComponent extends React.Component{
     handleNodeClick=(event)=>{
         console.log(event.target._private.data)
         
-        if(typeof event.target._private.data.pathTerm !== 'undefined' && event.target._private.data.pathTerm !== -1){
-            let versions = [1,20,21,22];// [...this.props.versionCardsO.cards[this.props.versionCardsO.activeCard].versions_s];
-            if(versions.length === 0)
-            {
-                this.props.handleLog("e", "no versions");
-                this.setState({result:  {nodes:[{"row":null, "id":null, "value":null}], edges: [] } });
-                return;
-            }
-            
-            
-            let command = {cmd:"dpth", versions:versions, 
-                vertexLabels: [0,1],// [...this.props.versionCardsO.cards[this.props.versionCardsO.activeCard].labelsV_s],
-                edgeLabels:  [0,1,2,3],//[...this.props.versionCardsO.cards[this.props.versionCardsO.activeCard].labelsE_s],
-                nodes : this.state.pathTreeResponse[event.target._private.data.pathTerm].nodes
-            };
-            
-            
-            Axios.post('http://'+this.props.backAddr, JSON.stringify(command)).then((response)=>{
-                console.log("dense", response)
-                
-                
-                             
-                let formatResponse=(nodeIndexSet)=>{
-                   // console.log("ND", this.props.nodeData)
-                    
-                    let elementsDense = [...nodeIndexSet].map((id)=>(
-                        {data: {id: id, label: this.props.nodeData.getEntry(id).name} }
-                    ))
-                    
-                    response.data.forEach((e)=>{
-                        elementsDense.push({data:{source: e.i1, target: e.i2, labelType: e.l }});
-                    })
-                    
-                    this.setState({
-                        densePathResponse : response,
-                        elementsDense : elementsDense
-                    });
-                    console.log(this.state)
-                }
-                
-                let nodeIds = new Set();
-                response.data.forEach((e) =>{
-                    nodeIds.add(e.i1);
-                    nodeIds.add(e.i2);
-                })
-                this.props.handleNodeLookupIndex([...nodeIds], function(){formatResponse(nodeIds)} );
-            });
-        }
+//         if(typeof event.target._private.data.pathTerm !== 'undefined' && event.target._private.data.pathTerm !== -1){
+//             let versions = [1,20,21,22];// [...this.props.versionCardsO.cards[this.props.versionCardsO.activeCard].versions_s];
+//             if(versions.length === 0)
+//             {
+//                 this.props.handleLog("e", "no versions");
+//                 this.setState({result:  {nodes:[{"row":null, "id":null, "value":null}], edges: [] } });
+//                 return;
+//             }
+//             
+//             
+//             let command = {cmd:"dpth", versions:versions, 
+//                 vertexLabels: [0,1],// [...this.props.versionCardsO.cards[this.props.versionCardsO.activeCard].labelsV_s],
+//                 edgeLabels:  [0,1,2,3],//[...this.props.versionCardsO.cards[this.props.versionCardsO.activeCard].labelsE_s],
+//                 nodes : this.state.pathTreeResponse[event.target._private.data.pathTerm].nodes
+//             };
+//             
+//             
+//             Axios.post('http://'+this.props.backAddr, JSON.stringify(command)).then((response)=>{
+//                 console.log("dense", response)
+//                 
+//                 
+//                              
+//                 let formatResponse=(nodeIndexSet)=>{
+//                    // console.log("ND", this.props.nodeData)
+//                     
+//                     let elementsDense = [...nodeIndexSet].map((id)=>(
+//                         {data: {id: id, label: this.props.nodeData.getEntry(id).name} }
+//                     ))
+//                     
+//                     response.data.forEach((e)=>{
+//                         elementsDense.push({data:{source: e.i1, target: e.i2, labelType: e.l }});
+//                     })
+//                     
+//                     this.setState({
+//                         densePathResponse : response,
+//                         elementsDense : elementsDense
+//                     });
+//                     console.log(this.state)
+//                 }
+//                 
+//                 let nodeIds = new Set();
+//                 response.data.forEach((e) =>{
+//                     nodeIds.add(e.i1);
+//                     nodeIds.add(e.i2);
+//                 })
+//                 this.props.handleNodeLookupIndex([...nodeIds], function(){formatResponse(nodeIds)} );
+//             });
+//         }
             
             
     }
@@ -291,7 +290,7 @@ class PathSearchComponent extends React.Component{
     
     render(){
 
-        {console.log(this.state.terminalScores)}
+        {/*console.log("Render", this.state.terminalScores)*/}
         
             let numScores = this.state.terminalScores.scores.length;
             let scoreMax = this.state.terminalScores.scores[numScores-1];
@@ -311,18 +310,15 @@ class PathSearchComponent extends React.Component{
                     <div className="border" >
                         <LineChart
                             margin={{top:0,right:0,bottom:0, left:0}}
-                        onClick={this.handleClickScore} width={200} height={100} data={this.state.terminalScores.scores.map((s, i) => ({rank: i*this.state.terminalScores.sparseFactor, score : s} ))}
+                            width={200} height={100} data={this.state.terminalScores.scores.map((s, i) => ({rank: i*this.state.terminalScores.sparseFactor, score : s} ))}
                         >
-                            {/*<XAxis dataKey="rank" type='number'/>*/}
-                            {/*<YAxis />*/}
                             <YAxis hide={true} type="number" domain={[0, 'dataMax']} />
                             <Line type='monotone' dataKey="score" stroke='#8884d8' strokeWidth={3} />
                             <ReferenceLine  y={this.state.minWeightDisplay}/>
-                            {/*<Tooltip position={{x: 0, y: 0}} content={testTT} />*/}
                         </LineChart>
                     </div>
                     
-                    <input type="range" name="minWeightDisplay" className="range-pathDisplayMinWeight" min="0" max={ numScores === 0 ? 0 :this.state.terminalScores.scores[this.state.terminalScores.scores.length-1]}
+                    <input type="range" name="minWeightDisplay" className="range-pathDisplayMinWeight" min="0" max={ numScores === 0 ? 0 : scoreMax}
                             value={this.state.minWeightDisplay} 
                             step={ /*numScores < 100 ? scoreMax/numScores:*/ scoreMax/100} 
                             id="customRange2"
@@ -342,25 +338,25 @@ class PathSearchComponent extends React.Component{
                 
                 <input type="range" name="topk" className="range-pathDisplayMinWeight" min="0" max={this.state.pathsPassing.length}
                     value={this.state.topk} step="1" id="customRange"
-                    onChange={(e) => {this.handleChange(e)  }}
-                    onMouseUp={(e)=> {this.handleUpdateElementsRendered()}} >
+                    onChange={this.handleChange  }
+                    onMouseUp={this.handleUpdateElementsRendered} >
                 </input>
                 <div>Display Top {this.state.topk} of {this.state.pathsPassing.length}</div>
                 </Card.Body>
             </Card>
             
+
             </div>
            
-            <Row>
-                <Col>
-                    <CytoscapeCustom elements={this.state.elementsRendered} 
-                        handleNodeClick={this.handleNodeClick} 
-                        handleEdgeClick={this.handleEdgeClick}
-                    />
-                </Col>
+            <div style={{float:'left'}}>
+            <CytoscapeCustom elements={this.state.elementsRendered} 
+                handleNodeClick={this.handleNodeClick} 
+                handleEdgeClick={this.handleEdgeClick}
+            />
+              </div>
                 
                 {/*<Col><CytoscapeCustom elements={this.state.elementsDense}/></Col>*/}
-            </Row>
+          
             
             </>
         )

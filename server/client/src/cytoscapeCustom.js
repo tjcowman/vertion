@@ -17,7 +17,7 @@ const ggColMap=(labelSet)=>{
     let cMap = new Map();
 //     console.log("HUES", hues);
     
-    [...labelSet].forEach( (e,i) =>  {console.log(e,i); cMap.set( e, 'hsl('+hues[i]+',65%,65%)')}  );// hues.map((h) => 'hsl('+h+',65%,65%)' )
+    [...labelSet].forEach( (e,i) =>  {/*console.log(e,i);*/ cMap.set( e, 'hsl('+hues[i]+',65%,65%)')}  );// hues.map((h) => 'hsl('+h+',65%,65%)' )
     return cMap;
 }
 
@@ -103,33 +103,30 @@ class CytoscapeCustom extends React.Component{
             
                 let edgeTypeSet = new Set();
                 let nodeTypeSet = new Set();
-                this.cy.edges().forEach((n) => {edgeTypeSet.add(n._private.data.edgeType); console.log(n._private.data.edgeType);})
-                this.cy.nodes().forEach((n) => {nodeTypeSet.add(n._private.data.nodeType); console.log(n._private.data.nodeType);})
+                this.cy.edges().forEach((n) => {edgeTypeSet.add(n._private.data.edgeType); /*console.log(n._private.data.edgeType);*/})
+                this.cy.nodes().forEach((n) => {nodeTypeSet.add(n._private.data.nodeType); /*console.log(n._private.data.nodeType);*/})
                 let colorMapEdges = ggColMap(edgeTypeSet);
                 let colorMapNodes = ggColMap(nodeTypeSet);
                 this.setState({colorMapEdges : colorMapEdges, colorMapNodes: colorMapNodes}, this.colorElements);
                 
                 this.cy.layout({name:'fcose'}).run();
             }   
-        
-//             console.log(this.state.colorMapEdges, prevState.colorMapEdges)
-//             if(this.state.reRenderPlot === 1){
-               
-//                 this.setState({reRenderPlot: 0});
-//             }
-        
+            else
+            {
+                this.colorElements();
+            }
+
         }
     }
     
     colorElements=()=>{
-//         console.log("YEAH")
         this.cy.edges().forEach((n) => n.json({data :{color : this.state.colorMapEdges.get(n._private.data.edgeType)}}) );
         this.cy.nodes().forEach((n) => n.json({data :{color : this.state.colorMapNodes.get(n._private.data.nodeType)}}) );
                 
     }
     
     componentDidMount = () => {
-//         this.cy.on('click', 'node', this.props.handleNodeClick);
+        this.cy.on('click', 'node', this.props.handleNodeClick);
         this.cy.on('click', 'edge', this.props.handleEdgeClick);
     }
     
@@ -152,8 +149,8 @@ class CytoscapeCustom extends React.Component{
         
         let colorMapEdges = this.state.colorMapEdges;
         colorMapEdges.set(this.state.editColorEdge, this.state.editValue);
-        this.colorElements();
-        this.setState({colorMapEdges: colorMapEdges});
+//         this.colorElements();
+        this.setState({colorMapEdges: colorMapEdges}, this.colorElements);
     }
     
     handleNodeColorSelect=(event)=>{
@@ -177,17 +174,21 @@ class CytoscapeCustom extends React.Component{
 //         console.log("SSSSS", [...this.state.colorMapEdges.entries()].map((key,val) => key))
       
         return(
-            <>
+        
             <Card>
             <Card.Body>
-                <CytoscapeComponent className="border"  cy={(cy) => {this.cy = cy}} elements={this.props.elements} stylesheet={ stylesheet } style={ { width: '600px', height: '400px' } }/>
-           
-                <Card className="legend">
-                    <Card.Header>Legend</Card.Header>
-                    <Card.Body >
+                <Button onClick={async () => {
+                    await navigator.clipboard.writeText(this.cy.nodes('[nodeType = "Protein"]').map((e) => e._private.data.label).join('\n'));
+                    console.log(this.cy.nodes('[nodeType = "Protein"]').map((e) => e._private.data.label))
+                }}
                     
-   
-                        <div>Edges :</div> 
+                ></Button>
+            
+            
+            
+                <CytoscapeComponent className="border"  cy={(cy) => {this.cy = cy}} elements={this.props.elements} stylesheet={ stylesheet } style={ { width: '600px', height: '400px', marginBottom:'10px' } }/>
+           
+                        <div style={this.state.colorMapEdges.size === 0 ? {display:'none'} : {}}>Edges :</div> 
                         <div>
                         {[...this.state.colorMapEdges.entries()].map((k, i) =>(
                                 <ListGroupItem className="colorItem" key={i}> 
@@ -200,7 +201,7 @@ class CytoscapeCustom extends React.Component{
                         
                         <div style={{clear:"both"}}></div>
                         
-                        <div>Nodes :</div>
+                        <div style={this.state.colorMapNodes.size === 0 ? {display:'none'} : {}}>Nodes :</div>
                         <div>
                         {[...this.state.colorMapNodes.entries()].map((k, i) =>(
                                 <ListGroupItem className="colorItem" key={i}> 
@@ -236,22 +237,13 @@ class CytoscapeCustom extends React.Component{
                                         
                                         >
                                     </input>
-                                
                             </form>
-                            
-                            
-                            
                         </div>
-                       
-                     
-                        
-                   
-                    </Card.Body>
-                </Card>
+   
                 
             </Card.Body>
             </Card>
-            </>
+          
            
         );
     }
