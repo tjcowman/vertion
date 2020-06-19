@@ -11,7 +11,7 @@ import BootstrapTable from 'react-bootstrap-table-next';
 import paginationFactory from 'react-bootstrap-table2-paginator';
 import filterFactory, { textFilter } from 'react-bootstrap-table2-filter';
 
-import {RolloverPanel} from './rolloverPanel.js'
+import {RolloverPanel, QuerySettingsBar} from './rolloverPanel.js'
 
 
 function getColumns(){
@@ -66,7 +66,7 @@ class SettingsRWR extends React.Component{
                             />
                         
 
-                    <Button style={{marginTop: '10px'}} className="form-control" variant="primary" onClick={(e) =>this.props.handleSubmit(e)} >Submit</Button>
+                    {/*<Button style={{marginTop: '10px'}} className="form-control" variant="primary" onClick={(e) =>this.props.handleSubmit(e)} >Submit</Button>*/}
                 </Card.Body>
 
             </Card>
@@ -176,23 +176,27 @@ class QueryComponentRWR extends React.Component{
 
   render() {
     return(
-        <>
         
-            <div>
-              <RolloverPanel component= { <SettingsRWR handleSubmit={this.handleSubmit} handleChange={this.handleChange} alpha={this.state.alpha} epsilon={this.state.epsilon} topk={this.state.topk}/>}/>
-           
+            <>  
+       
+        
             <Card.Body>
-                
-                {this.renderResults()}
-            </Card.Body>
-            </div>
+
+                <QuerySettingsBar handleRun={this.handleSubmit} component= { <SettingsRWR handleChange={this.handleChange} alpha={this.state.alpha} epsilon={this.state.epsilon} topk={this.state.topk}/>}/>
             
+            
+                
+                    {/*<RolloverPanel component= { <SettingsRWR handleSubmit={this.handleSubmit} handleChange={this.handleChange} alpha={this.state.alpha} epsilon={this.state.epsilon} topk={this.state.topk}/>}/>*/}
+                    {this.renderResults()}
+              
+            </Card.Body>
+            </>
             
           
             
 
 
-        </>
+       
 
     );
   }

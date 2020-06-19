@@ -8,10 +8,10 @@ import {BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip} from 'recharts';
 import Axios from 'axios';
  
 import BootstrapTable from 'react-bootstrap-table-next';
-import paginationFactory from 'react-bootstrap-table2-paginator';
-import filterFactory, { textFilter } from 'react-bootstrap-table2-filter';
+// import paginationFactory from 'react-bootstrap-table2-paginator';
+// import filterFactory, { textFilter } from 'react-bootstrap-table2-filter';
     
-import {SettingsRWR} from './queryComponentRWR.js';
+// import {SettingsRWR} from './queryComponentRWR.js';
 
 class MotifList{
     constructor(motifs, labelNames){

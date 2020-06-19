@@ -7,7 +7,7 @@
 
 .pageContentArgsRight{
     z-index: 0;
-    width: calc(100% - 20px);
+/*     width: calc(100% - 20px); */
 /*       display:inline-block; */
 /*     flex-wrap: nowrap; */
 /*     background-color: red; */

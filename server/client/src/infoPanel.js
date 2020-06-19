@@ -1,10 +1,8 @@
 import {} from 'react-bootstrap'
 import React from 'react';
-import Axios from 'axios';
 
-import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, CartesianGrid, ComposedChart, Line, Scatter } from 'recharts';
-//const {ComposedChart, Line, Area, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend} = Recharts;
-import {Card, ListGroup, Button} from 'react-bootstrap';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, CartesianGrid  } from 'recharts';
+import {Card, Button} from 'react-bootstrap';
 
 import './infoPanel.css';
 //tmp const data = [

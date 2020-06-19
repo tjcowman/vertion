@@ -78,7 +78,7 @@ class VersionsData{
 
   //Filters out the empty tagged versions when obtaining an array of all tags w/ their versions
   getDisplayedTags(){
-    return [...this.tags].filter(e => e[0] != "Empty");
+    return [...this.tags].filter(e => e[0] !== "Empty");
   }
 
 
@@ -87,9 +87,6 @@ class VersionsData{
 class App extends React.Component {
     constructor(props){
 
- 
-      
-        
         super(props);
         this.state={
             
@@ -116,7 +113,6 @@ class App extends React.Component {
             }
         }
 
-//         console.log(versionCardHandlers);
 
         var date = new Date();
         Axios.get('http://'+this.state.backAddr+'/ls', date.getTime()).then((response)=>{
@@ -139,6 +135,24 @@ class App extends React.Component {
 
     }
 
+    //Used to get the relevant properties defining a version on the server, versions/labels/etc
+    getVersionDefinition=()=>{
+        let versions =  [...this.state.versionCardsO.cards[this.state.versionCardsO.activeCard].versions_s];
+        if(versions.length === 0)
+        {
+            this.handleLog("e", "no versions");
+            return null;
+        }
+        
+        let activeCard = this.state.versionCardsO.activeCard;
+        let v = { 
+            versions:versions, 
+            vertexLabels: [...this.state.versionCardsO.cards[activeCard].labelsV_s],
+            edgeLabels:  [...this.state.versionCardsO.cards[activeCard].labelsE_s],
+        };
+        return v;
+    }
+    
     //TODO: Split the lookup and fill in nodeData from the handleSelect card
     handleNodeLookup=(names, afterLookupFn)=>{
             let queryNames = this.state.nodeData.filterKnown(names);
@@ -224,7 +238,7 @@ class App extends React.Component {
         versionCardsO.cards[cardId].toggle(name,elementId);
 
         //check to see whta else needs to be updated
-        if(name =="versions_s"){
+        if(name ==="versions_s"){
             let l = this.state.labelsUsed.getUsedLabelSum([...this.state.versionCardsO.getSelectedVersions()]);
             //console.log("labelset", l)
 
@@ -325,7 +339,7 @@ class App extends React.Component {
 
 
 
-                    <div className= "displayPanel"  style={{left: this.state.navCollapsed ? 20 : 200, width: this.state.navCollapsed ? 'calc(100% - 0px)' : 'calc(100% - 180px)'}}>
+                    <div className= "displayPanel"  style={{left: this.state.navCollapsed ? 20 : 200, width: this.state.navCollapsed ? 'calc(100% - 20px)' : 'calc(100% - 200px)'}}>
                         <Tab.Content>
                             <Tab.Pane eventKey="summary">
                                 <InfoPanel
@@ -400,7 +414,8 @@ class App extends React.Component {
                             <Tab.Pane eventKey="path_search" className="pageContentArgsRight">
                                 <PathSearchComponent
                                     backAddr={this.state.backAddr}
-                                    selectedVersions={this.state.versions_s}
+                                    getVersionDefinition={this.getVersionDefinition}
+//                                     selectedVersions={this.state.versions_s}
 
                                     handleNodeLookupIndex={this.handleNodeLookupIndex}
 
