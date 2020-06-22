@@ -20,6 +20,15 @@
 }
 
 
+.menuButton{
+    margin : 2px 5px;
+/*    margin: 5px;
+    background-color: grey;
+    border-color: black;*/
+/*     height: 30px; */
+    
+}
+
 .displayBlur{
 /*    position: absolute;
     
@@ -29,3 +38,11 @@
     z-index: 8;
     height: 100vh;*/
 }
+
+.settingsButton{
+    
+}/*::before{
+    width: 10px;
+    height: 10px;
+    content: url("/images/gear.svg");
+}*/

@@ -28,7 +28,7 @@ class Settings extends React.Component{
                         <input value={this.props.kinaseText} className="inputKinase form-control" name="kinaseText"  onChange={this.props.handleChange} ></input>
                         Sites
                         <textarea value={this.props.siteText} className="inputSites form-control" name="siteText"   onChange={this.props.handleChange} ></textarea>
-                        <Button className="form-control" variant="primary" onClick={(e) =>this.props.handleSubmit(e)} >Submit</Button>
+                      {/*  <Button className="form-control" variant="primary" onClick={(e) =>this.handleSubmit(e)} >Submit</Button>*/}
                     </Card.Body>
                 </Card>
                 
@@ -111,6 +111,7 @@ class PathSearchQueryComponent extends React.Component{
                 {data: {
                     id: id, 
                     nodeType: this.props.labelsUsed.nameLookupNode(this.props.nodeData.getEntry(id).labels).toString(), 
+//                     origin: this.props.elementsName,
                     color:'black', 
                     label: this.props.nodeData.getEntry(id).name, 
                     pLabel: this.props.nodeData.getEntry(id).pname === "" ? undefined : this.props.nodeData.getEntry(id).pname,
@@ -131,7 +132,7 @@ class PathSearchQueryComponent extends React.Component{
         //Pushes the edge elements to the array
          this.state.pathsPassing.map((arrI) => (this.state.pathTreeResponse[arrI])).slice(0,this.state.topk).forEach((p)=>{
             for(let i=0; i<p.nodes.length-1; ++i ){
-                elements.push({data:{source: p.nodes[i], target: p.nodes[i+1], edgeType: this.props.labelsUsed.nameLookupEdge(p.edgeLabels[i]).toString(), color : 'black' }});
+                elements.push({data:{source: p.nodes[i], target: p.nodes[i+1], /*origin: this.props.elementsName,*/ edgeType: this.props.labelsUsed.nameLookupEdge(p.edgeLabels[i]).toString(), color : 'black' }});
             }
         })
 
@@ -147,7 +148,7 @@ class PathSearchQueryComponent extends React.Component{
         });
 
         
-        this.props.handleUpdateElements(elements, "elements1");
+        this.props.handleUpdateElements(elements, this.props.elementsName);
 
     }
     
@@ -340,7 +341,8 @@ class PathSearchQueryComponent extends React.Component{
                         
                         
                             <div className="plotNav">
-                                <CytoscapeCustom elements={this.props.elements} 
+                                <CytoscapeCustom 
+                                                        elements={this.props.elements} 
                                                         handleNodeClick={this.handleNodeClick} 
                                                         handleEdgeClick={this.handleEdgeClick}
                                                     />

@@ -4,6 +4,7 @@ import {Card, ListGroup, Button} from 'react-bootstrap'
 
 import './rolloverPanel.css'
 
+import gearIcon from "./images/gear.svg"
 
 class QuerySettingsBar extends React.Component{
     constructor(props){
@@ -28,8 +29,13 @@ class QuerySettingsBar extends React.Component{
             <div style={{position:'relative'}}>
                 <div style={{margin:'5px 0px', padding:'5px'}} className="border">
                 
-                    <Button onClick={this.handleOnShowClick} className="btn-secondary">Settings</Button>
-                    <Button onClick={this.props.handleRun}>Run</Button>
+                    <Button onClick={this.handleOnShowClick} className=" menuButton ">
+                        {/*<img src={gearIcon} height="30px"/>*/}
+                        Settings
+                    </Button>
+                    <Button onClick={this.props.handleRun} className="menuButton">
+                        Run
+                    </Button>
  
                 </div>
                 
