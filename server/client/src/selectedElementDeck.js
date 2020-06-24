@@ -1,13 +1,26 @@
-import React from 'react';
+import React, {useState, useCallback} from 'react';
 
-import {Card, ListGroup, ListGroupItem} from 'react-bootstrap'
+import {Card, ListGroup, ListGroupItem, Button} from 'react-bootstrap'
 
 import './selectedElementDeck.css'
 
+
+
+
 const  SelectedElementDeck = (props) =>{
     
+    const [renameVisible, toggle] = useState(null);
+    
+//     {console.log("RN",renameVisible, props.versionCardsO.cards)}
+   
+    const handleRename=(event)=>{
+        props.handleChangeVersionCardName(event);
+        toggle(null);
+    }
+    
+    
      return(
-
+         
                 
            <div className="border deckContainer"> 
                   
@@ -16,7 +29,15 @@ const  SelectedElementDeck = (props) =>{
                     
                     
                         <div key={cardI} className= {props.activeCard===cardI ? "card cardC border-primary border-bold  " : "card cardC "} onClick={() => props.versionCardHandlers.click(cardI)}>
-                        <Card.Header>Set {cardI}</Card.Header>
+                        <Card.Header style={{height:'50px'}}>
+                            <div style={{position:'relative'}}>
+                                <form onSubmit={ handleRename } > 
+                                    <input autocomplete="off" id={cardI}  type="text"  onClick={()=>toggle(cardI)} onBlur={()=>toggle(null)} style={renameVisible === cardI ? {} : {opacity:'0'}} className="renameInput"></input>
+                                </form>
+                                <div   className="nameText">{cardO.name}</div>
+                            </div>
+                        </Card.Header>
+                        
                         <Card.Body className="card-bodyC">
 
                             {props.displayKeys.map((dKey,partI) =>(

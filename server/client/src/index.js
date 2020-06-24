@@ -134,24 +134,36 @@ class App extends React.Component {
          })
 
     }
+    
+    //Used to update the name of a versionCard 
+    handleChangeVersionCardName=(event)=>{
+        console.log(event.target, event.target[0])
+        
+        event.preventDefault();
+        let versionCardsO=this.state.versionCardsO;
+// //         console.log(versionCardsO.cards[event.id], event.target.id)
+        versionCardsO.cards[event.target[0].id].name = event.target[0].value;
+//         console.log(event.target)
+        this.setState({versionCardsO, versionCardsO});
+    }
 
     //Used to get the relevant properties defining a version on the server, versions/labels/etc
-    getVersionDefinition=()=>{
-        let versions =  [...this.state.versionCardsO.cards[this.state.versionCardsO.activeCard].versions_s];
-        if(versions.length === 0)
-        {
-            this.handleLog("e", "no versions");
-            return null;
-        }
-        
-        let activeCard = this.state.versionCardsO.activeCard;
-        let v = { 
-            versions:versions, 
-            vertexLabels: [...this.state.versionCardsO.cards[activeCard].labelsV_s],
-            edgeLabels:  [...this.state.versionCardsO.cards[activeCard].labelsE_s],
-        };
-        return v;
-    }
+//     getVersionDefinition=()=>{
+//         let versions =  [...this.state.versionCardsO.cards[this.state.versionCardsO.activeCard].versions_s];
+//         if(versions.length === 0)
+//         {
+//             this.handleLog("e", "no versions");
+//             return null;
+//         }
+//         
+//         let activeCard = this.state.versionCardsO.activeCard;
+//         let v = { 
+//             versions:versions, 
+//             vertexLabels: [...this.state.versionCardsO.cards[activeCard].labelsV_s],
+//             edgeLabels:  [...this.state.versionCardsO.cards[activeCard].labelsE_s],
+//         };
+//         return v;
+//     }
     
     //TODO: Split the lookup and fill in nodeData from the handleSelect card
     handleNodeLookup=(names, afterLookupFn)=>{
@@ -361,6 +373,7 @@ class App extends React.Component {
 
                                     versionCardsO={this.state.versionCardsO}
                                     versionCardHandlers={this.state.versionCardHandlers}
+                                    handleChangeVersionCardName={this.handleChangeVersionCardName}
 
                                     versionsData= {this.state.versionsData}
                                 />
