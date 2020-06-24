@@ -21,7 +21,9 @@
 
 
 .menuButton{
+/*     height: 36px; */
     margin : 2px 5px;
+    display: inline-block;
 /*    margin: 5px;
     background-color: grey;
     border-color: black;*/

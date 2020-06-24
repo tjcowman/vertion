@@ -91,23 +91,38 @@ class VersionCards{
 
     getSummaryLabelsUsed=(kind, by, cardIds)=>{
       let labels = new Set();
-      console.log(cardIds)
+//       console.log(cardIds)
       if(by === "any"){
         for(let i of cardIds){
-          console.log('cards',this.cards,i)
+//           console.log('cards',this.cards,i)
           labels.add(this.cards[i].summary[kind]);
         }
       }
-      console.log('sumlab', labels)
+//       console.log('sumlab', labels)
       return labels;
     }
 
+    
+    //Used to get the relevant properties defining a version on the server, versions/labels/etc
+    getVersionDefinition=(versionIndex)=>{
+        let versions =  [...this.cards[versionIndex].versions_s];
+        if(versions.length === 0)
+        {
+//             this.handleLog("e", "no versions");
+            return null;
+        }
+        
+        let v = { 
+            versions:versions, 
+            vertexLabels: [...this.cards[versionIndex].labelsV_s],
+            edgeLabels:  [...this.cards[versionIndex].labelsE_s],
+        };
+        return v;
+    }
+    
     handleAddVersionCard=()=>{
         this.push();
-//         let versionCardsO = this.state.versionCardsO;
-//         versionCardsO.push();
-//
-//         this.setState({versionCardsO: versionCardsO});
+
     }
 
     handleRemoveVersionCard=()=>{
@@ -115,21 +130,9 @@ class VersionCards{
             return;
         this.cards.pop();
         this.activeCard = Math.min(this.activeCard, this.cards.length-1);
-       /*
-        if(this.state.versionCardsO.cards.length <= 1)
-            return;
-
-        let versionCardsO = this.state.versionCardsO;
-        versionCardsO.pop();
-
-        this.setState({
-            versionCardsO: versionCardsO,
-            activeVersionCard : Math.min(this.state.activeVersionCard, versionCardsO.cards.length-1)
-        });*/
     }
 
     handleClickVersionCard=(id)=>{
-//         this.setState({activeVersionCard: id})
         this.activeCard = id;
     }
 

@@ -290,7 +290,7 @@ class PathSearchQueryComponent extends React.Component{
             <>
             <Card.Body >
                
-                    <QuerySettingsBar handleRun={this.handleSubmit} component={<Settings minWeight={this.state.minWeight} handleChange={this.handleChange} siteText={this.state.siteText} kinaseText={this.state.kinaseText}/>} />
+                    <QuerySettingsBar versionCards={this.props.versionCardsO} handleRun={this.handleSubmit} component={<Settings minWeight={this.state.minWeight} handleChange={this.handleChange} siteText={this.state.siteText} kinaseText={this.state.kinaseText}/>} />
                     
                 
                             <div className="container">

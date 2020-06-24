@@ -81,6 +81,8 @@ class QueryComponentRWR extends React.Component{
     constructor(props) {
         super(props);
         this.state = {
+            versionIndex: undefined,
+            
             alpha: .15,
             epsilon: 5,
             topk: 10,
@@ -99,31 +101,30 @@ class QueryComponentRWR extends React.Component{
 
   }
 
+  handleVersionChange=(event)=>{
+    this.setState({versionIndex: event.value})
+  }
+  
   handleSubmit=(event)=>{
+      
     try{
-        let versions = [...this.props.versionCardsO.cards[this.props.versionCardsO.activeCard].versions_s];
-
-        if(versions.length === 0)
-        {
-            this.props.handleLog("e", "no versions");
-            this.setState({result:  {nodes:[{"row":null, "id":null, "value":null}], edges: [] } });
-            return;
-        }
+        
+        let versionDef = this.props.versionCardsO.getVersionDefinition(this.state.versionIndex);
+//         console.log("VDEF",versionDef)
+        
+//   
 
         let epsilon = (1/(Math.pow(10,this.state.epsilon)));
         let selectedNodes = [];
 
        this.props.versionCardsO.cards[this.props.versionCardsO.activeCard].nodes_s.forEach((v1,v2) => (selectedNodes.push({i:v1, v:1})));
 
-//         console.log("SN", selectedNodes);
 
-        let command = {cmd:"rwr2", versions:versions, alpha:Number(this.state.alpha), epsilon:Number(epsilon),
+            let command = {cmd:"rwr2", ...versionDef, alpha:Number(this.state.alpha), epsilon:Number(epsilon),
             topk:Number(this.state.topk), source:selectedNodes, mode:"el",
-            vertexLabels:  [...this.props.versionCardsO.cards[this.props.versionCardsO.activeCard].labelsV_s],
-            edgeLabels:  [...this.props.versionCardsO.cards[this.props.versionCardsO.activeCard].labelsE_s]
-        };
-//         console.log("cmd", command)
 
+        };
+       
 
         Axios.post('http://'+this.props.backAddr, JSON.stringify(command)).then((response)=>{
         //    console.log("cmd",response.data)
@@ -182,7 +183,7 @@ class QueryComponentRWR extends React.Component{
         
             <Card.Body>
 
-                <QuerySettingsBar handleRun={this.handleSubmit} component= { <SettingsRWR handleChange={this.handleChange} alpha={this.state.alpha} epsilon={this.state.epsilon} topk={this.state.topk}/>}/>
+                <QuerySettingsBar handleVersionChange={this.handleVersionChange} versionCards={this.props.versionCardsO} handleRun={this.handleSubmit} component= { <SettingsRWR handleChange={this.handleChange} alpha={this.state.alpha} epsilon={this.state.epsilon} topk={this.state.topk}/>}/>
             
             
                 
