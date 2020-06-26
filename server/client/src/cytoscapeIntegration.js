@@ -20,6 +20,7 @@ class CytoscapeIntegration extends React.Component{
     }
     
     handleUnion=()=>{
+//         this.cy.removeData();
         
         let elements = [...this.props.elements1, ...this.props.elements2];
         
@@ -28,6 +29,7 @@ class CytoscapeIntegration extends React.Component{
     
     
     handleIntersection=()=>{
+//         this.cy.removeData();
         let elementMap1 = new Map();
         let elementMap2 = new Map();
         

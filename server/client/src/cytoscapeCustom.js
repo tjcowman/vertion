@@ -35,6 +35,7 @@ class CytoscapeCustom extends React.Component{
         
         this.state={
             colorStyle : "",
+            labelStyle : "",
             
             editColorEdge : "",
             editColorNode : "",
@@ -53,7 +54,7 @@ class CytoscapeCustom extends React.Component{
         
         if(this.props.elements.length > 0){//make sure elements actually exist
             if(this.props.elements !== prevProps.elements){ 
-            
+                this.cy.removeData();
             
                 let edgeTypeSet = new Set();
                 let nodeTypeSet = new Set();
@@ -86,8 +87,11 @@ class CytoscapeCustom extends React.Component{
     
 
     handleSetColorStyle=(event)=>{
-        
         this.setState({colorStyle: event.label}, console.log(this.cy));
+    }
+    
+    handleSetLabelStyle=(event)=>{
+        this.setState({labelStyle: event.label}, console.log(this.cy));
     }
     
     handleEdgeColorSelect=(event)=>{
@@ -129,6 +133,35 @@ class CytoscapeCustom extends React.Component{
         this.setState({colorMapNodes: colorMapNodes});
     }
     
+    styleLookup=(map, name)=>{
+        console.log("MN", map[name]);
+        if(typeof(map[name]) !== 'undefined')
+            return map[name];
+        else
+            return (new Array());
+    }
+    
+    computeStyle=()=>{
+        
+//         let test = this.styleLookup(cstyle.colors, this.state.colorStyle);
+//         console.log("WTF", test);
+        
+        let test = [
+            ...this.styleLookup(cstyle.colors, this.state.colorStyle),
+            ...this.styleLookup(cstyle.labels, this.state.labelStyle),
+        ]
+        console.log("TE", test)
+        
+        return [
+            ...this.styleLookup(cstyle.colors, this.state.colorStyle),
+            ...this.styleLookup(cstyle.labels, this.state.labelStyle),
+        ]
+        
+//         return (cstyle.colors[this.state.colorStyle]);
+    }
+    
+    
+    
     render(){
 //         console.log("SSSSS", [...this.state.colorMapEdges.entries()].map((key,val) => key))
       
@@ -137,9 +170,16 @@ class CytoscapeCustom extends React.Component{
             <Card>
             <Card.Body>
             
+                <label>Color</label>
                 <Select
-                    options={Object.keys(cstyle.all).map((e,i) => ({value: i, label: e }))}
+                    options={Object.keys(cstyle.colors).map((e,i) => ({value: i, label: e }))}
                     onChange={this.handleSetColorStyle}
+                />
+            
+                <label>Labels</label>
+                <Select
+                    options={Object.keys(cstyle.labels).map((e,i) => ({value: i, label: e }))}
+                    onChange={this.handleSetLabelStyle}
                 />
             
                 <Button onClick={async () => {
@@ -151,7 +191,7 @@ class CytoscapeCustom extends React.Component{
             
             
             
-                <CytoscapeComponent className="border"  cy={(cy) => {this.cy = cy}} elements={this.props.elements} stylesheet={ cstyle.all[this.state.colorStyle] } style={ { width: '600px', height: '400px', marginBottom:'10px' } }/>
+                <CytoscapeComponent className="border"  cy={(cy) => {this.cy = cy}} elements={this.props.elements} stylesheet={ this.computeStyle() } style={ { width: '600px', height: '400px', marginBottom:'10px' } }/>
            
                 <div style={this.state.colorMapEdges.size === 0 ? {display:'none'} : {}}>Edges :</div> 
                 <div>
