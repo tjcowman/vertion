@@ -13,9 +13,11 @@ const  SelectedElementDeck = (props) =>{
     
 //     {console.log("RN",renameVisible, props.versionCardsO.cards)}
    
-    const handleRename=(event)=>{
+    const handleRename=(event, cardI)=>{
+        
         event.preventDefault();
-        props.handleChangeVersionCardName(event);
+//         console.log(event.target[0].value);
+        props.handleChangeVersionCardName(cardI, event.target[0].value);
         toggle(null);
     }
     
@@ -32,8 +34,8 @@ const  SelectedElementDeck = (props) =>{
                         <div key={cardI} className= {props.activeCard===cardI ? "card cardC border-primary border-bold  " : "card cardC "} onClick={() => props.versionCardHandlers.click(cardI)}>
                         <Card.Header style={{height:'50px'}}>
                             <div style={{position:'relative'}}>
-                                <form onSubmit={ handleRename } > 
-                                    <input autoComplete="off" id={cardI}  type="text"  onClick={()=>toggle(cardI)} onBlur={()=>toggle(null)} style={renameVisible === cardI ? {} : {opacity:'0'}} className="renameInput"></input>
+                                <form onSubmit={ (event) =>handleRename(event, cardI) } > 
+                                    <input autoComplete="off"  type="text"  onClick={()=>toggle(cardI)} onBlur={()=>toggle(null)} style={renameVisible === cardI ? {} : {opacity:'0'}} className="renameInput"></input>
                                 </form>
                                 <div   className="nameText">{cardO.name}</div>
                             </div>

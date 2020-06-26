@@ -161,10 +161,12 @@ struct Path
     typename GT::Index length_;
     typename GT::Index nonMech_;
     float nodeScore_;
+    int nodeDirection_;
     
     std::set<typename GT::Index> indexes_;
     std::vector<typename GT::Index>visitOrder_;
     std::vector<EdgeLabel<GT>> edgeLabels_;
+//     std::vector<typename GT::Value> edgeWeights_;
 };
 
 /** @struct CurrentShortestDistance

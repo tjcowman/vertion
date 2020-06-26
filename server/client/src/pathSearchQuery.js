@@ -64,11 +64,13 @@ class PathSearchQueryComponent extends React.Component{
             
             topk: 0,
             minWeightDisplay: 0,
-            sitesMap:  new Set(),
+//             sitesMap:  new Set(),
             
             pathsPassing : [], //Retured paths that pass the specified cutoff of their log fold
             
-            elementsDense: []
+            elementsDense: [],
+            
+            sinkData : new Map(),
         }
         
     }
@@ -106,69 +108,72 @@ class PathSearchQueryComponent extends React.Component{
         this.setState({pathsPassing: pathsPassing, topk: nextTop}, ()=>{if(nextTop<prevTop)this.handleUpdateElementsRendered()} );
     }
     
-    handleUpdateElementsRendered=()=>{        
-        let elements = this.state.pathsPassing.map((arrI) => (this.state.pathTreeResponse[arrI])).slice(0,this.state.topk).map((p)=>(
-            
-            p.nodes.map((id, count) => (
-                {data: {
-                    id: id, 
-                    nodeType: this.props.labelsUsed.nameLookupNode(this.props.nodeData.getEntry(id).labels).toString(), 
-//                     origin: this.props.elementsName,
-                    color:'black', 
-                    label: this.props.nodeData.getEntry(id).name, 
-                    pLabel: this.props.nodeData.getEntry(id).pname === "" ? undefined : this.props.nodeData.getEntry(id).pname,
-                    pathTerm: -1,
-                    terminalScore : p.nodeScore,
-                }, 
-                position:{x:0, y:0} 
-                }
-            ))
-            
+    updateNodes=()=>{
+        //Get the unique nodeIds used
+        let nodeIds = new Set();        
+        this.state.pathsPassing.map((arrI) => (this.state.pathTreeResponse[arrI])).slice(0,this.state.topk).forEach((p)=>(
+            p.nodes.forEach(id => nodeIds.add(id))
         ))
         
-        //makes the terminal nodes with their pathNumber and flattens to array of node elements
-        elements.forEach((pp, pi)=> (pp[0].data.pathTerm =pi, pp[0].data.nodeScore = 10*pp[0].data.terminalScore ));
         
-        elements = elements.flat();//.flat()
-
-        //Pushes the edge elements to the array
-         this.state.pathsPassing.map((arrI) => (this.state.pathTreeResponse[arrI])).slice(0,this.state.topk).forEach((p)=>{
-            for(let i=0; i<p.nodes.length-1; ++i ){
-                elements.push({data:{source: p.nodes[i], target: p.nodes[i+1], /*origin: this.props.elementsName,*/ edgeType: this.props.labelsUsed.nameLookupEdge(p.edgeLabels[i]).toString(), color : 'black' }});
+        let nodes =  [...nodeIds].map(id =>({
+              data: {
+                id: id,
+                nodeType: this.props.labelsUsed.nameLookupNode(this.props.nodeData.getEntry(id).labels).toString(), 
+                label: this.props.nodeData.getEntry(id).name, 
+                pLabel: this.props.nodeData.getEntry(id).pname === "" ? undefined : this.props.nodeData.getEntry(id).pname,
+              }
+            })
+        );
+        
+        //For the terminal nodes update their values
+        nodes.forEach(n =>{
+            let lookup = this.state.sinkData.get(n.data.id);
+//             console.log(lookup)
+            if(typeof(lookup) !== 'undefined'){
+                n.pathTerm = 1;
+                n.data.nodeScore = lookup.pathScore*10;
+                n.data.direction = lookup.direction;
             }
         })
-
-        elements.forEach((e) => {
-            if( e.data.label in this.state.sitesMap){
-                e.data.direction = (this.state.sitesMap[e.data.label] > 0 ? 'up' : 'down');
-                e.data.scored = 1;
-            }
-            else{
-                e.data.scored = 0;
-
-            }
-        });
-
         
-        this.props.handleUpdateElements(elements, this.props.elementsName);
+        return nodes;
+    }
+    
+    updateEdges=()=>{
+        let edges = [];
+        this.state.pathsPassing.map((arrI) => (this.state.pathTreeResponse[arrI])).slice(0,this.state.topk).forEach((p)=>{
+            for(let i=0; i<p.nodes.length-1; ++i ){
+                edges.push({
+                    data:{
+                        source: p.nodes[i], 
+                        target: p.nodes[i+1], 
+                        edgeType: this.props.labelsUsed.nameLookupEdge(p.edgeLabels[i]).toString() 
+//                         color : 'black' 
+                    }
+                    
+                });
+            }
+        })
+        
+        return edges;
+    }
+    
+    handleUpdateElementsRendered=()=>{        
+        let nodes = this.updateNodes();
+        let edges = this.updateEdges();
 
+        this.props.handleUpdateElements([...nodes, ...edges], this.props.elementsName);
     }
     
     
     handleSubmit=()=>{
         
         //TODO: replace the current method with this 
-//         console.log(this.props.getVersionDefinition())
-//         let versionDef = this.props.versionCardsO.getVersionDefinition(this.state.versionIndex);
-//         console.log("VQ", versionDef);
-        
+
+
         let versions = [1,20,21,22];// [...this.props.versionCardsO.cards[this.props.versionCardsO.activeCard].versions_s];
-        if(versions.length === 0)
-        {
-            this.props.handleLog("e", "no versions");
-            this.setState({result:  {nodes:[{"row":null, "id":null, "value":null}], edges: [] } });
-            return;
-        }
+
         
         let sites =  this.state.siteText.split("\n").map((r) => (r.split("\t")) ).map((e) => [e[0], Number(e[1]), Number(e[2])]);
         let sitesMap = {}; // 
@@ -188,8 +193,6 @@ class PathSearchQueryComponent extends React.Component{
         };
         
         if(typeof(this.state.versionIndex) !== 'undefined'){
-//             [...command] = [...this.props.versionCardsO.getVersionDefinition(this.state.versionIndex)];
-//             console.log("VDEF", ...this.props.versionCardsO.getVersionDefinition(this.state.versionIndex));
             command = Object.assign(command, this.props.versionCardsO.getVersionDefinition(this.state.versionIndex));
         }
         
@@ -198,6 +201,8 @@ class PathSearchQueryComponent extends React.Component{
         Axios.post('http://'+this.props.backAddr, JSON.stringify(command)).then((response)=>{
             console.log("cmd",response.data);
 
+            let sinkData = new Map();
+            
             let terminalScores = { sparseFactor : 1, scores: response.data.map((p,i) => (p.nodeScore) ).sort()};
             //sparsify the scores for plotting later
             if(terminalScores.scores.length > 199){
@@ -205,10 +210,16 @@ class PathSearchQueryComponent extends React.Component{
                 
                 terminalScores = { sparseFactor : sparseFactor, scores: terminalScores.scores.filter((e, i) => {return i % sparseFactor === 0})};
             }
-//         
+            
+            response.data.forEach(p =>{
+                sinkData.set(p.nodes[0], {
+                    direction: p.direction, 
+                    pathScore: p.nodeScore 
+                });
+            });
             
             
-            this.props.handleNodeLookupIndex(response.data.map((p) => p.nodes).flat(), this.setState({pathTreeResponse: response.data, terminalScores: terminalScores}, this.handleMinWeightSlider) /*, formatResponse*/ );
+            this.props.handleNodeLookupIndex(response.data.map((p) => p.nodes).flat(), this.setState({pathTreeResponse: response.data, terminalScores: terminalScores, sinkData: sinkData}, this.handleMinWeightSlider) /*, formatResponse*/ );
         });
         
     }

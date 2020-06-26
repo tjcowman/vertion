@@ -29,6 +29,10 @@
 #include <mutex>
 #include <condition_variable>
 
+//BUG: Crash on 1st nodelookup query sometimes it looks like
+//BUG: No protein harboring crash on paths
+
+
 namespace fs = std::experimental::filesystem;
 using json = nlohmann::json;
 //TODO: Make the alternative mappings extensible and part of the vgraph struture, currently very brittle

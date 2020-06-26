@@ -142,14 +142,16 @@ class App extends React.Component {
     }
     
     //Used to update the name of a versionCard 
-    handleChangeVersionCardName=(event)=>{
-//         console.log(event.target, event.target[0])
+    handleChangeVersionCardName=(cardI, newName)=>{
+//         console.log("ET", event.target, event.target[0], event.target.dataset.cardi)
         
 //         event.preventDefault();
         let versionCardsO = this.state.versionCardsO;
 // //         console.log(versionCardsO.cards[event.id], event.target.id)
-        versionCardsO.cards[event.target[0].id].name = event.target[0].value;
+//         versionCardsO.cards[event.target[0].cardi].name = event.target[0].value;
 //         console.log(event.target)
+        
+        versionCardsO.cards[cardI].name = newName;
         this.setState({versionCardsO : versionCardsO});
     }
 

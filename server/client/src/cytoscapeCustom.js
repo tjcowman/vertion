@@ -34,7 +34,7 @@ class CytoscapeCustom extends React.Component{
         this.colorRef = React.createRef();
         
         this.state={
-//             reRenderPlot: 1,
+            colorStyle : "",
             
             editColorEdge : "",
             editColorNode : "",
@@ -74,8 +74,8 @@ class CytoscapeCustom extends React.Component{
     }
     
     colorElements=()=>{
-        this.cy.edges().forEach((n) => n.json({data :{color : this.state.colorMapEdges.get(n._private.data.edgeType)}}) );
-        this.cy.nodes().forEach((n) => n.json({data :{color : this.state.colorMapNodes.get(n._private.data.nodeType)}}) );
+        this.cy.edges().forEach((n) => n.json({data :{color_auto : this.state.colorMapEdges.get(n._private.data.edgeType)}}) );
+        this.cy.nodes().forEach((n) => n.json({data :{color_auto : this.state.colorMapNodes.get(n._private.data.nodeType)}}) );
                 
     }
     
@@ -85,6 +85,11 @@ class CytoscapeCustom extends React.Component{
     }
     
 
+    handleSetColorStyle=(event)=>{
+        
+        this.setState({colorStyle: event.label}, console.log(this.cy));
+    }
+    
     handleEdgeColorSelect=(event)=>{
           this.setState({
               editColorNode : "",
@@ -134,6 +139,7 @@ class CytoscapeCustom extends React.Component{
             
                 <Select
                     options={Object.keys(cstyle.all).map((e,i) => ({value: i, label: e }))}
+                    onChange={this.handleSetColorStyle}
                 />
             
                 <Button onClick={async () => {
@@ -145,59 +151,59 @@ class CytoscapeCustom extends React.Component{
             
             
             
-                <CytoscapeComponent className="border"  cy={(cy) => {this.cy = cy}} elements={this.props.elements} stylesheet={ cstyle.all.auto } style={ { width: '600px', height: '400px', marginBottom:'10px' } }/>
+                <CytoscapeComponent className="border"  cy={(cy) => {this.cy = cy}} elements={this.props.elements} stylesheet={ cstyle.all[this.state.colorStyle] } style={ { width: '600px', height: '400px', marginBottom:'10px' } }/>
            
-                        <div style={this.state.colorMapEdges.size === 0 ? {display:'none'} : {}}>Edges :</div> 
-                        <div>
-                        {[...this.state.colorMapEdges.entries()].map((k, i) =>(
-                                <ListGroupItem className="colorItem" key={i}> 
-                                    <button onClick={this.handleEdgeColorSelect} edit="editColorEdge" name={k[0]} value={k[1]} className="colorIcon" style={{backgroundColor:k[1]}}>
-                                    </button>
-                                    {k[0]}
-                                </ListGroupItem>
-                        ))}
-                        </div>
-                        
-                        <div style={{clear:"both"}}></div>
-                        
-                        <div style={this.state.colorMapNodes.size === 0 ? {display:'none'} : {}}>Nodes :</div>
-                        <div>
-                        {[...this.state.colorMapNodes.entries()].map((k, i) =>(
-                                <ListGroupItem className="colorItem" key={i}> 
-                                    <button onClick={this.handleNodeColorSelect} edit="editColorNode" name={k[0]} value={k[1]} className="colorIcon" style={{backgroundColor:k[1]}}>
-                                    </button>
-                                    {k[0]}
-                                </ListGroupItem>
-                        ))}
-                        </div>
-                    
-                        <div style={{clear:"both"}}></div>
-                    
-                        <div style={this.state.editColorEdge === "" ? {display:"none"} : {display:"inline"} }>
-                        
-                            <form onSubmit={this.handleEdgeColorChange}>
-                                {this.state.editColorEdge} : 
-                                    <input ref={this.colorRef} value={this.state.editValue}
-                                        onChange={this.handleColorValueChange}
-                                        
-                                        >
-                                    </input>
+                <div style={this.state.colorMapEdges.size === 0 ? {display:'none'} : {}}>Edges :</div> 
+                <div>
+                {[...this.state.colorMapEdges.entries()].map((k, i) =>(
+                        <ListGroupItem className="colorItem" key={i}> 
+                            <button onClick={this.handleEdgeColorSelect} edit="editColorEdge" name={k[0]} value={k[1]} className="colorIcon" style={{backgroundColor:k[1]}}>
+                            </button>
+                            {k[0]}
+                        </ListGroupItem>
+                ))}
+                </div>
+                
+                <div style={{clear:"both"}}></div>
+                
+                <div style={this.state.colorMapNodes.size === 0 ? {display:'none'} : {}}>Nodes :</div>
+                <div>
+                {[...this.state.colorMapNodes.entries()].map((k, i) =>(
+                        <ListGroupItem className="colorItem" key={i}> 
+                            <button onClick={this.handleNodeColorSelect} edit="editColorNode" name={k[0]} value={k[1]} className="colorIcon" style={{backgroundColor:k[1]}}>
+                            </button>
+                            {k[0]}
+                        </ListGroupItem>
+                ))}
+                </div>
+            
+                <div style={{clear:"both"}}></div>
+            
+                <div style={this.state.editColorEdge === "" ? {display:"none"} : {display:"inline"} }>
+                
+                    <form onSubmit={this.handleEdgeColorChange}>
+                        {this.state.editColorEdge} : 
+                            <input ref={this.colorRef} value={this.state.editValue}
+                                onChange={this.handleColorValueChange}
                                 
-                            </form>
-                        </div>
-                            
-                                          
-                        <div style={this.state.editColorNode === "" ? {display:"none"} : {display:"inline"} }>
+                                >
+                            </input>
                         
-                            <form onSubmit={this.handleNodeColorChange}>
-                                {this.state.editColorNode} : 
-                                    <input ref={this.colorRef} value={this.state.editValue}
-                                        onChange={this.handleColorValueChange}
-                                        
-                                        >
-                                    </input>
-                            </form>
-                        </div>
+                    </form>
+                </div>
+                    
+                                    
+                <div style={this.state.editColorNode === "" ? {display:"none"} : {display:"inline"} }>
+                
+                    <form onSubmit={this.handleNodeColorChange}>
+                        {this.state.editColorNode} : 
+                            <input ref={this.colorRef} value={this.state.editValue}
+                                onChange={this.handleColorValueChange}
+                                
+                                >
+                            </input>
+                    </form>
+                </div>
    
                 
             </Card.Body>

@@ -46,6 +46,8 @@ class KinasePaths
         
         std::array<GraphList<VertexS<GT>>, 3> nodeScores_;
         std::map<typename GT::Index, typename GT::Value> nodeScoreLookup_;
+        std::map<typename GT::Index, int> nodeDirectionLookup_;
+        
         std::vector<Path<GT>> paths_;
         //const VGraph<GT>* graph_;
         const IntegratedViewer<GT>* viewer_;
@@ -65,6 +67,7 @@ void KinasePaths<GT>::scorePaths()
                 ++path.nonMech_;
         
         path.nodeScore_ = nodeScoreLookup_[viewer_->getViewIndex(path.visitOrder_[0])]; //Looks at the compute score of the protein node containing the sites
+        path.nodeDirection_ = nodeDirectionLookup_[viewer_->getViewIndex(path.visitOrder_[0])];
     }
 }
 
@@ -133,8 +136,11 @@ void KinasePaths<GT>::computeNodeScores(const GraphList<VertexS<GT>>& sinks)
     
     for(int i=0; i<3; ++i)
         for(const auto& e : nodeScores_[i])
+        {
             nodeScoreLookup_.insert(std::make_pair(e.index_, e.value_));
-          
+            nodeDirectionLookup_.insert(std::make_pair(e.index_, i));
+        }
+            
     std::cout<<"NODELOOKUPSIZE "<<nodeScoreLookup_.size()<<std::endl;
         
     //for(
