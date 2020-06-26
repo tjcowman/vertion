@@ -37,7 +37,7 @@ class PathSearchComponent extends React.Component{
     render(){
         return(
             <Card.Body>
-            <Tabs>
+            <Tabs >
                 <Tab eventKey="q1" title="Kinase 1">
                     <PathSearchQueryComponent 
                         backAddr={this.props.backAddr}

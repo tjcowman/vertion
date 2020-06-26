@@ -68,6 +68,7 @@ class SelectLabelsComponent extends React.Component{
                     <SelectedElementDeck activeCard={this.props.versionCardsO.activeCard}
                         displayKeys={["labelsV_s","labelsE_s"]}
                         versionCardsO={this.props.versionCardsO}
+                        handleChangeVersionCardName={this.props.handleChangeVersionCardName}
                         partitionHeadings={["Vertex", "Edge"]}
                         displayLookup={[this.props.labelsUsed.nodeNames.names, this.props.labelsUsed.edgeNames.names]}
                         versionCardHandlers = {this.props.versionCardHandlers}

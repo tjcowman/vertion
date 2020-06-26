@@ -25,9 +25,9 @@ class Settings extends React.Component{
                     <Card.Header>Input</Card.Header>
                     <Card.Body>
                         Kinase
-                        <input value={this.props.kinaseText} className="inputKinase form-control" name="kinaseText"  onChange={this.props.handleChange} ></input>
+                        <input autoComplete="off" value={this.props.kinaseText} className="inputKinase form-control" name="kinaseText"  onChange={this.props.handleChange} ></input>
                         Sites
-                        <textarea value={this.props.siteText} className="inputSites form-control" name="siteText"   onChange={this.props.handleChange} ></textarea>
+                        <textarea autoComplete="off" value={this.props.siteText} className="inputSites form-control" name="siteText"   onChange={this.props.handleChange} ></textarea>
                       {/*  <Button className="form-control" variant="primary" onClick={(e) =>this.handleSubmit(e)} >Submit</Button>*/}
                     </Card.Body>
                 </Card>
@@ -50,6 +50,8 @@ class PathSearchQueryComponent extends React.Component{
         super(props);
 
          this.state={
+            versionIndex: undefined,
+             
             kinaseText: "P00533",
             siteText: "Q15459	359	-1.3219\nQ15459	451	0.5352\nP28482	185	4.4463\nP28482	187	4.4195\nQ8N3F8	273	-0.3219",
             pathTreeResponse: [],
@@ -156,7 +158,9 @@ class PathSearchQueryComponent extends React.Component{
     handleSubmit=()=>{
         
         //TODO: replace the current method with this 
-        console.log(this.props.getVersionDefinition())
+//         console.log(this.props.getVersionDefinition())
+//         let versionDef = this.props.versionCardsO.getVersionDefinition(this.state.versionIndex);
+//         console.log("VQ", versionDef);
         
         let versions = [1,20,21,22];// [...this.props.versionCardsO.cards[this.props.versionCardsO.activeCard].versions_s];
         if(versions.length === 0)
@@ -182,6 +186,13 @@ class PathSearchQueryComponent extends React.Component{
             kinase: this.state.kinaseText,
             sites: sites
         };
+        
+        if(typeof(this.state.versionIndex) !== 'undefined'){
+//             [...command] = [...this.props.versionCardsO.getVersionDefinition(this.state.versionIndex)];
+//             console.log("VDEF", ...this.props.versionCardsO.getVersionDefinition(this.state.versionIndex));
+            command = Object.assign(command, this.props.versionCardsO.getVersionDefinition(this.state.versionIndex));
+        }
+        
         console.log("CMSENT", command)
         
         Axios.post('http://'+this.props.backAddr, JSON.stringify(command)).then((response)=>{
@@ -219,56 +230,65 @@ class PathSearchQueryComponent extends React.Component{
     
     handleNodeClick=(event)=>{
         console.log(event.target._private.data)
-        
-//         if(typeof event.target._private.data.pathTerm !== 'undefined' && event.target._private.data.pathTerm !== -1){
-//             let versions = [1,20,21,22];// [...this.props.versionCardsO.cards[this.props.versionCardsO.activeCard].versions_s];
-//             if(versions.length === 0)
-//             {
-//                 this.props.handleLog("e", "no versions");
-//                 this.setState({result:  {nodes:[{"row":null, "id":null, "value":null}], edges: [] } });
-//                 return;
-//             }
-//             
-//             
-//             let command = {cmd:"dpth", versions:versions, 
-//                 vertexLabels: [0,1],// [...this.props.versionCardsO.cards[this.props.versionCardsO.activeCard].labelsV_s],
-//                 edgeLabels:  [0,1,2,3],//[...this.props.versionCardsO.cards[this.props.versionCardsO.activeCard].labelsE_s],
-//                 nodes : this.state.pathTreeResponse[event.target._private.data.pathTerm].nodes
-//             };
-//             
-//             
-//             Axios.post('http://'+this.props.backAddr, JSON.stringify(command)).then((response)=>{
-//                 console.log("dense", response)
-//                 
-//                 
-//                              
-//                 let formatResponse=(nodeIndexSet)=>{
-//                    // console.log("ND", this.props.nodeData)
-//                     
-//                     let elementsDense = [...nodeIndexSet].map((id)=>(
-//                         {data: {id: id, label: this.props.nodeData.getEntry(id).name} }
-//                     ))
-//                     
-//                     response.data.forEach((e)=>{
-//                         elementsDense.push({data:{source: e.i1, target: e.i2, labelType: e.l }});
-//                     })
-//                     
-//                     this.setState({
-//                         densePathResponse : response,
-//                         elementsDense : elementsDense
-//                     });
-//                     console.log(this.state)
-//                 }
-//                 
-//                 let nodeIds = new Set();
-//                 response.data.forEach((e) =>{
-//                     nodeIds.add(e.i1);
-//                     nodeIds.add(e.i2);
-//                 })
-//                 this.props.handleNodeLookupIndex([...nodeIds], function(){formatResponse(nodeIds)} );
-//             });
-//         }
+       /* 
+        if(typeof event.target._private.data.pathTerm !== 'undefined' && event.target._private.data.pathTerm !== -1){
+            let versions = [1,20,21,22];// [...this.props.versionCardsO.cards[this.props.versionCardsO.activeCard].versions_s];
+            if(versions.length === 0)
+            {
+                this.props.handleLog("e", "no versions");
+                this.setState({result:  {nodes:[{"row":null, "id":null, "value":null}], edges: [] } });
+                return;
+            }
             
+            
+            let command = {cmd:"dpth", versions:versions, 
+                vertexLabels: [0,1],// [...this.props.versionCardsO.cards[this.props.versionCardsO.activeCard].labelsV_s],
+                edgeLabels:  [0,1,2,3],//[...this.props.versionCardsO.cards[this.props.versionCardsO.activeCard].labelsE_s],
+                nodes : this.state.pathTreeResponse[event.target._private.data.pathTerm].nodes
+            };
+            
+            
+            Axios.post('http://'+this.props.backAddr, JSON.stringify(command)).then((response)=>{
+                console.log("dense", response)
+                
+                
+                             
+                let formatResponse=(nodeIndexSet)=>{
+                   // console.log("ND", this.props.nodeData)
+                    
+                    let elementsDense = [...nodeIndexSet].map((id)=>(
+                        {data: {
+                            id: id,
+                            label: this.props.nodeData.getEntry(id).name,
+                            nodeType: this.props.labelsUsed.nameLookupNode(this.props.nodeData.getEntry(id).labels).toString(), 
+                        } }
+                    ))
+                    
+                    response.data.forEach((e,i)=>{
+                        elementsDense.push({data:{
+                            source: e.i1,
+                            target: e.i2,
+                            labelType: e.l,
+//                             edgeType: this.props.labelsUsed.nameLookupEdge(e.edgeLabels[i]).toString(),
+                        }});
+                    })
+                    
+                    this.setState({
+                        densePathResponse : response,
+                        elementsDense : elementsDense
+                    });
+                    console.log(this.state)
+                }
+                
+                let nodeIds = new Set();
+                response.data.forEach((e) =>{
+                    nodeIds.add(e.i1);
+                    nodeIds.add(e.i2);
+                })
+                this.props.handleNodeLookupIndex([...nodeIds], function(){formatResponse(nodeIds)} );
+            });
+        }
+            */
             
     }
     
@@ -278,7 +298,9 @@ class PathSearchQueryComponent extends React.Component{
         this.setState({ minWeightDisplay: event.activePayload[0].value}, this.handleMinWeightSlider);
     }
     
-    
+    handleVersionChange=(event)=>{
+        this.setState({versionIndex: event.value})
+    }
     
     render(){  
             let numScores = this.state.terminalScores.scores.length;
@@ -290,7 +312,7 @@ class PathSearchQueryComponent extends React.Component{
             <>
             <Card.Body >
                
-                    <QuerySettingsBar versionCards={this.props.versionCardsO} handleRun={this.handleSubmit} component={<Settings minWeight={this.state.minWeight} handleChange={this.handleChange} siteText={this.state.siteText} kinaseText={this.state.kinaseText}/>} />
+                    <QuerySettingsBar handleVersionChange={this.handleVersionChange} versionCards={this.props.versionCardsO} handleRun={this.handleSubmit} component={<Settings minWeight={this.state.minWeight} handleChange={this.handleChange} siteText={this.state.siteText} kinaseText={this.state.kinaseText}/>} />
                     
                 
                             <div className="container">
@@ -311,7 +333,7 @@ class PathSearchQueryComponent extends React.Component{
                                         
                                         <input type="range" name="minWeightDisplay" className="range-pathDisplayMinWeight" min="0" max={ numScores === 0 ? 0 : scoreMax}
                                                 value={this.state.minWeightDisplay} 
-                                                step={ /*numScores < 100 ? scoreMax/numScores:*/ scoreMax/100} 
+                                                step={ isNaN(scoreMax) ? 0 : scoreMax/100} 
                                                 id="customRange2"
                                                 onChange={(e) => {this.handleChange(e)  }}
                                                 onMouseUp={(e)=> {this.handleMinWeightSlider(e)}} >
@@ -342,11 +364,19 @@ class PathSearchQueryComponent extends React.Component{
                         
                             <div className="plotNav">
                                 <CytoscapeCustom 
-                                                        elements={this.props.elements} 
-                                                        handleNodeClick={this.handleNodeClick} 
-                                                        handleEdgeClick={this.handleEdgeClick}
-                                                    />
-                        </div>
+                                    elements={this.props.elements} 
+                                    handleNodeClick={this.handleNodeClick} 
+                                    handleEdgeClick={this.handleEdgeClick}
+                                />
+                            </div>
+                            
+                            {/*
+                            <CytoscapeCustom 
+                                elements={this.state.elementsDense} 
+                                                        
+                                                        
+                            />*/}
+                            
                         </div>
                    
                 </Card.Body>

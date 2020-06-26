@@ -3,9 +3,14 @@ import {Button, Card, Row, Col, ListGroup, ListGroupItem, Input} from 'react-boo
 import Cytoscape from 'cytoscape';
 import CytoscapeComponent from 'react-cytoscapejs';
 
+import Select from 'react-select';
+
 import fcose from 'cytoscape-fcose';
 
+import * as cstyle from './cytoStyles.js'
+
 import './cytoscapeCustom.css'
+
 
 const ggcol=(n)=>{
     let hues = [...Array(n)].map((e,i) => ((15 + 360/(n))*i)%360 );
@@ -21,57 +26,6 @@ const ggColMap=(labelSet)=>{
     return cMap;
 }
 
-
-let stylesheet = [
-
-    {
-        selector: 'edge',
-        style: {
-            'line-color' : 'data(color)'  //'mapData(edgeType, 0, 8, red, blue)'
-        }
-    },
-    {
-      selector: 'node',
-      style: {
-           'label': 'data(label)',
-           'background-color' : 'data(color)',
-           'width': '20px',
-           'height': '20px'
-      }
-      
-    },
-    {
-        selector: 'node[pLabel]',
-        style:{
-            'label': 'data(pLabel)',
-            'background-color' : 'data(color)'
-        }
-    },
-    {
-        selector: 'node[nodeScore]',
-        style: {
-            'width' : 'data(nodeScore)',
-            'height' : 'data(nodeScore)',
-            }
-        
-    },
-    {
-        selector: "node[scored = 0 ]",
-            style: {
-//                 'background-color' : 'white',
-                'border-color' : 'black',
-                'border-width' : '2'
-            }
-    },
-    {
-        selector: "node[scored = 1 ]",
-            style: {
-//                 'background-color' : 'blue',
-                'border-color' : 'black',
-                'border-width' : '2'
-            }
-    }
-]
 
 class CytoscapeCustom extends React.Component{
     constructor(props){
@@ -177,6 +131,11 @@ class CytoscapeCustom extends React.Component{
         
             <Card>
             <Card.Body>
+            
+                <Select
+                    options={Object.keys(cstyle.all).map((e,i) => ({value: i, label: e }))}
+                />
+            
                 <Button onClick={async () => {
                     await navigator.clipboard.writeText(this.cy.nodes('[nodeType = "Protein"]').map((e) => e._private.data.label).join('\n'));
                     console.log(this.cy.nodes('[nodeType = "Protein"]').map((e) => e._private.data.label))
@@ -186,7 +145,7 @@ class CytoscapeCustom extends React.Component{
             
             
             
-                <CytoscapeComponent className="border"  cy={(cy) => {this.cy = cy}} elements={this.props.elements} stylesheet={ stylesheet } style={ { width: '600px', height: '400px', marginBottom:'10px' } }/>
+                <CytoscapeComponent className="border"  cy={(cy) => {this.cy = cy}} elements={this.props.elements} stylesheet={ cstyle.all.auto } style={ { width: '600px', height: '400px', marginBottom:'10px' } }/>
            
                         <div style={this.state.colorMapEdges.size === 0 ? {display:'none'} : {}}>Edges :</div> 
                         <div>

@@ -2,7 +2,7 @@
 
 #include "vertion.h"
 #include "query/Traversal_View.h"
-
+#include "query/RandomWalker.h" 
 
 
 #include <nlohmann/json.hpp>
@@ -36,7 +36,7 @@ class KinasePaths
         
         
         
-        typename GT::Value weightFunction(typename GT::Index row, typename GT::Index edge, typename GT::Value original)const ;
+        typename GT::Value weightFunction(/*const GraphList<VertexS<GT>>& nodeWeights,*/ typename GT::Index row, typename GT::Index edge, typename GT::Value original)const ;
         
         void computeNodeScores( const GraphList<VertexS<GT>>& sinks);
         
@@ -149,7 +149,7 @@ KinasePaths<GT>::KinasePaths(const IntegratedViewer<GT>& viewer)
 }
 
 template<class GT>
-typename GT::Value KinasePaths<GT>::weightFunction(typename GT::Index row, typename GT::Index edge, typename GT::Value original)const 
+typename GT::Value KinasePaths<GT>::weightFunction(/*const GraphList<VertexS<GT>>& nodeWeights,*/ typename GT::Index row, typename GT::Index edge, typename GT::Value original)const 
 {
     //disallow site->protein 
     if( (viewer_->L_[edge].getBits() == 4  && viewer_->getLabels(row).getBits() == 2)) 
@@ -169,6 +169,12 @@ typename GT::Value KinasePaths<GT>::weightFunction(typename GT::Index row, typen
     if(it != nodeScoreLookup_.end())
         original = original * (.5/ it->second);
     
+    //Use the rwr score to weight, global so will be no 0s
+//     original = original * -log(nodeWeights[edge].value_);
+    
+    
+//     std::cout<<row<<" "<<edge<<" "<<original<<std::endl;
+    
     return original;
     
 }
@@ -181,6 +187,15 @@ void KinasePaths<GT>::compute(const VertexI<GT>& source, const GraphList<VertexS
     
     auto Arw = viewer_->A_;
     
+    
+    //compute the global rwr
+    RandomWalker<GT> RW(*viewer_);
+    
+
+    typename RandomWalker<GT>::Args_Walk args_walk{.15, 1e-6, GraphList<VertexS<GT>>()};
+    auto res = RW.walk(GraphList<VertexS<GT>>(), args_walk);
+    std::cout<<"RWR DONE"<<std::endl;
+//     std::cout<<res<<std::endl;
    // row is the node index, edge is the edge index ex: A_[edge] JA_[edge]
     for(typename GT::Index row=0; row<viewer_->size().first; ++row)
     {
@@ -188,7 +203,10 @@ void KinasePaths<GT>::compute(const VertexI<GT>& source, const GraphList<VertexS
         typename GT::Index rb = viewer_->IA_[row].s1() + viewer_->IA_[row].s2();
         
         for(typename GraphType::GD::Index edge=lb; edge<rb; ++edge)
-            Arw[edge] = weightFunction(row, edge, Arw[edge]);
+        {
+//             std::cout<<res[edge].value_<<std::endl;
+            Arw[edge] = weightFunction(/*res,*/ row, edge, Arw[edge]* -log(res[viewer_->JA_[edge]].value_) );
+        }
     }
     
 //     for(const auto& e : Arw)

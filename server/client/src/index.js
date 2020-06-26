@@ -2,7 +2,7 @@ import { StrictMode} from 'react';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 
-import {Tab, Nav, Button} from 'react-bootstrap';
+import {Tab, Nav} from 'react-bootstrap';
 
 import React from 'react';
 import ReactDOM from 'react-dom';
@@ -115,6 +115,8 @@ class App extends React.Component {
 
 
         var date = new Date();
+//         try{
+        
         Axios.get('http://'+this.state.backAddr+'/ls', date.getTime()).then((response)=>{
             console.log("lsResponse", response)
 
@@ -131,20 +133,24 @@ class App extends React.Component {
 
             }, () =>{console.log("initstate", this.state); this.handleLog("i","Ready")})
 
-         })
+         }).catch(error => {})
+//         }
+//         catch{
+//             
+//         }
 
     }
     
     //Used to update the name of a versionCard 
     handleChangeVersionCardName=(event)=>{
-        console.log(event.target, event.target[0])
+//         console.log(event.target, event.target[0])
         
-        event.preventDefault();
-        let versionCardsO=this.state.versionCardsO;
+//         event.preventDefault();
+        let versionCardsO = this.state.versionCardsO;
 // //         console.log(versionCardsO.cards[event.id], event.target.id)
         versionCardsO.cards[event.target[0].id].name = event.target[0].value;
 //         console.log(event.target)
-        this.setState({versionCardsO, versionCardsO});
+        this.setState({versionCardsO : versionCardsO});
     }
 
     //Used to get the relevant properties defining a version on the server, versions/labels/etc
@@ -209,7 +215,7 @@ class App extends React.Component {
     handleLog=(mtype, message)=>{
         let logStruct = this.state.logStruct;
         this.state.logStruct.log(mtype, message);
-        this.setState({logStruct, logStruct})
+        this.setState({logStruct: logStruct})
       //  console.log(this.state)
     }
 
@@ -331,7 +337,7 @@ class App extends React.Component {
 
             <div className="mainContent">
                 <div style={{left: this.state.navCollapsed ? 0 : 180}} className=" btn-secondary menuToggleButton"   onClick= {()=> {this.setState({navCollapsed: !this.state.navCollapsed}) } }></div>
-                <Tab.Container id="menu" defaultActiveKey="versions" >
+                <Tab.Container  id="menu" defaultActiveKey="versions" >
 
                     <div className={this.state.navCollapsed ? " border-right menuContainerClosed bg-light":" border-right menuContainerOpen bg-light" } >
                    
@@ -386,6 +392,7 @@ class App extends React.Component {
 
                                     versionCardsO={this.state.versionCardsO}
                                     versionCardHandlers={this.state.versionCardHandlers}
+                                    handleChangeVersionCardName={this.handleChangeVersionCardName}
 
                                     labelsUsed = {this.state.labelsUsed}
                                 />
@@ -404,6 +411,7 @@ class App extends React.Component {
 
                                     versionCardsO={this.state.versionCardsO}
                                     versionCardHandlers={this.state.versionCardHandlers}
+                                    handleChangeVersionCardName={this.handleChangeVersionCardName}
                                 />
 
                             </Tab.Pane>
@@ -459,7 +467,7 @@ class App extends React.Component {
 
     render(){
         return(
-            <StrictMode>
+           // {/*<StrictMode>*/}
             
                 <div className="windowAll">
                 
@@ -469,7 +477,7 @@ class App extends React.Component {
                     
                 </div>
 
-            </StrictMode>
+            //{/*</StrictMode>*/}
         );
     }
 
