@@ -80,8 +80,9 @@ class CytoscapeIntegration extends React.Component{
                 <Button onClick={this.handleIntersection}>Intersection</Button>
                 <Button onClick={this.handleUnion}>Union</Button>
             
+                <div className="plotNav">
                 <CytoscapeCustom className="border"  cy={(cy) => {this.cy = cy}} elements={this.state.fnElements} style={ { width: '600px', height: '400px', marginBottom:'10px' } }/>
-           
+                </div>
                 
             </Card.Body>
             </Card>

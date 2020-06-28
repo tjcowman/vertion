@@ -18,3 +18,19 @@
     padding: 3px;
     border-style:none;
 }
+
+.cyClass{
+    display: inline-block;
+}
+
+.styleSelectorContainer{
+/*     margin: 5px; */
+    width: 200px;
+    vertical-align:top;
+    display: inline-block;
+/*     float: right; */
+}
+
+.mySelect__control{
+ height: 38px;
+}

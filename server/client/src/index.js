@@ -175,7 +175,7 @@ class App extends React.Component {
     
     //TODO: Split the lookup and fill in nodeData from the handleSelect card
     handleNodeLookup=(names, afterLookupFn)=>{
-            let queryNames = this.state.nodeData.filterKnown(names);
+            let queryNames = this.state.nodeData.filterKnown([...new Set(names)]);
 
             //Only need to make request if names are unknown
             if(queryNames.length > 0){
@@ -195,7 +195,7 @@ class App extends React.Component {
 
     handleNodeLookupIndex=(indexes, afterLookupFn)=>{
 //         console.log("wut", afterLookupFn)
-        let queryIndexes = this.state.nodeData.filterKnownIndex(indexes);
+        let queryIndexes = this.state.nodeData.filterKnownIndex([...new Set(indexes)]);
 
         //Only need to make request if names are unknown
         if(queryIndexes.length > 0){

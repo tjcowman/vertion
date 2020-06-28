@@ -1,11 +1,22 @@
  
 //TODO: Implement some sort of customizable legend 
  
+    let size_score = [
+        {
+            selector: 'node[scoreNorm]',
+            style: {
+                'height': 'data(scoreNorm)',
+                'width': 'data(scoreNorm)'
+            }
+        }
+    ]
+ 
     let color_auto = [
         {
             selector: 'edge',
             style: {
-                'line-color' : 'data(color_auto)'  //'mapData(edgeType, 0, 8, red, blue)'
+                'line-color' : 'data(color_auto)',
+                'source-arrow-color' : 'data(color_auto)'  
             }
         },
         {
@@ -16,65 +27,19 @@
         }
     ]
 
-    let auto = [
-        {
-            selector: 'edge',
-            style: {
-                'line-color' : 'data(color_auto)'  //'mapData(edgeType, 0, 8, red, blue)'
-            }
-        },
-        {
-            selector: 'node',
-            style: {
-                'label': 'data(label)',
-                'background-color' : 'data(color_auto)',
-                'width': '20px',
-                'height': '20px'
-            }
-        
-        },
-        {
-            selector: 'node[pLabel]',
-            style:{
-                'label': 'data(pLabel)',
-                'background-color' : 'data(color_auto)'
-            }
-        },
-        {
-            selector: 'node[nodeScore]',
-            style: {
-                'width' : 'data(nodeScore)',
-                'height' : 'data(nodeScore)',
-                }
-            
-        },
-        {
-            selector: "node[scored = 0 ]",
-                style: {
-                    'border-color' : 'black',
-                    'border-width' : '2'
-                }
-        },
-        {
-            selector: "node[scored = 1 ]",
-                style: {
-                    'border-color' : 'black',
-                    'border-width' : '2'
-                }
-        }
-    ]
+   
     
     let color_monochrome =  [
         {
             selector: 'edge',
             style: {
-                'line-color' : 'black'  //'mapData(edgeType, 0, 8, red, blue)'
+                'line-color' : 'gray'  //'mapData(edgeType, 0, 8, red, blue)'
             }
         },
         {
         selector: 'node',
             style: {
-                'background-color' : 'black',
+                'background-color' : 'gray',
             }
         }
     ]
@@ -161,14 +126,29 @@
 //         auto:auto, monochrome :monochrome, regulationDirection: regulationDirection
 //     }
     
-    export let colors = { auto: color_auto, monochrome: color_monochrome, direction: color_direction
+    export let colors = { none: color_monochrome, auto: color_auto, direction: color_direction
         
     }
     
-    export let labels = { uniprot : label_uniprot, proteinName : label_proteinName 
+    export let labels = { none: [], uniprot : label_uniprot, proteinName : label_proteinName
         
     }
     
+    export let sizes = { constant: [], score : size_score
+        
+    }
+    
+    export let base = [
+        {
+            selector: 'edge[edgeType = "Phosphorylation"]',
+            style: {
+//                 'line-color' : 'orange',
+                'curve-style': 'bezier',
+                 'source-arrow-shape': 'triangle'
+            }
+        
+        }
+    ]
     
     
 // }

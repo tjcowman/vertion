@@ -120,7 +120,7 @@ class PathSearchQueryComponent extends React.Component{
               data: {
                 id: id,
                 nodeType: this.props.labelsUsed.nameLookupNode(this.props.nodeData.getEntry(id).labels).toString(), 
-                label: this.props.nodeData.getEntry(id).name, 
+                label:  this.props.nodeData.getEntry(id).name, 
                 pLabel: this.props.nodeData.getEntry(id).pname === "" ? undefined : this.props.nodeData.getEntry(id).pname,
               }
             })
@@ -132,9 +132,17 @@ class PathSearchQueryComponent extends React.Component{
 //             console.log(lookup)
             if(typeof(lookup) !== 'undefined'){
                 n.pathTerm = 1;
-                n.data.nodeScore = lookup.pathScore*10;
+                n.data.scoreNorm = lookup.scoreNorm;
                 n.data.direction = lookup.direction;
             }
+            
+//             console.log(n, n.nodeType)
+            if(n.data.nodeType === "Site"){
+                n.data.label = n.data.label.substring(n.data.label.search(':')+1 );
+                //console.log("f" ,n.data.label.substring(n.data.label.search(':')+1 ))
+//                 n.data.label = n.data.label.substring(n.data.label.search(':')+1 );
+            }
+            
         })
         
         return nodes;
@@ -161,6 +169,8 @@ class PathSearchQueryComponent extends React.Component{
     
     handleUpdateElementsRendered=()=>{        
         let nodes = this.updateNodes();
+        
+        
         let edges = this.updateEdges();
 
         this.props.handleUpdateElements([...nodes, ...edges], this.props.elementsName);
@@ -211,12 +221,18 @@ class PathSearchQueryComponent extends React.Component{
                 terminalScores = { sparseFactor : sparseFactor, scores: terminalScores.scores.filter((e, i) => {return i % sparseFactor === 0})};
             }
             
+            let maxScore =  Math.max(...response.data.map(p => p.nodeScore));
+//             console.log("MS", maxScore, response.data.map(p => p.nodeScore))
+            let targetMax = 100;
+            
             response.data.forEach(p =>{
                 sinkData.set(p.nodes[0], {
                     direction: p.direction, 
-                    pathScore: p.nodeScore 
+                    scoreNorm: p.nodeScore*(targetMax/maxScore) 
                 });
             });
+            
+            //Compute normalized scores 
             
             
             this.props.handleNodeLookupIndex(response.data.map((p) => p.nodes).flat(), this.setState({pathTreeResponse: response.data, terminalScores: terminalScores, sinkData: sinkData}, this.handleMinWeightSlider) /*, formatResponse*/ );
