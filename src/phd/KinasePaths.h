@@ -77,7 +77,7 @@ void KinasePaths<GT>::computeNodeScores(const GraphList<VertexS<GT>>& sinks)
     //for each node index
     auto rangeit = std::equal_range(sinks.begin(), sinks.end(), *sinks.begin());
     
-    std::cout<<sinks<<std::endl;
+//     std::cout<<sinks<<std::endl;
     
    // while(rangeit.first != sinks.end())
     while(true)
@@ -141,7 +141,7 @@ void KinasePaths<GT>::computeNodeScores(const GraphList<VertexS<GT>>& sinks)
             nodeDirectionLookup_.insert(std::make_pair(e.index_, i));
         }
             
-    std::cout<<"NODELOOKUPSIZE "<<nodeScoreLookup_.size()<<std::endl;
+//     std::cout<<"NODELOOKUPSIZE "<<nodeScoreLookup_.size()<<std::endl;
         
     //for(
     //std::cout<<nodeScores_[0]<<nodeScores_[1]<<nodeScores_[2];
@@ -200,7 +200,7 @@ void KinasePaths<GT>::compute(const VertexI<GT>& source, const GraphList<VertexS
 
     typename RandomWalker<GT>::Args_Walk args_walk{.15, 1e-6, GraphList<VertexS<GT>>()};
     auto res = RW.walk(GraphList<VertexS<GT>>(), args_walk);
-    std::cout<<"RWR DONE"<<std::endl;
+//     std::cout<<"RWR DONE"<<std::endl;
 //     std::cout<<res<<std::endl;
    // row is the node index, edge is the edge index ex: A_[edge] JA_[edge]
     for(typename GT::Index row=0; row<viewer_->size().first; ++row)
@@ -218,10 +218,10 @@ void KinasePaths<GT>::compute(const VertexI<GT>& source, const GraphList<VertexS
 //     for(const auto& e : Arw)
 //         std::cout<<e<<std::endl;
 
-    std::cout<<"reweight done"<<std::endl;
+//     std::cout<<"reweight done"<<std::endl;
     //auto sourceIndex = source.index_;
     auto sourceIndex = viewer_->getViewIndex(source.index_);
-    std::cout<<"SI "<<sourceIndex<<std::endl;
+//     std::cout<<"SI "<<sourceIndex<<std::endl;
     
     
     auto numNodes = viewer_->size().first;
@@ -281,7 +281,7 @@ void KinasePaths<GT>::compute(const VertexI<GT>& source, const GraphList<VertexS
         }
         exploreQueue.pop();
     }
-    std::cout<<"Trav done"<<std::endl;
+//     std::cout<<"Trav done"<<std::endl;
     
    // std::vector<Path<GT>> paths;
     for(int j=0; j<3; ++j)

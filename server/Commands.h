@@ -26,7 +26,7 @@ namespace Commands
     template<class GT>
     json lkpn(const VGraph<GT>& graph, const json& args)
     {
-        std::cout<<args["names"]<<std::endl;
+//         std::cout<<args["names"]<<std::endl;
 
         std::vector<std::string> names = args["names"].get<std::vector<std::string>>();
 
@@ -56,12 +56,21 @@ namespace Commands
     json lkpi(const VGraph<GT>& graph, const json& args)
     {
         std::vector<typename GT::Index> ids = args["ids"].get<std::vector<typename GT::Index>>();
-
+// std::cout<<"l1"<<std::endl;
         json ret;
         for(const auto& id : ids)
         {
-            ret.push_back({{"name", graph.lookupVertex(id)}, {"pname", graph.alternateMapping_.findf(id)->second}, {"l", graph.getVertexData().lookupLabels(id).getBits().to_ulong()} });
+            auto alternateMapping = graph.alternateMapping_.findf(id);
+            std::string aMap = alternateMapping != graph.alternateMapping_.end() ?  alternateMapping->second : "";
+            
+            ret.push_back({
+                {"name", graph.lookupVertex(id)},
+                {"pname", aMap}, // graph.alternateMapping_.findf(id)->second}, 
+                {"l", graph.getVertexData().lookupLabels(id).getBits().to_ulong()} 
+                
+            });
         }
+//         std::cout<<"l2"<<std::endl;
 
         return ret;
     }

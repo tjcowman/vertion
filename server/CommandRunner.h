@@ -57,7 +57,7 @@ CommandRunner<GT>::CommandRunner(const VGraph<GT>& graph, ViewCache<GT>& viewCac
 template<class GT>
 json CommandRunner<GT>::run(const json& command)const
 {
-    std::cout<<"COMMAND\n"<<command<<std::endl;
+//     std::cout<<"COMMAND\n"<<command<<std::endl;
     
     
     if(command.find("cmd") != command.end())

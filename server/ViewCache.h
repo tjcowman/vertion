@@ -344,9 +344,9 @@ void ViewCache<GT>::finishLookup(const ViewKey<GT>& key)
     //NOTE: map.at does not decrment the value, not sure why
     auto v = viewMap_.find(key.key_);
 
-    std::cout<<v->second.numActive_<<std::endl;
+//     std::cout<<v->second.numActive_<<std::endl;
     v->second.numActive_ -=1;
-    std::cout<<v->second.numActive_<<std::endl;
+//     std::cout<<v->second.numActive_<<std::endl;
 
     lock.unlock();
 }

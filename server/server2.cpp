@@ -112,7 +112,7 @@ int handleInit_ls(int sockfd, const CommandRunner<GraphType::GD>& CR)
     
     auto written = res.send(sockfd, queryResponse.dump());
 
-    std::cout<<"returned from send to handle ls"<<std::endl;
+//     std::cout<<"returned from send to handle ls"<<std::endl;
     
     if(written < 0 )
         return -1;
@@ -168,12 +168,12 @@ void handlerDispatchSL(int sockfd, std::set<int>* threadSlots, int threadId, con
     }
     
 //     TOLOG("closed fd(" +std::to_string(sockfd)+ ")");
-std::cout<<"before socket close"<<std::endl;
+// std::cout<<"before socket close"<<std::endl;
     close(sockfd);
 
     threadLock.lock();
     threadSlots->insert(threadId);
-    std::cout<<"re-enabled "<<threadId<<std::endl;
+//     std::cout<<"re-enabled "<<threadId<<std::endl;
     threadLock.unlock();
     
     cv.notify_one();
@@ -249,7 +249,7 @@ int startServer_hgraph(int portNumber, int threads, const Graph* G,  ViewCache<G
         if (newsockfd < 0) 
             std::cout<<"ERROR on accept"<<std::endl;
         
-        std::cout<<"conn acc on "<<newsockfd<<std::endl;
+//         std::cout<<"conn acc on "<<newsockfd<<std::endl;
 //         TOLOG("connection accepted: fd "+std::to_string(newsockfd));
         
 
@@ -263,7 +263,7 @@ int startServer_hgraph(int portNumber, int threads, const Graph* G,  ViewCache<G
         int threadId = (*lastE);
         
         threadSlots.erase(lastE);
-        std::cout<<threadId<<" "<<threadSlots.size()<<std::endl;
+//         std::cout<<threadId<<" "<<threadSlots.size()<<std::endl;
         threadLock.unlock();
         
         
@@ -342,7 +342,7 @@ int main(int argc, char* argv[] )
 //    for(const auto& e : pNames)
 //        std::cout<<e.first<<" "<<e.second<<"\n";
     G.alternateMapping_ = std::move(pNames);
-     std::cout<<G.size()<<std::endl;
+//      std::cout<<G.size()<<std::endl;
      
 //      for(int i=0; i<G.versionsData_.size(); ++i)
 //          std::cout<<G.versionsData_[i].edgeLabelsUsed_<<" "<<G.versionsData_[i].vertexLabelsUsed_<<"\n";

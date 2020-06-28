@@ -350,9 +350,9 @@ class App extends React.Component {
                             <Nav.Link eventKey="summary" className="sideElement" onClick={  this.handleUpdateCardSummaryt} >Summary</Nav.Link>
 
                         <div className=" text-dark sideElementHeading border-bottom">Queries</div>
-                            <Nav.Link eventKey="nodes" className="sideElement">Nodes</Nav.Link>
+                            {/*<Nav.Link eventKey="nodes" className="sideElement">Nodes</Nav.Link>*/}
                             <Nav.Link eventKey="query_rwr" className=" sideElement">RWR</Nav.Link>
-                            <Nav.Link eventKey="query_motif" className=" sideElement">Motifs</Nav.Link>
+                            {/*<Nav.Link eventKey="query_motif" className=" sideElement">Motifs</Nav.Link>*/}
                             <Nav.Link eventKey="path_search" className=" sideElement">Paths</Nav.Link>
 
                     </div>
@@ -400,6 +400,7 @@ class App extends React.Component {
                                 />
                             </Tab.Pane>
 
+                            {/*
                             <Tab.Pane eventKey="nodes">
                                 <SelectNodesComponent
                                     backAddr={this.state.backAddr}
@@ -417,7 +418,8 @@ class App extends React.Component {
                                 />
 
                             </Tab.Pane>
-
+                            */}
+                            
                             <Tab.Pane eventKey="query_rwr" className="pageContentArgsRight">
                                 <QueryComponentRWR
                                     backAddr={this.state.backAddr}
