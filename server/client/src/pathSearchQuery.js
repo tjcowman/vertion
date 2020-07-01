@@ -12,7 +12,7 @@ import DefaultTooltipContent from 'recharts/lib/component/DefaultTooltipContent'
 import Axios from 'axios';
 import {CytoscapeCustom} from './cytoscapeCustom.js'
 import {RolloverPanel, QuerySettingsBar} from './rolloverPanel.js'
-
+import * as cstyle from './cytoStyles.js'
 
 import './pathSearchQuery.css'
 
@@ -150,10 +150,13 @@ class PathSearchQueryComponent extends React.Component{
     
     updateEdges=()=>{
         let edges = [];
+//         let 
+        
         this.state.pathsPassing.map((arrI) => (this.state.pathTreeResponse[arrI])).slice(0,this.state.topk).forEach((p)=>{
             for(let i=0; i<p.nodes.length-1; ++i ){
                 edges.push({
                     data:{
+                        id: p.nodes[i] + '-' + p.nodes[i+1],
                         source: p.nodes[i], 
                         target: p.nodes[i+1], 
                         edgeType: this.props.labelsUsed.nameLookupEdge(p.edgeLabels[i]).toString() 
@@ -164,7 +167,17 @@ class PathSearchQueryComponent extends React.Component{
             }
         })
         
-        return edges;
+//         console.log("E", edges)
+        
+        //get unique indexes by using source target as key
+//         let uniqueIndexes = new Map(edges.map((e,i) => ([e.data.source + '-' +e.data.target, i])));
+        let uniqueIndexes = new Map(edges.map((e,i) => [e.data.id, i]));
+        
+        return [...uniqueIndexes.values()].map(i => edges[i]);
+        
+//         console.log("FFF", uniqueIndexes)
+        
+//         return edges;
     }
     
     handleUpdateElementsRendered=()=>{        
@@ -391,6 +404,7 @@ class PathSearchQueryComponent extends React.Component{
                         
                             <div className="plotNav">
                                 <CytoscapeCustom 
+                                    cstyle={{colors: cstyle.colors , labels: cstyle.labels, sizes :cstyle.sizes}}
                                     elements={this.props.elements} 
                                     handleNodeClick={this.handleNodeClick} 
                                     handleEdgeClick={this.handleEdgeClick}

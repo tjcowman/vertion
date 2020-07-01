@@ -140,7 +140,7 @@ class CytoscapeCustom extends React.Component{
     }
     
     styleLookup=(map, name)=>{
-        console.log("MN", map[name]);
+//         console.log("MN", map[name]);
         if(typeof(map[name]) !== 'undefined')
             return map[name];
         else
@@ -203,19 +203,19 @@ class CytoscapeCustom extends React.Component{
                     <label>Color</label>
                     <Select
                       
-                        options={Object.keys(cstyle.colors).map((e,i) => ({value: i, label: e }))}
+                        options={Object.keys(this.props.cstyle.colors).map((e,i) => ({value: i, label: e }))}
                         onChange={this.handleSetColorStyle}
                     />
                 
                     <label>Labels</label>
                     <Select
-                        options={Object.keys(cstyle.labels).map((e,i) => ({value: i, label: e }))}
+                        options={Object.keys(this.props.cstyle.labels).map((e,i) => ({value: i, label: e }))}
                         onChange={this.handleSetLabelStyle}
                     />
                     
                     <label>Sizes</label>
                     <Select
-                        options={Object.keys(cstyle.sizes).map((e,i) => ({value: i, label: e }))}
+                        options={Object.keys(this.props.cstyle.sizes).map((e,i) => ({value: i, label: e }))}
                         onChange={this.handleSetSizeStyle}
                     />
                     </Card.Body>

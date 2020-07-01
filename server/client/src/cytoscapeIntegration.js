@@ -4,6 +4,7 @@ import Cytoscape from 'cytoscape';
 import CytoscapeComponent from 'react-cytoscapejs';
 import {CytoscapeCustom} from './cytoscapeCustom.js';
 
+import * as cstyle from './cytoStyles.js'
 import fcose from 'cytoscape-fcose';
 
 
@@ -22,9 +23,37 @@ class CytoscapeIntegration extends React.Component{
     handleUnion=()=>{
 //         this.cy.removeData();
         
-        let elements = [...this.props.elements1, ...this.props.elements2];
+        let idMap = new Map();
         
-        this.setState({fnElements: elements});
+        this.props.elements1.forEach(e => {
+            idMap.set(e.data.id, e);
+            idMap.get(e.data.id).data.origin = 'l1';
+        });
+        
+        this.props.elements2.forEach(e => {
+            if(idMap.has(e.data.id)){
+                idMap.get(e.data.id).data.origin = 'b';
+            }else{
+                idMap.set(e.data.id, e);
+                idMap.get(e.data.id).data.origin = 'l2';
+            }
+        });
+        console.log(idMap)
+/*        let elements = [...this.props.elements1.map(e => [0,e]),
+                        ...this.props.elements2.map(e => [1,e])];
+        
+        elements.sort((l,r) => l[1].data.id.localeCompare(r[1].data.id));
+        
+        for(let i=0; i< elements.length; ++i){
+            if(elements[i][1].data.id === elements[i+1][1].data.id){
+                fnElements.add()
+            }
+                
+        }
+               */         
+//         console.log("f",idMap.values())
+                        
+        this.setState({fnElements: [...idMap.values()]});
     }
     
     
@@ -81,7 +110,11 @@ class CytoscapeIntegration extends React.Component{
                 <Button onClick={this.handleUnion}>Union</Button>
             
                 <div className="plotNav">
-                <CytoscapeCustom className="border"  cy={(cy) => {this.cy = cy}} elements={this.state.fnElements} style={ { width: '600px', height: '400px', marginBottom:'10px' } }/>
+                <CytoscapeCustom className="border"  cy={(cy) => {this.cy = cy}} 
+                    elements={this.state.fnElements} 
+                    style={ { width: '600px', height: '400px', marginBottom:'10px' } }
+                    cstyle={{colors: cstyle.colors , labels: cstyle.labels, sizes :cstyle.sizes}}
+                />
                 </div>
                 
             </Card.Body>
