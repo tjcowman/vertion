@@ -7,7 +7,7 @@ import Select from 'react-select';
 
 import fcose from 'cytoscape-fcose';
 
-import * as cstyle from './cytoStyles.js'
+import {base}  from './cytoStyles.js'
 
 import './cytoscapeCustom.css'
 
@@ -24,6 +24,73 @@ const ggColMap=(labelSet)=>{
     
     [...labelSet].forEach( (e,i) =>  {/*console.log(e,i);*/ cMap.set( e, 'hsl('+hues[i]+',65%,65%)')}  );// hues.map((h) => 'hsl('+h+',65%,65%)' )
     return cMap;
+}
+
+
+class CytoscapeLegend extends React.Component{
+    constructor(props){
+        super(props);
+    }
+    
+    render(){
+        return(
+            <>
+                <div style={this.props.edgeMap.size === 0 ? {display:'none'} : {}}>Edges :</div> 
+                <div>
+                {[...this.props.edgeMap.entries()].map((k, i) =>(
+                        <ListGroupItem className="colorItem" key={i}> 
+                            <button onClick={this.handleEdgeColorSelect} edit="editColorEdge" name={k[0]} value={k[1]} className="colorIcon" style={{backgroundColor:k[1]}}>
+                            </button>
+                            {k[0]}
+                        </ListGroupItem>
+                ))}
+                </div>
+                
+                <div style={{clear:"both"}}></div>
+                
+                <div style={this.props.nodeMap.size === 0 ? {display:'none'} : {}}>Nodes :</div>
+                <div>
+                {[...this.props.nodeMap.entries()].map((k, i) =>(
+                        <ListGroupItem className="colorItem" key={i}> 
+                            <button onClick={this.handleNodeColorSelect} edit="editColorNode" name={k[0]} value={k[1]} className="colorIcon" style={{backgroundColor:k[1]}}>
+                            </button>
+                            {k[0]}
+                        </ListGroupItem>
+                ))}
+                </div>
+            
+            {/*
+                <div style={{clear:"both"}}></div>
+            
+                <div style={this.state.editColorEdge === "" ? {display:"none"} : {display:"inline"} }>
+                
+                    <form onSubmit={this.handleEdgeColorChange}>
+                        {this.state.editColorEdge} : 
+                            <input ref={this.colorRef} value={this.state.editValue}
+                                onChange={this.handleColorValueChange}
+                                
+                                >
+                            </input>
+                        
+                    </form>
+                </div>
+                    
+                                    
+                <div style={this.state.editColorNode === "" ? {display:"none"} : {display:"inline"} }>
+                
+                    <form onSubmit={this.handleNodeColorChange}>
+                        {this.state.editColorNode} : 
+                            <input ref={this.colorRef} value={this.state.editValue}
+                                onChange={this.handleColorValueChange}
+                                
+                                >
+                            </input>
+                    </form>
+                </div>
+                */}
+            </>
+        );
+    }
 }
 
 
@@ -148,36 +215,57 @@ class CytoscapeCustom extends React.Component{
     }
     
     computeStyle=()=>{
-        
-//         let test = this.styleLookup(cstyle.colors, this.state.colorStyle);
-//         console.log("WTF", test);
-        
-//         let test = [
-//             ...this.styleLookup(cstyle.colors, this.state.colorStyle),
-//             ...this.styleLookup(cstyle.labels, this.state.labelStyle),
-//         ]
-//         console.log("TE", test)
-        
         return [
-            ...cstyle.base,
-            ...this.styleLookup(cstyle.colors, this.state.colorStyle),
-            ...this.styleLookup(cstyle.labels, this.state.labelStyle),
-            ...this.styleLookup(cstyle.sizes, this.state.sizeStyle)
+            ...base,
+            ...this.styleLookup(this.props.cstyle.colors, this.state.colorStyle),
+            ...this.styleLookup(this.props.cstyle.labels, this.state.labelStyle),
+            ...this.styleLookup(this.props.cstyle.sizes, this.state.sizeStyle)
         ]
-        
-//         return (cstyle.colors[this.state.colorStyle]);
     }
     
+    generateLegendEdges=()=>{
+        //If the color scheme is set to auto, use the generated state colorMapping
+        if(this.state.colorStyle === "auto")
+            return(this.state.colorMapEdges)
+        //
+        else{ //Otherwise use the style provided legend names and colors
+            let s = this.styleLookup(this.props.cstyle.colors, this.state.colorStyle);
+            
+            let colorMap = new Map();
+            
+            s.forEach(e => {
+                if(e.selector.search("edge\\[") !== -1 || e.selector.search("\\[") === 0)
+                    colorMap.set(e.legendName, e.style['background-color']);
+            })
+            
+            return colorMap;
+        }
+        
+    }
     
+    generateLegendNodes=()=>{
+        
+        //If the color scheme is set to auto, use the generated state colorMapping
+        if(this.state.colorStyle === "auto")
+            return(this.state.colorMapNodes)
+        //
+        else{ //Otherwise use the style provided legend names and colors
+            let s = this.styleLookup(this.props.cstyle.colors, this.state.colorStyle);
+            
+            let colorMap = new Map();
+            
+            s.forEach(e => {
+                if(e.selector.search("node\\[")!== -1 ||  e.selector.search("\\[") === 0)
+                    colorMap.set(e.legendName, e.style['background-color']);
+            })
+            
+            return colorMap;
+        }
+    }
     
     render(){
-        
-//         const customStyles = {
-//             control: (provided) => ({...provided, fontSize:  '10px', minHeight: '20px', height : '20px'}) 
-//         };
 
-//         console.log("SSSSS", [...this.state.colorMapEdges.entries()].map((key,val) => key))
-      
+//         {this.generateLegendNodes()}
         return(
         
             <Card>
@@ -222,59 +310,9 @@ class CytoscapeCustom extends React.Component{
                 </Card>
            
            
-                <div style={this.state.colorMapEdges.size === 0 ? {display:'none'} : {}}>Edges :</div> 
-                <div>
-                {[...this.state.colorMapEdges.entries()].map((k, i) =>(
-                        <ListGroupItem className="colorItem" key={i}> 
-                            <button onClick={this.handleEdgeColorSelect} edit="editColorEdge" name={k[0]} value={k[1]} className="colorIcon" style={{backgroundColor:k[1]}}>
-                            </button>
-                            {k[0]}
-                        </ListGroupItem>
-                ))}
-                </div>
-                
-                <div style={{clear:"both"}}></div>
-                
-                <div style={this.state.colorMapNodes.size === 0 ? {display:'none'} : {}}>Nodes :</div>
-                <div>
-                {[...this.state.colorMapNodes.entries()].map((k, i) =>(
-                        <ListGroupItem className="colorItem" key={i}> 
-                            <button onClick={this.handleNodeColorSelect} edit="editColorNode" name={k[0]} value={k[1]} className="colorIcon" style={{backgroundColor:k[1]}}>
-                            </button>
-                            {k[0]}
-                        </ListGroupItem>
-                ))}
-                </div>
-            
-                <div style={{clear:"both"}}></div>
-            
-                <div style={this.state.editColorEdge === "" ? {display:"none"} : {display:"inline"} }>
-                
-                    <form onSubmit={this.handleEdgeColorChange}>
-                        {this.state.editColorEdge} : 
-                            <input ref={this.colorRef} value={this.state.editValue}
-                                onChange={this.handleColorValueChange}
-                                
-                                >
-                            </input>
-                        
-                    </form>
-                </div>
-                    
-                                    
-                <div style={this.state.editColorNode === "" ? {display:"none"} : {display:"inline"} }>
-                
-                    <form onSubmit={this.handleNodeColorChange}>
-                        {this.state.editColorNode} : 
-                            <input ref={this.colorRef} value={this.state.editValue}
-                                onChange={this.handleColorValueChange}
-                                
-                                >
-                            </input>
-                    </form>
-                </div>
-   
-   
+
+                {/*<CytoscapeLegend edgeMap={this.state.colorMapEdges} nodeMap={this.state.colorMapNodes}/>*/}
+                {this.props.elements.length > 0 ? <CytoscapeLegend edgeMap={this.generateLegendEdges()} nodeMap={this.generateLegendNodes()}/> : ""}
     
    
                 

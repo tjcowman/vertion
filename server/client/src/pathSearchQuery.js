@@ -192,6 +192,8 @@ class PathSearchQueryComponent extends React.Component{
     
     handleSubmit=()=>{
         
+        this.props.handleUpdateElements([], this.props.elementsName);
+        
         //TODO: replace the current method with this 
 
 
@@ -248,7 +250,14 @@ class PathSearchQueryComponent extends React.Component{
             //Compute normalized scores 
             
             
-            this.props.handleNodeLookupIndex(response.data.map((p) => p.nodes).flat(), this.setState({pathTreeResponse: response.data, terminalScores: terminalScores, sinkData: sinkData}, this.handleMinWeightSlider) /*, formatResponse*/ );
+            this.props.handleNodeLookupIndex(response.data.map((p) => p.nodes).flat(), this.setState({
+                pathTreeResponse: response.data, 
+                terminalScores: terminalScores, 
+                sinkData: sinkData,
+                topk: 0,
+                minWeightDisplay: 0,
+            }, this.handleMinWeightSlider) /*, formatResponse*/ );
+            
         });
         
     }

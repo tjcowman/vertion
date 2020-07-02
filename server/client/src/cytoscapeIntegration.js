@@ -27,7 +27,7 @@ class CytoscapeIntegration extends React.Component{
         
         this.props.elements1.forEach(e => {
             idMap.set(e.data.id, e);
-            idMap.get(e.data.id).data.origin = 'l1';
+            idMap.get(e.data.id).data.origin = 'l';
         });
         
         this.props.elements2.forEach(e => {
@@ -35,7 +35,7 @@ class CytoscapeIntegration extends React.Component{
                 idMap.get(e.data.id).data.origin = 'b';
             }else{
                 idMap.set(e.data.id, e);
-                idMap.get(e.data.id).data.origin = 'l2';
+                idMap.get(e.data.id).data.origin = 'r';
             }
         });
         console.log(idMap)
@@ -90,9 +90,12 @@ class CytoscapeIntegration extends React.Component{
 
     }
     
-//     handleNodeClick=(event)=>{
-//         console.log("E", event.target._private);
-//     }
+    handleNodeClick=(event)=>{
+        console.log("E", event.target._private.data);
+    }
+    handleEdgeClick=(event)=>{
+        console.log("E", event.target._private.data);
+    }
 // 
 //     componentDidMount = () => {
 //         this.cy.on('click', 'node', this.handleNodeClick);
@@ -113,7 +116,9 @@ class CytoscapeIntegration extends React.Component{
                 <CytoscapeCustom className="border"  cy={(cy) => {this.cy = cy}} 
                     elements={this.state.fnElements} 
                     style={ { width: '600px', height: '400px', marginBottom:'10px' } }
-                    cstyle={{colors: cstyle.colors , labels: cstyle.labels, sizes :cstyle.sizes}}
+                    cstyle={{colors: {...cstyle.colors, union :cstyle.color_union} , labels: cstyle.labels, sizes :cstyle.sizes}}
+                    handleNodeClick={this.handleNodeClick} 
+                    handleEdgeClick={this.handleEdgeClick}
                 />
                 </div>
                 

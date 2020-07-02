@@ -44,50 +44,23 @@
         }
     ]
     
-    let regulationDirection = [
-        {
-            selector: 'node[nodeScore]',
-            style: {
-                'width' : 'data(nodeScore)',
-                'height' : 'data(nodeScore)',
-                }
-            
-        },
-    
-        {
-            selector: "node[direction = 0 ]",
-                style: {
-                    'background-color' : 'green'
-                }
-        },
-                {
-            selector: "node[direction = 1 ]",
-                style: {
-                    'background-color' : 'red'
-                }
-        },
-                {
-            selector: "node[direction = 2 ]",
-                style: {
-                    'background-color' : 'orange'
-                }
-        },
-    ]
-    
     let color_direction = [    
         {
+            legendName: "Increased",
             selector: "node[direction = 0 ]",
                 style: {
                     'background-color' : 'green'
                 }
         },
-                {
+        {
+            legendName: "Decreased",
             selector: "node[direction = 1 ]",
                 style: {
                     'background-color' : 'red'
                 }
         },
-                {
+        {
+            legendName: "Both",
             selector: "node[direction = 2 ]",
                 style: {
                     'background-color' : 'orange'
@@ -122,9 +95,35 @@
         }
     ]
     
-//     export let all = {
-//         auto:auto, monochrome :monochrome, regulationDirection: regulationDirection
-//     }
+    export let color_union = [
+        {
+            legendName: "Kinase 1",
+            selector: "[origin = 'l']",
+            style: {
+                'background-color': 'blue',
+                'line-color': 'blue',
+                'source-arrow-color' : 'blue'
+            }
+        },
+        {
+            legendName: "Kinase 2",
+            selector: "[origin = 'r']",
+            style: {
+                'background-color': 'yellow',
+                'line-color': 'yellow',
+                'source-arrow-color' : 'yellow'
+            }
+        },
+        {
+            legendName: "Both",
+            selector: "[origin = 'b']",
+            style: {
+                'background-color': 'green',
+                'line-color': 'green',
+                'source-arrow-color' : 'green'
+            }
+        },
+    ]
     
     export let colors = { none: color_monochrome, auto: color_auto, direction: color_direction
         
