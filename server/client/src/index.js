@@ -30,29 +30,31 @@ import './index.css';
 import './sideBarMenu.css';
 
 
-class LogStruct{
-    //{type, text, count(calculated)}
+//TODO BUG: A lot of state is being mutated directly due to a misunderstanding, need to fix EX: switch to functional setState like currently used in the add and remove versionCard Handlers
 
-    constructor(){
-      this.messages = [];
-    }
-
-    mostRecent(){
-      return this.messages[this.messages.length-1];
-    }
-
-    log(mtype, message){
-//console.log("m1", this.mostRecent(), "m2",message)
-        if( !(this.mostRecent() === undefined) && this.mostRecent().text === message){
-          this.mostRecent().count +=1;
-
-        }
-        else
-            this.messages.push({type :  mtype, text: message, count: 1});
-
-    }
-}
-
+// class LogStruct{
+//     //{type, text, count(calculated)}
+// 
+//     constructor(){
+//       this.messages = [];
+//     }
+// 
+//     mostRecent(){
+//       return this.messages[this.messages.length-1];
+//     }
+// 
+//     log(mtype, message){
+// //console.log("m1", this.mostRecent(), "m2",message)
+//         if( !(this.mostRecent() === undefined) && this.mostRecent().text === message){
+//           this.mostRecent().count +=1;
+// 
+//         }
+//         else
+//             this.messages.push({type :  mtype, text: message, count: 1});
+// 
+//     }
+// }
+// 
 
 
 
@@ -92,7 +94,7 @@ class App extends React.Component {
             
             navCollapsed: false,
             
-            logStruct : new LogStruct(),
+//             logStruct : new LogStruct(),
 
             serverProps : {},
 
@@ -216,30 +218,28 @@ class App extends React.Component {
 
     handleLog=(mtype, message)=>{
         let logStruct = this.state.logStruct;
-        this.state.logStruct.log(mtype, message);
+//         this.state.logStruct.log(mtype, message);
         this.setState({logStruct: logStruct})
       //  console.log(this.state)
     }
 
 
     handleAddVersionCard=()=>{
-        let versionCardsO = this.state.versionCardsO;
-        this.state.versionCardsO.handleAddVersionCard();
-
-        this.setState({versionCardsO: versionCardsO}, this.handleClickVersionCard(this.state.versionCardsO.cards.length-1));
+        this.setState(prevState=>({
+            
+            versionCardsO: prevState.versionCardsO.handleAddVersionCard().handleClickVersionCard(this.state.versionCardsO.cards.length-1)
+            
+        }))
     }
 
     handleRemoveVersionCard=()=>{
         if(this.state.versionCardsO.cards.length <= 1)
             return;
-
-        let versionCardsO = this.state.versionCardsO;
-        this.state.versionCardsO.handleRemoveVersionCard();
-
-        this.setState({
-            versionCardsO: versionCardsO,
-            activeVersionCard : Math.min(this.state.activeVersionCard, versionCardsO.cards.length-1)
-        });
+        
+        this.setState(prevState=>({
+            versionCardsO: prevState.versionCardsO.handleRemoveVersionCard()
+            
+        }))
     }
 
     handleClickVersionCard=(id)=>{

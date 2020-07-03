@@ -29,9 +29,35 @@ class PathSearchComponent extends React.Component{
     
     handleUpdateElements=(elements, stateName)=>{
      
-        this.setState({[stateName]: elements});
+        this.setState(prevState=>({
+            [stateName]: elements
+        }));
         
 //         console.log("TEST",this.cy)
+    }
+    
+    handleComputeIntegrationData=(dependentFunction)=>{
+        let idMap = new Map();
+        
+        this.state.elements1.forEach(e => {
+            idMap.set(String(e.data.id), 'l');
+        });
+        
+        this.state.elements2.forEach(e => {
+            if(idMap.has(String(e.data.id))){
+                idMap.set(String(e.data.id), 'b');
+            }else{
+                idMap.set(String(e.data.id), 'r');
+            }
+        });
+        console.log(idMap)
+
+        this.setState(prevState=>({
+            elements1 : this.state.elements1.map((e) => ({data:{...e.data, origin: idMap.get(String(e.data.id))}})),
+            elements2 : this.state.elements2.map((e) => ({data:{...e.data, origin: idMap.get(String(e.data.id))}}))
+        }), dependentFunction)
+                   
+//         let newElements = [...idMap.values()].map(e => ({data:{...e[0].data, origin: e[1]}} ));
     }
 
     render(){
@@ -75,6 +101,7 @@ class PathSearchComponent extends React.Component{
                         <CytoscapeIntegration 
                             elements1={this.state.elements1} 
                             elements2={this.state.elements2}
+                            handleComputeIntegrationData={this.handleComputeIntegrationData}
                         />
                         </Card.Body>
                 </Tab>

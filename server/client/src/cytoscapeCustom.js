@@ -93,6 +93,27 @@ class CytoscapeLegend extends React.Component{
     }
 }
 
+// class CytoscapeExport extends React.Component{
+//     constructor(props){
+//         super(props);
+//     }
+//     
+//     render(){
+//         {console.log("FF", this.props.cy)}
+//         return(
+//             
+//             <>
+//                 <Button onClick={async () => {
+//                     await navigator.clipboard.writeText(this.props.cy.nodes('[nodeType = "Protein"]').map((e) => e._private.data.label).join('\n'));
+//                     console.log(this.cy.nodes('[nodeType = "Protein"]').map((e) => e._private.data.label))
+//                 }}
+//                     
+//                 ></Button>
+//             
+//             </>
+//         )
+//     }
+// }
 
 class CytoscapeCustom extends React.Component{
     constructor(props){
@@ -105,9 +126,11 @@ class CytoscapeCustom extends React.Component{
             labelStyle : "",
             sizeStyle : "",
             
-            editColorEdge : "",
-            editColorNode : "",
-            editValue : "",
+//             editColorEdge : "",
+//             editColorNode : "",
+//             editValue : "",
+            
+            exportField : "",
             
             colorMapEdges : new Map(),
             colorMapNodes : new Map(),
@@ -121,9 +144,9 @@ class CytoscapeCustom extends React.Component{
 //         console.log( this.state.colorMapEdges, prevState.colorMapEdges)
         
         if(this.props.elements.length > 0){//make sure elements actually exist
-            this.cy.startBatch();
+//             this.cy.startBatch();
             if(this.props.elements !== prevProps.elements){ 
-                this.cy.removeData();
+//                 this.cy.removeData();
             
                 let edgeTypeSet = new Set();
                 let nodeTypeSet = new Set();
@@ -139,9 +162,10 @@ class CytoscapeCustom extends React.Component{
             {
                 this.colorElements();
             }
-            this.cy.endBatch();
+//             this.cy.endBatch();
         }
     }
+    
     
     colorElements=()=>{
         this.cy.edges().forEach((n) => n.json({data :{color_auto : this.state.colorMapEdges.get(n._private.data.edgeType)}}) );
@@ -204,6 +228,10 @@ class CytoscapeCustom extends React.Component{
         colorMapNodes.set(this.state.editColorNode, this.state.editValue);
         this.colorElements();
         this.setState({colorMapNodes: colorMapNodes});
+    }
+    
+    handleExportChange=(event)=>{
+        this.setState({exportField : event.value})
     }
     
     styleLookup=(map, name)=>{
@@ -271,14 +299,23 @@ class CytoscapeCustom extends React.Component{
             <Card>
             <Card.Body>
             
-   
-            
-                <Button onClick={async () => {
-                    await navigator.clipboard.writeText(this.cy.nodes('[nodeType = "Protein"]').map((e) => e._private.data.label).join('\n'));
-                    console.log(this.cy.nodes('[nodeType = "Protein"]').map((e) => e._private.data.label))
-                }}
-                    
-                ></Button>
+                <div className= "border" style={{margin:'5px 0px' }}>
+                    <div style={{display:'inline-block'}} >
+                        <Button style={{margin:'5px'}} onClick={async () => {
+                            await navigator.clipboard.writeText(this.cy.nodes('[nodeType = "Protein"]').map((e) => e._private.data[this.state.exportField]).join('\n'));
+//                             console.log(this.cy.nodes('[nodeType = "Protein"]').map((e) => e._private.data.label))
+                        }}>Export Proteins</Button>
+                    </div>
+                    <div style={{width:'200px', margin:'5px', display:'inline-block', verticalAlign: 'middle'}}>
+                        <Select 
+                            options={[
+                                {value: 'label', label: 'Uniprot'},
+                                {value:  'pLabel', label: 'Name'}
+                            ]}
+                            onChange={this.handleExportChange}
+                        />
+                    </div>
+                </div>
             
             
             

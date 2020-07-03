@@ -122,7 +122,7 @@ class VersionCards{
     
     handleAddVersionCard=()=>{
         this.push();
-
+        return this;
     }
 
     handleRemoveVersionCard=()=>{
@@ -130,10 +130,12 @@ class VersionCards{
             return;
         this.cards.pop();
         this.activeCard = Math.min(this.activeCard, this.cards.length-1);
+        return this;
     }
 
     handleClickVersionCard=(id)=>{
         this.activeCard = id;
+        return this;
     }
 
 }

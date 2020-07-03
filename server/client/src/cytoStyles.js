@@ -95,7 +95,7 @@
         }
     ]
     
-    export let color_union = [
+    export let color_integration = [
         {
             legendName: "Kinase 1",
             selector: "[origin = 'l']",

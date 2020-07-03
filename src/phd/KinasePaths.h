@@ -20,7 +20,7 @@ class KinasePaths
         KinasePaths(const IntegratedViewer<GT>& viewer);
         
         //calculates the shortest paths given the current settings
-        void compute(const VertexI<GT>& source, const GraphList<VertexS<GT>>& sinks);
+        void compute(const VertexI<GT>& source, const GraphList<VertexS<GT>>& sinks, const GraphList<VertexS<GT>>& globalProximity);
         void scorePaths();
         
         GraphList<EdgeElement<GT>> computeDense(const std::vector<typename GT::Index> & pathNodes)const;
@@ -187,7 +187,7 @@ typename GT::Value KinasePaths<GT>::weightFunction(/*const GraphList<VertexS<GT>
 
 //NOTE: the paths are returne dusing global indexes
 template<class GT>
-void KinasePaths<GT>::compute(const VertexI<GT>& source, const GraphList<VertexS<GT>>& sinks)
+void KinasePaths<GT>::compute(const VertexI<GT>& source, const GraphList<VertexS<GT>>& sinks, const GraphList<VertexS<GT>>& globalProximity)
 {
     computeNodeScores(sinks);
     
@@ -195,11 +195,11 @@ void KinasePaths<GT>::compute(const VertexI<GT>& source, const GraphList<VertexS
     
     
     //compute the global rwr
-    RandomWalker<GT> RW(*viewer_);
+//     RandomWalker<GT> RW(*viewer_);
     
 
-    typename RandomWalker<GT>::Args_Walk args_walk{.15, 1e-6, GraphList<VertexS<GT>>()};
-    auto res = RW.walk(GraphList<VertexS<GT>>(), args_walk);
+//     typename RandomWalker<GT>::Args_Walk args_walk{.15, 1e-6, GraphList<VertexS<GT>>()};
+//     auto res = RW.walk(GraphList<VertexS<GT>>(), args_walk);
 //     std::cout<<"RWR DONE"<<std::endl;
 //     std::cout<<res<<std::endl;
    // row is the node index, edge is the edge index ex: A_[edge] JA_[edge]
@@ -211,7 +211,7 @@ void KinasePaths<GT>::compute(const VertexI<GT>& source, const GraphList<VertexS
         for(typename GraphType::GD::Index edge=lb; edge<rb; ++edge)
         {
 //             std::cout<<res[edge].value_<<std::endl;
-            Arw[edge] = weightFunction(/*res,*/ row, edge, Arw[edge]* -log(res[viewer_->JA_[edge]].value_) );
+            Arw[edge] = weightFunction(/*res,*/ row, edge, Arw[edge]* -log(globalProximity[viewer_->JA_[edge]].value_) );
         }
     }
     

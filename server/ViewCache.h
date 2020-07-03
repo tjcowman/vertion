@@ -4,6 +4,7 @@
 #include "query/IntegratedViewer.h"
 #include "query/Traversal_View.h"
 #include "query/Components_View.h"
+#include "query/RandomWalker.h"
 
 
 #include <string>
@@ -179,6 +180,7 @@ class ViewCache
         json getViewSummary(const std::string& key);
 
         IntegratedViewer<GT>& lookup(const ViewKey<GT>& key);
+        const GraphList<VertexS<GT>>& lookupProximities(const ViewKey<GT>& key);
         void finishLookup(const ViewKey<GT>& key);
 
 
@@ -198,8 +200,10 @@ class ViewCache
 
         std::map<std::string, TrackerEntry> viewMap_;
         std::set<int> emptySlots_;
+        
         std::vector<IntegratedViewer<GT>> viewData_;
-
+        //Derived calculations, parallel to the viewData_
+        std::vector< std::pair< bool, GraphList<VertexS<GT>> > > viewProximities_;
 
 };
 
@@ -209,6 +213,8 @@ ViewCache<GT>::ViewCache(const VGraph<GT>& graph, int cacheSize, int sizeFactor)
     cacheSize_ = cacheSize;
     sizeFactor_ = sizeFactor;
     viewData_ = std::vector<IntegratedViewer<GT>>(cacheSize_*sizeFactor_, IntegratedViewer<GT>(graph));
+    viewProximities_ =  std::vector< std::pair<bool, GraphList<VertexS<GT>> > >(cacheSize_*sizeFactor_, std::pair<bool,GraphList<VertexS<GT>>>(false, GraphList<VertexS<GT>>()) );
+    
     emptySlots_ = std::set<int>();
     for(int i=0; i<cacheSize_*sizeFactor_; ++i)
         emptySlots_.insert(emptySlots_.end(), i);
@@ -251,6 +257,9 @@ void ViewCache<GT>::clean()
 
                 emptySlots_.insert(viewsToRemove[i].entryIndex_);
                 viewMap_.erase(viewsToRemove[i].key_);
+                
+                viewProximities_[viewsToRemove[i].entryIndex_].first = false;
+                
             }
 
 
@@ -268,7 +277,28 @@ json ViewCache<GT>::getViewSummary(const std::string& key)
     return json(viewSummaries_.at(key));
 }
 
-//
+//NOTE: Only call within the standard lookup/finishlookup block
+template<class GT>
+const GraphList<VertexS<GT>>& ViewCache<GT>::lookupProximities(const ViewKey<GT>& key)
+{
+    
+    auto v = viewMap_.find(key.key_)->second.entryIndex_;
+     
+    if(!viewProximities_[v].first) //generate the lookupProximities
+    {
+        RandomWalker<GT> RW(viewData_[v]);
+        typename RandomWalker<GT>::Args_Walk args_walk{.15, 1e-6, GraphList<VertexS<GT>>()};
+        
+        viewProximities_[v] =   std::make_pair(true,GraphList<VertexS<GT>>(RW.walk(GraphList<VertexS<GT>>(), args_walk)));
+        
+        return viewProximities_[v].second;
+    }
+    else
+    {
+        return viewProximities_[v].second;
+    }
+}
+
 template<class GT>
 IntegratedViewer<GT>& ViewCache<GT>::lookup(const ViewKey<GT>& key)
 {

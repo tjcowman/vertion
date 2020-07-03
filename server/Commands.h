@@ -339,7 +339,8 @@ namespace Commands
 //         std::cout<<sinkList<<std::endl;
         
         sinkList.sort(Sort::indexInc);
-        KP.compute(VertexI<GT>(sourceIndex), sinkList);
+        KP.compute(VertexI<GT>(sourceIndex), sinkList, viewCache.lookupProximities(key));
+        viewCache.finishLookup(key);
    // std::cout<<"CMPTED"<<std::endl;    
         int pNum=0;
         for(const auto& path : KP.getPaths())
