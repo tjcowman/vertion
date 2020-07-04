@@ -426,7 +426,8 @@ class App extends React.Component {
                                     selectedVersions={this.state.versions_s}
 
                                     handleNodeLookupIndex={this.handleNodeLookupIndex}
-
+                                    handleNodeLookup={this.handleNodeLookup}
+                                    
                                     nodeData = {this.state.nodeData}
 
 

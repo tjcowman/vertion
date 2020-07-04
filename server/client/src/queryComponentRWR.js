@@ -41,6 +41,16 @@ class SettingsRWR extends React.Component{
         return (
             
             <>
+            
+            <Card style={{marginBottom: '10px'}}>
+                <Card.Header>Input</Card.Header>
+                <Card.Body>
+                    Restart Nodes
+                    <textarea autoComplete="off" value={this.props.kinaseText} className=" form-control" name="nodeText"  onChange={this.props.handleChange} ></textarea>
+                </Card.Body>
+            </Card>
+            
+            
             <Card>
                 <Card.Header>Settings</Card.Header>
                 <Card.Body>
@@ -83,6 +93,8 @@ class QueryComponentRWR extends React.Component{
         this.state = {
             versionIndex: undefined,
             
+            nodeText: "",
+            
             alpha: .15,
             epsilon: 5,
             topk: 10,
@@ -98,7 +110,7 @@ class QueryComponentRWR extends React.Component{
     this.setState({
         [name]: value,
     })
-
+    console.log(this.state);
   }
 
   handleVersionChange=(event)=>{
@@ -110,45 +122,85 @@ class QueryComponentRWR extends React.Component{
     try{
         
         let versionDef = this.props.versionCardsO.getVersionDefinition(this.state.versionIndex);
-//         console.log("VDEF",versionDef)
-        
-//   
-
         let epsilon = (1/(Math.pow(10,this.state.epsilon)));
-        let selectedNodes = [];
+        
+//         let selectedNodes = [];
+        //parse the restart vector nodes TODO: add weighting
+        let uniprotNames = this.state.nodeText.split('\n'); //.map(row=>(row.split('\t')));
+  
+        this.props.handleNodeLookup(uniprotNames, ()=> { 
+            let selectedNodes2 = uniprotNames.map(e => ({i: this.props.nodeData.getIndex(e), v:1}) );
+//             console.log("SN2", selectedNodes2)
+            
+            
+            let command = {
+                cmd:"rwr2",
+                ...versionDef, 
+                alpha:Number(this.state.alpha), 
+                epsilon:Number(epsilon), 
+                topk:Number(this.state.topk), 
+                source:selectedNodes2, mode:"el",
 
-       this.props.versionCardsO.cards[this.props.versionCardsO.activeCard].nodes_s.forEach((v1,v2) => (selectedNodes.push({i:v1, v:1})));
+            };
+            
+            
+            Axios.post('http://'+this.props.backAddr, JSON.stringify(command)).then((response)=>{
+                let ids = response.data.nodes.map((e) => e.id);
 
+                let formatResponse = () =>{
+                let result = response.data.nodes.map((e,i) => ({
+                        row : i,
+                        value : e.value,
+                        name: this.props.nodeData.getEntry(e.id).name,
+                        labels: this.props.nodeData.getEntry(e.id).labelsText
 
-            let command = {cmd:"rwr2", ...versionDef, alpha:Number(this.state.alpha), epsilon:Number(epsilon),
-            topk:Number(this.state.topk), source:selectedNodes, mode:"el",
+                    }))
 
-        };
+                    this.setState({ result:  {nodes:result, edges: response.data.edges } })
+
+                }
+
+                this.props.handleNodeLookupIndex(ids, formatResponse);
+
+            });
+            
+        });
+     
+        
+        //Take the unknown uniprotIds and query the mfor existence
+        
+//        this.props.versionCardsO.cards[this.props.versionCardsO.activeCard].nodes_s.forEach((v1,v2) => (selectedNodes.push({i:v1, v:1})));
+// 
+// 
+//             let command = {cmd:"rwr2", ...versionDef, alpha:Number(this.state.alpha), epsilon:Number(epsilon),
+//             topk:Number(this.state.topk), source:selectedNodes, mode:"el",
+// 
+//         };
        
 
-        Axios.post('http://'+this.props.backAddr, JSON.stringify(command)).then((response)=>{
-        //    console.log("cmd",response.data)
-
-            let ids = response.data.nodes.map((e) => e.id);
-
-
-            let formatResponse = () =>{
-               let result = response.data.nodes.map((e,i) => ({
-                    row : i,
-                    value : e.value,
-                    name: this.props.nodeData.getEntry(e.id).name,
-                    labels: this.props.nodeData.getEntry(e.id).labelsText
-
-                }))
-
-              console.log(result)
-                this.setState({ result:  {nodes:result, edges: response.data.edges } })
-
-            }
-
-            this.props.handleNodeLookupIndex(ids, formatResponse);
-
-        });
+//         Axios.post('http://'+this.props.backAddr, JSON.stringify(command)).then((response)=>{
+//         //    console.log("cmd",response.data)
+// 
+//             let ids = response.data.nodes.map((e) => e.id);
+// 
+// 
+//             let formatResponse = () =>{
+//                let result = response.data.nodes.map((e,i) => ({
+//                     row : i,
+//                     value : e.value,
+//                     name: this.props.nodeData.getEntry(e.id).name,
+//                     labels: this.props.nodeData.getEntry(e.id).labelsText
+// 
+//                 }))
+// 
+//               console.log(result)
+//                 this.setState({ result:  {nodes:result, edges: response.data.edges } })
+// 
+//             }
+// 
+//             this.props.handleNodeLookupIndex(ids, formatResponse);
+// 
+//         });
 
     }
     catch(err){

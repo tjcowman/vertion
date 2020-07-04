@@ -117,23 +117,21 @@ class NodeData{
     }
 
     //Takes a array of pairs corresponding to the name : index of nodes
+    //TODO: remove labelsText
     update(names, serverResponse){
         for (let i=0; i< names.length; ++i){
             this.names.set(names[i], serverResponse[i].id);
             if(serverResponse[i] !== -1)
                 this.indexes[serverResponse[i].id] = {name: names[i], pname: serverResponse[i].pname, labels:serverResponse[i].l, labelsText: "tmp" };
-//             this.indexes.set(serverResponse[i], names[i]);
         }
         return this;
     }
 
     updateIndex(indexes, serverResponse){
         for (let i=0; i< indexes.length; ++i){
-            this.names.set(indexes[i], serverResponse[i].name);
+            this.names.set(serverResponse[i].name, indexes[i]);
 
-//             if(serverResponse[i] != -1)
             this.indexes[indexes[i]] = {name: serverResponse[i].name, pname: serverResponse[i].pname ,labels:serverResponse[i].l, labelsText: "tmp"};
-//             this.indexes.set(serverResponse[i], names[i]);
         }
         return this;
     }
