@@ -282,7 +282,7 @@ void VectorIA<T>::populateCache()
     IACacheSize = versionBounds_.size()+1;
     
     for(typename T::VersionIndex i = 0; i<versionBounds_.size(); ++i)
-        cacheIA_.insert(std::make_pair(i,  decompressIA(i))).first;
+        cacheIA_.insert(std::make_pair(i,  decompressIA(i)));//.first;
 
 }
 

@@ -29,9 +29,9 @@
 #include <mutex>
 #include <condition_variable>
 
-//BUG: Crash on 1st nodelookup query sometimes it looks like
-//BUG: No protein harboring crash on paths
 
+//BUG: No protein harboring crash on paths
+//TODO: Important Efficieny, check the variables set to const auto/type, if not also & then even if fucntion returns const& a copy will occur 
 
 namespace fs = std::experimental::filesystem;
 using json = nlohmann::json;

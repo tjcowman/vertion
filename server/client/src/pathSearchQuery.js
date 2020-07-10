@@ -37,6 +37,8 @@ class Settings extends React.Component{
                     <Card.Body>
                         Minimum Weight
                         <input className="form-control" value={this.props.minWeight} name="minWeight" onChange={this.props.handleChange}></input>
+                        Kinase Permutations
+                        <input className="form-control" value={this.props.kinasePerm} name="kinasePerm" onChange={this.props.handleChange}></input>
                     </Card.Body>
                 </Card>
             </>
@@ -55,11 +57,13 @@ class PathSearchQueryComponent extends React.Component{
             kinaseText: "P00533",
             siteText: "Q15459	359	-1.3219\nQ15459	451	0.5352\nP28482	185	4.4463\nP28482	187	4.4195\nQ8N3F8	273	-0.3219",
             pathTreeResponse: [],
+            pathTreePermutationResponse: [[]],
             terminalScores: { sparseFactor :0, scores: []}, //the computed score value for the provided input set (basically avgs of sites / protein)
             
             densePathResponse: [],
 
             minWeight: 0,
+            kinasePerm: 0,
             
             
             topk: 0,
@@ -210,10 +214,11 @@ class PathSearchQueryComponent extends React.Component{
         
         
         let command = {cmd:"pths", versions:versions, 
-            vertexLabels: [0,1],// [...this.props.versionCardsO.cards[this.props.versionCardsO.activeCard].labelsV_s],
+            vertexLabels: [0,1,2],// [...this.props.versionCardsO.cards[this.props.versionCardsO.activeCard].labelsV_s],
             edgeLabels:  [0,1,2,3], //[...this.props.versionCardsO.cards[this.props.versionCardsO.activeCard].labelsE_s],
             minWeight: Number(this.state.minWeight),
             kinase: this.state.kinaseText,
+            kinasePerm: this.state.kinasePerm,
             sites: sites
         };
         
@@ -228,7 +233,7 @@ class PathSearchQueryComponent extends React.Component{
 
             let sinkData = new Map();
             
-            let terminalScores = { sparseFactor : 1, scores: response.data.map((p,i) => (p.nodeScore) ).sort()};
+            let terminalScores = { sparseFactor : 1, scores: response.data.mainTree.map((p,i) => (p.nodeScore) ).sort()};
             //sparsify the scores for plotting later
             if(terminalScores.scores.length > 199){
                 let sparseFactor = Math.floor(terminalScores.scores.length/100);
@@ -236,11 +241,10 @@ class PathSearchQueryComponent extends React.Component{
                 terminalScores = { sparseFactor : sparseFactor, scores: terminalScores.scores.filter((e, i) => {return i % sparseFactor === 0})};
             }
             
-            let maxScore =  Math.max(...response.data.map(p => p.nodeScore));
-//             console.log("MS", maxScore, response.data.map(p => p.nodeScore))
+            let maxScore =  Math.max(...response.data.mainTree.map(p => p.nodeScore));
             let targetMax = 100;
             
-            response.data.forEach(p =>{
+            response.data.mainTree.forEach(p =>{
                 sinkData.set(p.nodes[0], {
                     direction: p.direction, 
                     scoreNorm: p.nodeScore*(targetMax/maxScore) 
@@ -250,8 +254,10 @@ class PathSearchQueryComponent extends React.Component{
             //Compute normalized scores 
             
             
-            this.props.handleNodeLookupIndex(response.data.map((p) => p.nodes).flat(), this.setState({
-                pathTreeResponse: response.data, 
+            this.props.handleNodeLookupIndex(response.data.mainTree.map((p) => p.nodes).flat(), 
+                this.setState({
+                pathTreeResponse: response.data.mainTree, 
+                pathTreePermutationResponse: response.data.permTree,
                 terminalScores: terminalScores, 
                 sinkData: sinkData,
                 topk: 0,
@@ -361,7 +367,16 @@ class PathSearchQueryComponent extends React.Component{
             <>
             <Card.Body >
                
-                    <QuerySettingsBar handleVersionChange={this.handleVersionChange} versionCards={this.props.versionCardsO} handleRun={this.handleSubmit} component={<Settings minWeight={this.state.minWeight} handleChange={this.handleChange} siteText={this.state.siteText} kinaseText={this.state.kinaseText}/>} />
+                    <QuerySettingsBar handleVersionChange={this.handleVersionChange} 
+                        versionCards={this.props.versionCardsO} 
+                        handleRun={this.handleSubmit} 
+                        component={<Settings minWeight={this.state.minWeight} 
+                            handleChange={this.handleChange} 
+                            siteText={this.state.siteText}
+                            kinaseText={this.state.kinaseText}
+                            kinasePerm={this.state.kinasePerm}
+                        />} 
+                    />
                     
                 
                             <div className="container">

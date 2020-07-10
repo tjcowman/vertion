@@ -77,6 +77,8 @@ class VGraph
         using Value = typename T::Value;
         using VersionIndex = typename T::VersionIndex;
         
+
+        
         
         friend class VGraphIO<T>; //So graphs can be read/write more efficiently
         friend class Extractor<T>;
@@ -606,7 +608,7 @@ EdgeList VGraph<T>::indexNewEdges(const iterableType& edges, FL fl, FR fr, FW se
 
         //std::cout<<"lu "<<index1<<":"<<fl(e)<<":::"<<index2<<":"<<fr(e)<<"\n";
         
-        if(index1 != VertexController<T>::invalidIndex && index2 !=VertexController<T>::invalidIndex)
+        if(index1 != T::invalidIndex && index2 !=T::invalidIndex)
             newEdges.push_back(EdgeElement<T>(index1, index2, setWeight(e), EdgeLabel<T>()));
                 
     }

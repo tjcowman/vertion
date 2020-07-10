@@ -313,17 +313,19 @@ namespace Commands
     template<class GT>
     json pths(const VGraph<GT>& graph, ViewCache<GT>& viewCache, const json& args)
     {
-        auto ret = json::array();
+        json ret;
+        auto mainTree = json::array();
         
         ViewKey<GT> key = viewKeyFromArgs<GT>(args);
         IntegratedViewer<GT> IV = viewCache.lookup(key);
         // IV.viewUnion(versions);
-    // 
+    std::cout<<"VIEWCACHELOOKEDUP"<<std::endl;
     //         
         KinasePaths KP(IV);
         KP.arg_minWeight_ = args["minWeight"];
         
         auto sourceIndex = graph.lookupVertex(args["kinase"].get<std::string>());
+        std::cout<<"SOURCEINDEX" <<sourceIndex<<std::endl;
         
         GraphList<VertexS<GT>> sinkList;
         for(const auto& e : args["sites"])
@@ -335,49 +337,51 @@ namespace Commands
                 //usedIndexes.insert(graphIndex);
             }
         }
-        
+        std::cout<<"SINKLIST"<<std::endl;
 //         std::cout<<sinkList<<std::endl;
         
         sinkList.sort(Sort::indexInc);
-        KP.compute(VertexI<GT>(sourceIndex), sinkList, viewCache.lookupProximities(key));
+        KP.compute(VertexI<GT>(sourceIndex), sinkList, args["kinasePerm"], viewCache.lookupProximities(key));
         viewCache.finishLookup(key);
    // std::cout<<"CMPTED"<<std::endl;    
         int pNum=0;
         for(const auto& path : KP.getPaths())
         {
-            ret[pNum]["name"] =  "path-"+std::to_string(pNum);
-            ret[pNum]["nodeScore"] = path.nodeScore_;
-            ret[pNum]["direction"] = path.nodeDirection_;
-            ret[pNum]["nodes"] = std::vector<int>(); 
-            ret[pNum]["edgeLabels"] = std::vector<long>();
+            mainTree[pNum]["name"] =  "path-"+std::to_string(pNum);
+            mainTree[pNum]["nodeScore"] = path.nodeScore_;
+            mainTree[pNum]["direction"] = path.nodeDirection_;
+            mainTree[pNum]["nodes"] = std::vector<int>(); 
+            mainTree[pNum]["edgeLabels"] = std::vector<long>();
             //ret[pNum]["score"] = path.score_;
             
             
             for(const auto & e : path.visitOrder_)
-                ret[pNum]["nodes"].push_back(e);
+                mainTree[pNum]["nodes"].push_back(e);
             
             for(const auto& e : path.edgeLabels_)
-                ret[pNum]["edgeLabels"].push_back(e.getBits().to_ulong());
+                mainTree[pNum]["edgeLabels"].push_back(e.getBits().to_ulong());
                 
             ++pNum;
         }
             
+            
+        ret["mainTree"] = mainTree;
         return ret;
     }
 
-    template<class GT>
-    json dpth(const VGraph<GT>& graph, ViewCache<GT>& viewCache, const json& args)
-    {
-        json ret = json::array();;
-        ViewKey<GT> key = viewKeyFromArgs<GT>(args);
-        IntegratedViewer<GT> IV = viewCache.lookup(key);
-        
-        KinasePaths KP(IV);
-        auto edges = KP.computeDense(args["nodes"].get<std::vector<typename GT::Index>>());
-        
-        for(const auto& e : edges)
-            ret.push_back(e);
-        
-        return ret;
-    }
+//     template<class GT>
+//     json dpth(const VGraph<GT>& graph, ViewCache<GT>& viewCache, const json& args)
+//     {
+//         json ret = json::array();;
+//         ViewKey<GT> key = viewKeyFromArgs<GT>(args);
+//         IntegratedViewer<GT> IV = viewCache.lookup(key);
+//         
+//         KinasePaths KP(IV);
+//         auto edges = KP.computeDense(args["nodes"].get<std::vector<typename GT::Index>>());
+//         
+//         for(const auto& e : edges)
+//             ret.push_back(e);
+//         
+//         return ret;
+//     }
 };

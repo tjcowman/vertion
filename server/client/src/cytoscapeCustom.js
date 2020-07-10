@@ -134,6 +134,7 @@ class CytoscapeCustom extends React.Component{
             
             colorMapEdges : new Map(),
             colorMapNodes : new Map(),
+            colorMapBoth : new Map(),
         }
         
     }
@@ -154,7 +155,8 @@ class CytoscapeCustom extends React.Component{
                 this.cy.nodes().forEach((n) => {nodeTypeSet.add(n._private.data.nodeType); /*console.log(n._private.data.nodeType);*/})
                 let colorMapEdges = ggColMap(edgeTypeSet);
                 let colorMapNodes = ggColMap(nodeTypeSet);
-                this.setState({colorMapEdges : colorMapEdges, colorMapNodes: colorMapNodes}, this.colorElements);
+                let colorMapBoth = ggColMap(new Set([...nodeTypeSet,...edgeTypeSet]));
+                this.setState({colorMapEdges : colorMapEdges, colorMapNodes: colorMapNodes, colorMapBoth: colorMapBoth}, this.colorElements);
                 
                 this.cy.layout({name:'fcose'}).run();
             }   
@@ -168,8 +170,10 @@ class CytoscapeCustom extends React.Component{
     
     
     colorElements=()=>{
-        this.cy.edges().forEach((n) => n.json({data :{color_auto : this.state.colorMapEdges.get(n._private.data.edgeType)}}) );
-        this.cy.nodes().forEach((n) => n.json({data :{color_auto : this.state.colorMapNodes.get(n._private.data.nodeType)}}) );
+//         this.cy.edges().forEach((n) => n.json({data :{color_auto : this.state.colorMapEdges.get(n._private.data.edgeType)}}) );
+//         this.cy.nodes().forEach((n) => n.json({data :{color_auto : this.state.colorMapNodes.get(n._private.data.nodeType)}}) );
+         this.cy.edges().forEach((n) => n.json({data :{color_auto : this.state.colorMapBoth.get(n._private.data.edgeType)}}) );
+        this.cy.nodes().forEach((n) => n.json({data :{color_auto : this.state.colorMapBoth.get(n._private.data.nodeType)}}) );
                 
     }
     
@@ -253,9 +257,11 @@ class CytoscapeCustom extends React.Component{
     
     generateLegendEdges=()=>{
         //If the color scheme is set to auto, use the generated state colorMapping
-        if(this.state.colorStyle === "auto")
-            return(this.state.colorMapEdges)
-        //
+        if(this.state.colorStyle === "auto"){
+//             return(this.state.colorMapEdges)
+//             console.log([...this.state.colorMapBoth.keys()].filter(e => {return this.state.colorMapEdges.has(e)} ))
+            return(new Map([...this.state.colorMapBoth].filter(e => {return this.state.colorMapEdges.has(e[0])} )))
+        }
         else{ //Otherwise use the style provided legend names and colors
             let s = this.styleLookup(this.props.cstyle.colors, this.state.colorStyle);
             
@@ -275,7 +281,9 @@ class CytoscapeCustom extends React.Component{
         
         //If the color scheme is set to auto, use the generated state colorMapping
         if(this.state.colorStyle === "auto")
-            return(this.state.colorMapNodes)
+//             return(this.state.colorMapNodes)
+            
+            return(new Map([...this.state.colorMapBoth].filter(e => {return this.state.colorMapNodes.has(e[0])} )))
         //
         else{ //Otherwise use the style provided legend names and colors
             let s = this.styleLookup(this.props.cstyle.colors, this.state.colorStyle);

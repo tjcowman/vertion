@@ -12,16 +12,19 @@ using ViewRow = std::pair< typename GT::Index, ZippedRow<GT>>;
 
 template<class GT>
 using ZippedRowIT = typename std::vector<std::tuple<typename GT::Index, typename GT::Value, EdgeLabel<GT>>>::iterator;
-//using ZippedRowIT = typename std::vector<std::tuple<typename GT::Index, typename GT::Value, EdgeLabel<GT>>>::iterator;
-
-// template<class GT>
-// using ViewIndex = GT::Index;
 
 template<class GT>
 class IntegratedViewer
 {
     public:
+        
+        using ArrayA = std::vector<typename GT::Value>;
+        using ArrayIA =  std::vector<AugIA<GT>>;
+        using ArrayJA = std::vector<typename GT::Index>;
+        using ArrayL = std::vector<EdgeLabel<GT>>;
+        
         IntegratedViewer(const VGraph<GT>& graph);
+        auto getContext()const;
 
         //returns size as a pair of numnodes and numedges
         std::pair<size_t, size_t> size()const;
@@ -61,7 +64,12 @@ class IntegratedViewer
         GraphList<VertexI<GT>> getDegrees()const;
         std::vector<std::pair<typename GT::Index,  EdgeLabel<GT>>> getlabeledRow(typename GT::Index index)const;
 
-//     private:
+        const auto& getA()const;
+        const auto& getJA()const;
+        const auto& getIA()const;
+        const auto& getL()const;
+        
+     private:
 
         std::vector<typename GT::Index> originalIndexes_;
         std::vector<typename GT::Index> viewIndexes_;
@@ -74,6 +82,38 @@ class IntegratedViewer
         const VGraph<GT>* graph_;
 
 };
+
+template<class GT>
+auto IntegratedViewer<GT>::getContext()const
+{
+    return graph_->getContext();
+}
+
+template<class GT>
+const auto& IntegratedViewer<GT>::getA()const
+{
+    return A_;
+}
+
+template<class GT>
+const auto& IntegratedViewer<GT>::getJA()const
+{
+    return JA_;
+}
+
+template<class GT>
+const auto& IntegratedViewer<GT>::getIA()const
+{
+    return IA_;
+}
+
+template<class GT>
+const auto& IntegratedViewer<GT>::getL()const
+{
+    return L_;
+}
+
+
 
 template<class GT>
 void IntegratedViewer<GT>::clear()
