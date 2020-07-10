@@ -309,23 +309,37 @@ namespace Commands
         j[2].get_to(p.score_);
     }
 
-    
+//     template<class GT>
+//     static std::vector<typename GT::Index> kinaseIndexesCache;
+//     
     template<class GT>
     json pths(const VGraph<GT>& graph, ViewCache<GT>& viewCache, const json& args)
     {
+//         if(kinaseIndexesCache<GT>.size() == 0)
+//         {
+//           //  kinaseIndexes<GT> = std::vector<typename GT::Index>(10,0);
+//             
+//             std::vector<typename GT::Index> kinIndexes;
+//             
+//             for(const auto& e graph->)
+//             
+//             //calculate the kinaseIndexes
+//             std::cout<<"calculated kinIn"<<std::endl;
+//         }
+        
         json ret;
         auto mainTree = json::array();
         
         ViewKey<GT> key = viewKeyFromArgs<GT>(args);
         IntegratedViewer<GT> IV = viewCache.lookup(key);
         // IV.viewUnion(versions);
-    std::cout<<"VIEWCACHELOOKEDUP"<<std::endl;
+//     std::cout<<"VIEWCACHELOOKEDUP"<<std::endl;
     //         
         KinasePaths KP(IV);
         KP.arg_minWeight_ = args["minWeight"];
         
         auto sourceIndex = graph.lookupVertex(args["kinase"].get<std::string>());
-        std::cout<<"SOURCEINDEX" <<sourceIndex<<std::endl;
+//         std::cout<<"SOURCEINDEX" <<sourceIndex<<std::endl;
         
         GraphList<VertexS<GT>> sinkList;
         for(const auto& e : args["sites"])
@@ -337,21 +351,24 @@ namespace Commands
                 //usedIndexes.insert(graphIndex);
             }
         }
-        std::cout<<"SINKLIST"<<std::endl;
+//         std::cout<<"SINKLIST"<<std::endl;
 //         std::cout<<sinkList<<std::endl;
         
         sinkList.sort(Sort::indexInc);
-        KP.compute(VertexI<GT>(sourceIndex), sinkList, args["kinasePerm"], viewCache.lookupProximities(key));
+        KP.compute(VertexI<GT>(sourceIndex), sinkList, args["mechRatio"], args["kinasePerm"], viewCache.lookupProximities(key));
         viewCache.finishLookup(key);
    // std::cout<<"CMPTED"<<std::endl;    
         int pNum=0;
         for(const auto& path : KP.getPaths())
         {
-            mainTree[pNum]["name"] =  "path-"+std::to_string(pNum);
+//             mainTree[pNum]["name"] =  "path-"+std::to_string(pNum);
             mainTree[pNum]["nodeScore"] = path.nodeScore_;
             mainTree[pNum]["direction"] = path.nodeDirection_;
             mainTree[pNum]["nodes"] = std::vector<int>(); 
             mainTree[pNum]["edgeLabels"] = std::vector<long>();
+            
+            mainTree[pNum]["scoring"]["totalWeight"] = path.totalWeight_;
+            std::cout<<path.totalWeight_<<std::endl;
             //ret[pNum]["score"] = path.score_;
             
             
@@ -365,7 +382,31 @@ namespace Commands
         }
             
             
+        auto permTreesAr = json::array();
+        
+        for(const auto& permTree : KP.getPermPaths())
+        {
+            int pNum =0;
+            auto permTreeAr = json::array();
+            for(const auto& path : permTree)
+            {
+                permTreeAr[pNum]["scoring"]["totalWeight"] = path.totalWeight_;
+                
+                permTreeAr[pNum]["nodeScore"] = path.nodeScore_;
+                
+                for(const auto & e : path.visitOrder_)
+                    permTreeAr[pNum]["nodes"].push_back(e);
+            
+                for(const auto& e : path.edgeLabels_)
+                    permTreeAr[pNum]["edgeLabels"].push_back(e.getBits().to_ulong());
+                
+                ++pNum;
+            }
+            permTreesAr.push_back(permTreeAr);
+        }
+            
         ret["mainTree"] = mainTree;
+        ret["permTrees"] = permTreesAr;
         return ret;
     }
 

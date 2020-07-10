@@ -166,6 +166,7 @@ struct Path
     std::set<typename GT::Index> indexes_;
     std::vector<typename GT::Index>visitOrder_;
     std::vector<EdgeLabel<GT>> edgeLabels_;
+    float totalWeight_;
 //     std::vector<typename GT::Value> edgeWeights_;
 };
 

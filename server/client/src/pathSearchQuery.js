@@ -37,6 +37,8 @@ class Settings extends React.Component{
                     <Card.Body>
                         Minimum Weight
                         <input className="form-control" value={this.props.minWeight} name="minWeight" onChange={this.props.handleChange}></input>
+                        Mechanistic Ratio
+                        <input className="form-control" value={this.props.mechRatio} name="mechRatio" onChange={this.props.handleChange}></input>
                         Kinase Permutations
                         <input className="form-control" value={this.props.kinasePerm} name="kinasePerm" onChange={this.props.handleChange}></input>
                     </Card.Body>
@@ -64,6 +66,7 @@ class PathSearchQueryComponent extends React.Component{
 
             minWeight: 0,
             kinasePerm: 0,
+            mechRatio: 1,
             
             
             topk: 0,
@@ -218,7 +221,8 @@ class PathSearchQueryComponent extends React.Component{
             edgeLabels:  [0,1,2,3], //[...this.props.versionCardsO.cards[this.props.versionCardsO.activeCard].labelsE_s],
             minWeight: Number(this.state.minWeight),
             kinase: this.state.kinaseText,
-            kinasePerm: this.state.kinasePerm,
+            kinasePerm:  2,// Number(this.state.kinasePerm),
+            mechRatio: Number(this.state.mechRatio),
             sites: sites
         };
         
@@ -229,8 +233,80 @@ class PathSearchQueryComponent extends React.Component{
         console.log("CMSENT", command)
         
         Axios.post('http://'+this.props.backAddr, JSON.stringify(command)).then((response)=>{
+            
+            //Define the sort order for paths
+            const pathOrder = (l,r)=>{
+                if(l.scoring.nonMech !== r.scoring.nonMech){
+                    return l.scoring.nonMech - r.scoring.nonMech;
+                }else{
+                    return l.edgeLabels.length - r.edgeLabels.length;
+                }
+            }
+            
+            //compute the path scoring data
+            const computeOrderData = (path)=>{
+                 path.scoring = {...path.scoring, nonMech: path.edgeLabels.filter(label => label === 1).length };
+            }
+            
+           
+            response.data.mainTree.forEach(computeOrderData);
+            
+            response.data.permTrees.forEach(tree => tree.forEach(computeOrderData));
+            
+            response.data.mainTree.sort(pathOrder);            
+            response.data.permTrees.forEach(tree => tree.sort(pathOrder));
+            
+//             response.data.mainTree.forEach( path => path.pathScore =  Math.sqrt(path.edgeLabels.filter(el => el !== 1).length,2) /Math.pow( path.edgeLabels.length,2));
+//             
+//             response.data.permTrees.forEach( tree => tree.forEach( path => path.pathScore =  Math.pow(path.edgeLabels.filter(el => el !== 1).length,2) /Math.pow( path.edgeLabels.length,2)));
+//             
+//             
+//             let computePathScore = (path)=>{
+//                 return {score: path.edgeLabels.filter(el => el !== 1).length / path.edgeLabels.length, nodeScore: path.nodeScore}; 
+//             }
+//             
+//             
+//             response.data.mainTree.sort((l,r)=> {
+//                 return r.pathScore - l.pathScore
+//             })
+//             
+//              response.data.permTrees.forEach(tree => tree.sort((l,r)=> {
+//                 return r.pathScore - l.pathScore
+//             })
+//             )
+//             
             console.log("cmd",response.data);
-
+// 
+//             
+//             //temp testing
+//             let runScores = response.data.mainTree.map( path =>  computePathScore(path));
+//             
+//             
+//             console.log(runScores
+// //                 response.data.mainTree.map(path =>  path.edgeLabels.filter(el => el !== 1).length / path.edgeLabels.length )
+//             )
+//             
+//             let permScores = 
+//                 response.data.permTrees.map(tree =>
+//                     tree.map(path => computePathScore(path)));
+// //                 
+// //             
+//             console.log("Ps", permScores)
+// //                 
+//             if (permScores.length > 0){
+//                 let aggScores = Array(permScores[0].length).fill(0)
+//                 permScores.forEach(row => {
+//                     row.forEach((e,i) => {
+//                         aggScores[i] += e;
+//                     })
+//                 })
+//                 aggScores = aggScores.map(e => e/permScores.length)
+//                 
+//                 console.log(aggScores.sort(), runScores.sort())
+//             }
+//             
+            
+            
             let sinkData = new Map();
             
             let terminalScores = { sparseFactor : 1, scores: response.data.mainTree.map((p,i) => (p.nodeScore) ).sort()};
@@ -375,6 +451,7 @@ class PathSearchQueryComponent extends React.Component{
                             siteText={this.state.siteText}
                             kinaseText={this.state.kinaseText}
                             kinasePerm={this.state.kinasePerm}
+                            mechRatio={this.state.mechRatio}
                         />} 
                     />
                     

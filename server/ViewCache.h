@@ -204,6 +204,8 @@ class ViewCache
         std::vector<IntegratedViewer<GT>> viewData_;
         //Derived calculations, parallel to the viewData_
         std::vector< std::pair< bool, GraphList<VertexS<GT>> > > viewProximities_;
+        
+//         std::map<std::string, std::vector<typename GT::Index>> indexedNodeSets
 
 };
 

@@ -71,8 +71,8 @@ class IntegratedViewer
         
      private:
 
-        std::vector<typename GT::Index> originalIndexes_;
-        std::vector<typename GT::Index> viewIndexes_;
+        std::vector<typename GT::Index> originalIndexes_; //Looking up an originalIndex returns a viewIndex
+        std::vector<typename GT::Index> viewIndexes_; //Looking up a viewIndex returns an originalIndex (smaller that original Index vector)
 
         std::vector<EdgeLabel<GT>> L_; //Edge labels
         std::vector<typename GT::Value> A_; /**< The values of non-zero edges in the graph.*/

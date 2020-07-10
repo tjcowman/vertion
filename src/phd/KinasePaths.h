@@ -19,8 +19,8 @@ class KinasePaths
     public:
         KinasePaths(const IntegratedViewer<GT>& viewer);
         
-        //calculates the shortest paths given the current settings
-        void compute(const VertexI<GT>& source, const GraphList<VertexS<GT>>& sinks, int kinasePerm, const GraphList<VertexS<GT>>& globalProximity);
+        
+        void compute(const VertexI<GT>& source, const GraphList<VertexS<GT>>& sinks, float mechRatio, int kinasePerm, const GraphList<VertexS<GT>>& globalProximity);
         
         
         GraphList<EdgeElement<GT>> computeDense(const std::vector<typename GT::Index> & pathNodes)const;
@@ -29,21 +29,24 @@ class KinasePaths
         void printPathJson(std::ostream& os)const;
         
         const std::vector<Path<GT>>& getPaths()const;
+        const std::vector<std::vector<Path<GT>>>& getPermPaths()const;
         
         float arg_minWeight_;
         
     private:
         
         
-        typename GT::Value weightFunction(typename GT::Index row, typename GT::Index edge, typename GT::Value original)const;
+        typename GT::Value weightFunction(typename GT::Index row, typename GT::Index edge, typename GT::Value original, float mechRatio)const;
         void computeNodeScores( const GraphList<VertexS<GT>>& sinks);
-        void runSP(typename GT::Index sourceIndex, const typename IntegratedViewer<GT>::ArrayA& A, const typename IntegratedViewer<GT>::ArrayIA& IA, const typename IntegratedViewer<GT>::ArrayJA& JA, const typename IntegratedViewer<GT>::ArrayL& L);
+        //calculates the shortest paths given the current settings, returns the shortest path lengths
+        auto runSP(typename GT::Index sourceIndex, const typename IntegratedViewer<GT>::ArrayA& A, float mechRatio, const typename IntegratedViewer<GT>::ArrayIA& IA, const typename IntegratedViewer<GT>::ArrayJA& JA, const typename IntegratedViewer<GT>::ArrayL& L);
         auto formatPaths(typename GT::Index sourceIndex)const;
         void scorePaths(std::vector<Path<GT>>& paths);
         
         std::map<typename GT::Index, std::pair<typename GT::Value, int>> nodeScoreLookup_; //(Score,Direction)
         
         
+        //TODO: replace with single index corresponding to the vector JA/A location
         std::vector<std::pair<typename GT::Index,EdgeLabel<GT>>> fromData_; //(source node, edgelabel)
 
         
@@ -140,7 +143,7 @@ KinasePaths<GT>::KinasePaths(const IntegratedViewer<GT>& viewer)
 }
 
 template<class GT>
-typename GT::Value KinasePaths<GT>::weightFunction(typename GT::Index row, typename GT::Index edge, typename GT::Value original)const 
+typename GT::Value KinasePaths<GT>::weightFunction(typename GT::Index row, typename GT::Index edge, typename GT::Value original, float mechRatio)const 
 {
      const auto & L = viewer_->getL();
     //disallow site->protein 
@@ -150,7 +153,7 @@ typename GT::Value KinasePaths<GT>::weightFunction(typename GT::Index row, typen
     
     //Prioritize proten->site KSA
     if((L[edge].getBits() & std::bitset< GT::LabelSize>(6)).any())
-        original = .0000001;
+        original = mechRatio;
     else original=1;
     
     
@@ -163,7 +166,7 @@ typename GT::Value KinasePaths<GT>::weightFunction(typename GT::Index row, typen
 }
 
 template<class GT>
-void KinasePaths<GT>::runSP(typename GT::Index sourceIndex,const typename IntegratedViewer<GT>::ArrayA& A, const typename IntegratedViewer<GT>::ArrayIA& IA, const typename IntegratedViewer<GT>::ArrayJA& JA, const typename IntegratedViewer<GT>::ArrayL& L)
+auto KinasePaths<GT>::runSP(typename GT::Index sourceIndex, const typename IntegratedViewer<GT>::ArrayA& A,  float mechRatio, const typename IntegratedViewer<GT>::ArrayIA& IA, const typename IntegratedViewer<GT>::ArrayJA& JA, const typename IntegratedViewer<GT>::ArrayL& L)
 {
     auto numNodes = viewer_->size().first;
 
@@ -183,6 +186,7 @@ void KinasePaths<GT>::runSP(typename GT::Index sourceIndex,const typename Integr
     while(exploreQueue.size()>0)
     {
         CurrentShortestDistance cur = exploreQueue.top();
+//         std::cout<<cur.index_<<std::endl;
        // std::cout<<"i "<<cur.index_<<std::endl;
         typename GT::Index lb = IA[cur.index_].s1();
         typename GT::Index rb = IA[cur.index_].s1() + IA[cur.index_].s2() ;
@@ -215,6 +219,7 @@ void KinasePaths<GT>::runSP(typename GT::Index sourceIndex,const typename Integr
         }
         exploreQueue.pop();
     }
+    return shortestPathLengths;
 }
 
 template<class GT>
@@ -256,7 +261,7 @@ auto KinasePaths<GT>::formatPaths(typename GT::Index sourceIndex)const
 
 //NOTE: the paths are returned using global indexes
 template<class GT>
-void KinasePaths<GT>::compute(const VertexI<GT>& source, const GraphList<VertexS<GT>>& sinks, int kinasePerm, const GraphList<VertexS<GT>>& globalProximity)
+void KinasePaths<GT>::compute(const VertexI<GT>& source, const GraphList<VertexS<GT>>& sinks, float mechRatio, int kinasePerm, const GraphList<VertexS<GT>>& globalProximity)
 {
     computeNodeScores(sinks);
     
@@ -273,28 +278,70 @@ void KinasePaths<GT>::compute(const VertexI<GT>& source, const GraphList<VertexS
         
         for(typename GraphType::GD::Index edge=lb; edge<rb; ++edge)
         {
-            Arw[edge] = weightFunction( row, edge, Arw[edge]* -log(globalProximity[JA[edge]].value_) );  //Use the rwr score to weight, global so will be no 0s
+            Arw[edge] = weightFunction( row, edge, Arw[edge]* -log(globalProximity[JA[edge]].value_) , mechRatio );  //Use the rwr score to weight, global so will be no 0s
         }
     }
 
     
     //Performs djikstras algorithm for the provided source and sink nodes
     auto sourceIndex = viewer_->getViewIndex(source.index_);
-    runSP(sourceIndex, Arw, IA, JA, L);
+    auto spLengths = std::move(runSP(sourceIndex, Arw, mechRatio, IA, JA, L));
     
     paths_ = formatPaths(sourceIndex);
+    
+    for(int i=0; i<paths_.size(); ++i)
+        paths_[i].totalWeight_ = spLengths[ viewer_->getViewIndex(paths_[i].visitOrder_[0]) ]; 
     
     
     
     scorePaths(paths_);
     //TODO replace server score ranking with client based
-    std::sort(paths_.begin(), paths_.end(), [](const auto& lhs, const auto& rhs){
-        return(   std::tie(lhs.nonMech_, lhs.length_/*, lhs.nodeScore_*/) 
-                < std::tie(rhs.nonMech_, rhs.length_/*, rhs.nodeScore_*/)             
-        );
-    });
+//     std::sort(paths_.begin(), paths_.end(), [](const auto& lhs, const auto& rhs){
+//         return(   std::tie(lhs.nonMech_, lhs.length_/*, lhs.nodeScore_*/) 
+//                 < std::tie(rhs.nonMech_, rhs.length_/*, rhs.nodeScore_*/)             
+//         );
+//     });
     
     //Now calculate the permutation paths
+    auto numNodes = viewer_->size().first;
+    std::vector<typename GT::Index> kinaseIndexes;
+    
+    for(typename GT::Index i=0; i<numNodes; ++i)
+    {
+        if(viewer_->getLabels(i).getBits() == 4 )
+            kinaseIndexes.push_back(i);
+    }
+//     std::cout<<"KIN"<<kinaseIndexes.size()<<std::endl;
+    
+    std::random_shuffle(kinaseIndexes.begin(), kinaseIndexes.end());
+    
+    for(int i=0; i<kinasePerm; ++i )
+    {
+//         std::cout<<i<<std::endl;
+        auto sourceIndex = kinaseIndexes[i]; //viewer_->getViewIndex(kinaseIndexes[i]);
+//        std::cout<<"SOURCE INDEX "<<sourceIndex<<std::endl;
+        
+        
+        auto spLengths = std::move(runSP(sourceIndex, Arw, mechRatio, IA, JA, L));
+        auto paths = formatPaths(sourceIndex);
+        
+        for(int i=0; i<paths.size(); ++i)
+            paths[i].totalWeight_ = spLengths[viewer_->getViewIndex( paths[i].visitOrder_[0])]; 
+//             paths[i].totalWeight_ = spLengths[i]; 
+        
+        permPaths_.push_back( paths);
+        
+        
+        
+        scorePaths(permPaths_[permPaths_.size()-1]);
+        
+//         std::sort(permPaths_[permPaths_.size()-1].begin(), permPaths_[permPaths_.size()-1].end(), [](const auto& lhs, const auto& rhs){
+//             return(   std::tie(lhs.nonMech_, lhs.length_/*, lhs.nodeScore_*/) 
+//                 < std::tie(rhs.nonMech_, rhs.length_/*, rhs.nodeScore_*/)             
+//             );
+//         });
+    }
+
 
 }
 
@@ -399,4 +446,10 @@ template<class GT>
 const std::vector<Path<GT>>& KinasePaths<GT>::getPaths()const
 {
     return paths_;
+}
+
+template<class GT>
+const std::vector<std::vector<Path<GT>>>& KinasePaths<GT>::getPermPaths()const
+{
+    return permPaths_;
 }
