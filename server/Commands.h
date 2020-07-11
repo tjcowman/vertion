@@ -367,8 +367,8 @@ namespace Commands
             mainTree[pNum]["nodes"] = std::vector<int>(); 
             mainTree[pNum]["edgeLabels"] = std::vector<long>();
             
-            mainTree[pNum]["scoring"]["totalWeight"] = path.totalWeight_;
-            std::cout<<path.totalWeight_<<std::endl;
+            mainTree[pNum]["totalWeight"] = path.totalWeight_;
+//             std::cout<<path.totalWeight_<<std::endl;
             //ret[pNum]["score"] = path.score_;
             
             
@@ -390,7 +390,7 @@ namespace Commands
             auto permTreeAr = json::array();
             for(const auto& path : permTree)
             {
-                permTreeAr[pNum]["scoring"]["totalWeight"] = path.totalWeight_;
+                permTreeAr[pNum]["totalWeight"] = path.totalWeight_;
                 
                 permTreeAr[pNum]["nodeScore"] = path.nodeScore_;
                 
