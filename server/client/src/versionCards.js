@@ -105,6 +105,11 @@ class VersionCards{
     
     //Used to get the relevant properties defining a version on the server, versions/labels/etc
     getVersionDefinition=(versionIndex)=>{
+        
+        //TEMP
+        if(versionIndex === "T")
+            return {versions:[1,20,21,22], vertexLabels:[0,1,2], edgeLabels:[0,1,2,3]}
+        
         let versions =  [...this.cards[versionIndex].versions_s];
         if(versions.length === 0)
         {

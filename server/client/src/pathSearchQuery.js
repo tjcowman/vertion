@@ -1,5 +1,5 @@
 import React from 'react';
-import {Button, Card} from 'react-bootstrap'
+import {Button, Card, Tab, Tabs} from 'react-bootstrap'
 
 // import Cytoscape from 'cytoscape';
 // import CytoscapeComponent from 'react-cytoscapejs';
@@ -16,36 +16,13 @@ import * as cstyle from './cytoStyles.js'
 
 import './pathSearchQuery.css'
 
-function standardDeviation(values){
-  var avg = average(values);
-  
-  var squareDiffs = values.map(function(value){
-    var diff = value - avg;
-    var sqrDiff = diff * diff;
-    return sqrDiff;
-  });
-  
-  var avgSquareDiff = average(squareDiffs);
-
-  var stdDev = Math.sqrt(avgSquareDiff);
-  return stdDev;
-}
-
-function average(data){
-  var sum = data.reduce(function(sum, value){
-    return sum + value;
-  }, 0);
-
-  var avg = sum / data.length;
-  return avg;
-}
 
 
 class Settings extends React.Component{
     render(){
         return(
             <>
-                <Card style={{marginBottom: '10px'}}>
+                <Card style={{/*marginBottom: '10px'*/}}>
                     <Card.Header>Input</Card.Header>
                     <Card.Body>
                         Kinase
@@ -63,8 +40,6 @@ class Settings extends React.Component{
                         <input className="form-control" value={this.props.minWeight} name="minWeight" onChange={this.props.handleChange}></input>
                         Mechanistic Ratio
                         <input className="form-control" value={this.props.mechRatio} name="mechRatio" onChange={this.props.handleChange}></input>
-                        Kinase Permutations
-                        <input className="form-control" value={this.props.kinasePerm} name="kinasePerm" onChange={this.props.handleChange}></input>
                     </Card.Body>
                 </Card>
             </>
@@ -72,6 +47,180 @@ class Settings extends React.Component{
     }
 }
 
+
+class PathQueryComponent2 extends React.Component{
+    constructor(props){
+        super(props);
+        
+        this.state={
+            versionIndex: "T",
+            kinaseText: "P00533",
+            siteText: "Q15459	359	-1.3219\nQ15459	451	0.5352\nP28482	185	4.4463\nP28482	187	4.4195\nQ8N3F8	273	-0.3219",
+            minWeight: 0,
+            mechRatio: 10,
+        }
+    }
+    
+    parseKinase=()=>{
+        return this.state.kinaseText;
+    }
+    
+    parseSites=()=>{
+        return this.state.siteText.split("\n").map((r) => (r.split("\t")) ).map((e) => [e[0], Number(e[1]), Number(e[2])]).filter(e => {return e[2] !== 0});
+    }
+    
+    handleChange=(event)=>{
+        let name = event.target.name;
+        let value= event.target.value;
+
+        this.setState({
+            [name]: value,
+        })
+
+    }
+    
+    handleSubmit=()=>{
+        let versionDef = this.props.versionCards.getVersionDefinition(this.state.versionIndex);
+        let command = {cmd:"pths",
+             ...versionDef, 
+            minWeight: Number(this.state.minWeight),
+            kinase: this.parseKinase(),
+            mechRatio: Number(this.state.mechRatio),
+            sites: this.parseSites()
+        };
+        
+        Axios.post('http://'+this.props.backAddr, JSON.stringify(command)).then((response)=>{
+            console.log(response);
+            //Define the sort order for paths
+            const pathOrder = (l,r)=>{
+                return l.totalWeight - r.totalWeight;
+            }
+
+            this.props.getResponse(response.data);
+
+        });
+        
+    }
+    
+    handleVersionChange=(event)=>{
+        this.setState({versionIndex: event.value})
+    }
+    
+    render(){
+        return(
+            <QuerySettingsBar 
+                handleVersionChange={this.handleVersionChange} 
+                versionCards={this.props.versionCards} 
+                handleRun={this.handleSubmit} 
+                component={<Settings 
+                    minWeight={this.state.minWeight} 
+                    handleChange={this.handleChange} 
+                    siteText={this.state.siteText}
+                    kinaseText={this.state.kinaseText}
+                    mechRatio={this.state.mechRatio}
+                />} 
+            />
+        )
+    }
+}
+
+class CutoffManagerComponent extends React.Component{
+    constructor(props){
+        super(props);
+        
+        this.state=({
+            minWeightDisplay:0,
+             minPathScore: 0
+        });
+        
+    }
+    
+    handleChange=(event)=>{
+        let name = event.target.name;
+        let value= event.target.value;
+
+        this.setState({
+            [name]: value,
+        })
+
+    }
+
+    render(){
+        let numScores = this.props.terminalScores.scores.length;
+        let scoreMax = this.props.terminalScores.scores[numScores-1];
+        
+        return(
+            <div className="container" >
+                    <div style={{display:'inline-block',/*, backgroundColor:'green'*/}}>
+                        <Card className="rounded-0">
+                            <Card.Body>
+                        
+                                <div className="border" >
+                                    <LineChart
+                                        margin={{top:0,right:0,bottom:0, left:0}}
+                                        width={200} height={100} data={this.props.terminalScores.scores.map((s, i) => ({rank: i*this.props.terminalScores.sparseFactor, score : s} ))}
+                                    >
+                                        <YAxis hide={true} type="number" domain={[0, 'dataMax']} />
+                                        <Line  dot={false} type='monotone' dataKey="score" stroke='#8884d8' strokeWidth={3} />
+                                        <ReferenceLine  y={this.state.minPathScore}/>
+                                    </LineChart>
+                                </div>
+                    
+                                <input type="range" name="minPathScore" className="range-pathDisplayMinWeight" min="0" max={ numScores === 0 ? 0 : scoreMax}
+                                        value={this.state.minPathScore} 
+                                        step={ isNaN(scoreMax) ? 0 : scoreMax/100} 
+                                        id="customRange2"
+                                        onChange={ this.handleChange}
+                                        onMouseUp={this.props.handleSetState} >
+                                </input>
+                                    
+                                <div>Score Cutoff = {Number(this.state.minPathScore).toPrecision(5)}</div>
+                        
+                                
+                            </Card.Body>
+                        </Card>
+                        
+                        
+                        <Card className="rounded-0">
+                            <Card.Body>
+                                    <div>Top K</div>
+                                    <input  className="form-control" style={{width:'200px'}} name="topk" autoComplete="off" value={this.props.topk} onChange={this.props.handleSetState}></input>
+                            </Card.Body>
+                        </Card>
+                        
+                    </div>
+            </div>
+        );
+    }
+}
+
+class ResultDisplay extends React.Component{
+     constructor(props){
+        super(props)
+     }
+     
+     render(){
+        return(
+            <>
+         
+                 
+            <div >
+                <CytoscapeCustom 
+                    cstyle={{colors: cstyle.colors , labels: cstyle.labels, sizes :cstyle.sizes}}
+                    elements={this.props.displayElements} 
+                />
+            </div>
+           
+            </>
+        );
+     }
+    
+}
+
+const responseParser=(props)=>{
+
+    
+}
 
 class PathSearchQueryComponent extends React.Component{
     constructor(props){
@@ -83,13 +232,13 @@ class PathSearchQueryComponent extends React.Component{
             kinaseText: "P00533",
             siteText: "Q15459	359	-1.3219\nQ15459	451	0.5352\nP28482	185	4.4463\nP28482	187	4.4195\nQ8N3F8	273	-0.3219",
             pathTreeResponse: [],
-            pathTreePermutationResponse: [[]],
+//             pathTreePermutationResponse: [[]],
             terminalScores: { sparseFactor :0, scores: []}, //the computed score value for the provided input set (basically avgs of sites / protein)
             
             densePathResponse: [],
 
             minWeight: 0,
-            kinasePerm: 1,
+           
             mechRatio: 10,
             
             
@@ -98,9 +247,7 @@ class PathSearchQueryComponent extends React.Component{
 //             sitesMap:  new Set(),
             
             pathsPassing : [], //Retured paths that pass the specified cutoff of their log fold
-            
-            elementsDense: [],
-            
+
             sinkData : new Map(),
         }
         
@@ -222,11 +369,7 @@ class PathSearchQueryComponent extends React.Component{
     
     
     handleSubmit=()=>{
-        
         this.props.handleUpdateElements([], this.props.elementsName);
-        
-        //TODO: replace the current method with this 
-
 
         let versions = [1,20,21,22];// [...this.props.versionCardsO.cards[this.props.versionCardsO.activeCard].versions_s];
 
@@ -245,7 +388,6 @@ class PathSearchQueryComponent extends React.Component{
             edgeLabels:  [0,1,2,3], //[...this.props.versionCardsO.cards[this.props.versionCardsO.activeCard].labelsE_s],
             minWeight: Number(this.state.minWeight),
             kinase: this.state.kinaseText,
-            kinasePerm:  Number(this.state.kinasePerm),
             mechRatio: Number(this.state.mechRatio),
             sites: sites
         };
@@ -264,53 +406,11 @@ class PathSearchQueryComponent extends React.Component{
 //                 return l.sdn - r.sdn;
             }
 
-           let scorePerm2 = [];
-           
-           
-            for(let pathIndex=0; pathIndex<response.data.permTrees[0].length; ++pathIndex){ 
-                let weights = [];
-                for(let itIndex=0; itIndex<response.data.permTrees.length; ++itIndex){
-                    weights.push((response.data.permTrees[itIndex][pathIndex].totalWeight));
-                }
+  
 
-                scorePerm2.push({
-                    nodeScore:response.data.permTrees[0][pathIndex].nodeScore, 
-                    weightMean: average(weights),//weightMean,
-                    weightSD: standardDeviation(weights),
-                });
-           }
-      /*     let weights = [];
-            for(let pathIndex=0; pathIndex<response.data.permTrees[0].length; ++pathIndex){ 
-                
-                for(let itIndex=0; itIndex<response.data.permTrees.length; ++itIndex){
-                    weights.push((response.data.permTrees[itIndex][pathIndex].totalWeight));
-                }
-
-//                 scorePerm2.push({
-//                     nodeScore:response.data.permTrees[0][pathIndex].nodeScore, 
-//                     weightMean: average(weights),//weightMean,
-//                     weightSD: standardDeviation(weights),
-//                 });
-           }
-//            console.log("EXPERI", average(weights),  standardDeviation(weights))
-           */
-
-//             console.log("PC2",scorePerm2)
-
-            //before sorting, these should be aligned
-            response.data.mainTree = response.data.mainTree.map((e,i)=> ({...e, 
-                sdn: (e.totalWeight-scorePerm2[i].weightMean) /scorePerm2[i].weightSD  //diff[i].sd
-                
-            }));
-            
+   
             response.data.mainTree.sort(pathOrder);   
-            
-//             console.log(response.data.mainTree.slice(0,10).map(e=>(e.nodeScore)))
-            
-//             response.data.permTrees.forEach(tree => tree.sort(pathOrder));
-            
 
-//             console.log("cmd",response.data);
 
             let sinkData = new Map();
             
@@ -338,7 +438,7 @@ class PathSearchQueryComponent extends React.Component{
             this.props.handleNodeLookupIndex(response.data.mainTree.map((p) => p.nodes).flat(), 
                 this.setState({
                 pathTreeResponse: response.data.mainTree, 
-                pathTreePermutationResponse: response.data.permTree,
+//                 pathTreePermutationResponse: response.data.permTree,
                 terminalScores: terminalScores, 
                 sinkData: sinkData,
                 topk: 0,
@@ -366,66 +466,6 @@ class PathSearchQueryComponent extends React.Component{
     
     handleNodeClick=(event)=>{
         console.log(event.target._private.data)
-       /* 
-        if(typeof event.target._private.data.pathTerm !== 'undefined' && event.target._private.data.pathTerm !== -1){
-            let versions = [1,20,21,22];// [...this.props.versionCardsO.cards[this.props.versionCardsO.activeCard].versions_s];
-            if(versions.length === 0)
-            {
-                this.props.handleLog("e", "no versions");
-                this.setState({result:  {nodes:[{"row":null, "id":null, "value":null}], edges: [] } });
-                return;
-            }
-            
-            
-            let command = {cmd:"dpth", versions:versions, 
-                vertexLabels: [0,1],// [...this.props.versionCardsO.cards[this.props.versionCardsO.activeCard].labelsV_s],
-                edgeLabels:  [0,1,2,3],//[...this.props.versionCardsO.cards[this.props.versionCardsO.activeCard].labelsE_s],
-                nodes : this.state.pathTreeResponse[event.target._private.data.pathTerm].nodes
-            };
-            
-            
-            Axios.post('http://'+this.props.backAddr, JSON.stringify(command)).then((response)=>{
-                console.log("dense", response)
-                
-                
-                             
-                let formatResponse=(nodeIndexSet)=>{
-                   // console.log("ND", this.props.nodeData)
-                    
-                    let elementsDense = [...nodeIndexSet].map((id)=>(
-                        {data: {
-                            id: id,
-                            label: this.props.nodeData.getEntry(id).name,
-                            nodeType: this.props.labelsUsed.nameLookupNode(this.props.nodeData.getEntry(id).labels).toString(), 
-                        } }
-                    ))
-                    
-                    response.data.forEach((e,i)=>{
-                        elementsDense.push({data:{
-                            source: e.i1,
-                            target: e.i2,
-                            labelType: e.l,
-//                             edgeType: this.props.labelsUsed.nameLookupEdge(e.edgeLabels[i]).toString(),
-                        }});
-                    })
-                    
-                    this.setState({
-                        densePathResponse : response,
-                        elementsDense : elementsDense
-                    });
-                    console.log(this.state)
-                }
-                
-                let nodeIds = new Set();
-                response.data.forEach((e) =>{
-                    nodeIds.add(e.i1);
-                    nodeIds.add(e.i2);
-                })
-                this.props.handleNodeLookupIndex([...nodeIds], function(){formatResponse(nodeIds)} );
-            });
-        }
-            */
-            
     }
     
     handleClickScore=(event)=>{
@@ -455,7 +495,6 @@ class PathSearchQueryComponent extends React.Component{
                             handleChange={this.handleChange} 
                             siteText={this.state.siteText}
                             kinaseText={this.state.kinaseText}
-                            kinasePerm={this.state.kinasePerm}
                             mechRatio={this.state.mechRatio}
                         />} 
                     />
@@ -490,25 +529,7 @@ class PathSearchQueryComponent extends React.Component{
                                             
                                     </Card.Body>
                                 </Card>
-                                {/*console.log("PTR",this.state.pathTreeResponse, this.state.pathTreeResponse.map(e => ({score: e.nodeScore , sd: -(e.sd)}) ))*/}
-                                {/*<Card >
-                                    <Card.Body>
-                                
-                                        <div className="border" >
-                                            <LineChart
-                                                margin={{top:0,right:0,bottom:0, left:0}}
-                                                width={200} height={100} data={ this.state.pathTreeResponse.map((e,i) => ({rank: i , sd: -(e.sd)}) )}
-                                            >
-                                                <YAxis  hide={true} type="number"   />
-                                                
-                                                <Line type='monotone' stroke='#8884d8' dataKey='sd' strokeWidth={3}/>
-//                                                 <ReferenceLine  y={this.state.minWeightDisplay}/>
-                                            </LineChart>
-                                        </div>
-                                    </Card.Body>
-                                </Card>*/}
-                                
-
+           
                                 <Card>
                                 <Card.Body>
                                     
@@ -533,14 +554,7 @@ class PathSearchQueryComponent extends React.Component{
                                     handleEdgeClick={this.handleEdgeClick}
                                 />
                             </div>
-                            
-                            {/*
-                            <CytoscapeCustom 
-                                elements={this.state.elementsDense} 
-                                                        
-                                                        
-                            />*/}
-                            
+
                         </div>
                    
                 </Card.Body>
@@ -550,5 +564,5 @@ class PathSearchQueryComponent extends React.Component{
 
 }
 
-export {PathSearchQueryComponent}
+export {PathSearchQueryComponent, PathQueryComponent2,CutoffManagerComponent, ResultDisplay}
 

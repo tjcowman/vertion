@@ -13,14 +13,14 @@
  
     let color_auto = [
         {
-            selector: 'edge',
+            selector: 'edge[color_auto]',
             style: {
                 'line-color' : 'data(color_auto)',
                 'source-arrow-color' : 'data(color_auto)'  
             }
         },
         {
-            selector: 'node',
+            selector: 'node[color_auto]',
             style: {
                 'background-color' : 'data(color_auto)',
             }

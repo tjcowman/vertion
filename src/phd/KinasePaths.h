@@ -20,7 +20,7 @@ class KinasePaths
         KinasePaths(const IntegratedViewer<GT>& viewer);
         
         
-        void compute(const VertexI<GT>& source, const GraphList<VertexS<GT>>& sinks, float mechRatio, int kinasePerm, const GraphList<VertexS<GT>>& globalProximity);
+        void compute(const VertexI<GT>& source, const GraphList<VertexS<GT>>& sinks, float mechRatio,  const GraphList<VertexS<GT>>& globalProximity);
         
         
         GraphList<EdgeElement<GT>> computeDense(const std::vector<typename GT::Index> & pathNodes)const;
@@ -29,7 +29,7 @@ class KinasePaths
         void printPathJson(std::ostream& os)const;
         
         const std::vector<Path<GT>>& getPaths()const;
-        const std::vector<std::vector<Path<GT>>>& getPermPaths()const;
+//         const std::vector<std::vector<Path<GT>>>& getPermPaths()const;
         
         float arg_minWeight_;
         
@@ -52,7 +52,7 @@ class KinasePaths
         
         
         std::vector<Path<GT>> paths_;
-        std::vector<std::vector<Path<GT>>> permPaths_;
+//         std::vector<std::vector<Path<GT>>> permPaths_;
         
         const IntegratedViewer<GT>* viewer_;
 };
@@ -265,7 +265,7 @@ auto KinasePaths<GT>::formatPaths(typename GT::Index sourceIndex)const
 
 //NOTE: the paths are returned using global indexes
 template<class GT>
-void KinasePaths<GT>::compute(const VertexI<GT>& source, const GraphList<VertexS<GT>>& sinks, float mechRatio, int kinasePerm, const GraphList<VertexS<GT>>& globalProximity)
+void KinasePaths<GT>::compute(const VertexI<GT>& source, const GraphList<VertexS<GT>>& sinks, float mechRatio, const GraphList<VertexS<GT>>& globalProximity)
 {
     computeNodeScores(sinks);
     
@@ -300,59 +300,7 @@ void KinasePaths<GT>::compute(const VertexI<GT>& source, const GraphList<VertexS
     
     
     scorePaths(paths_);
-    //TODO replace server score ranking with client based
-//     std::sort(paths_.begin(), paths_.end(), [](const auto& lhs, const auto& rhs){
-//         return(   std::tie(lhs.nonMech_, lhs.length_/*, lhs.nodeScore_*/) 
-//                 < std::tie(rhs.nonMech_, rhs.length_/*, rhs.nodeScore_*/)             
-//         );
-//     });
-    
-    //Now calculate the permutation paths
-    auto numNodes = viewer_->size().first;
-    std::vector<std::pair<typename GT::Index, typename GT::Value>> kinaseIndexes;
-    
-    for(typename GT::Index i=0; i<numNodes; ++i)
-    {
-        if(viewer_->getLabels(i).getBits() == 4 && spLengths[ i ] != std::numeric_limits<typename GT::Value>::infinity() )
-            kinaseIndexes.push_back(std::make_pair(i,spLengths[ i ]));
-    }
-    std::sort(kinaseIndexes.begin(),kinaseIndexes.end(), [](const auto& l, const auto& r){return r.second < l.second;});
-//     for(const auto& e : kinaseIndexes)
-//         std::cout<<e.second<<std::endl;
-//     kinaseIndexes.erase(kinaseIndexes.begin()+100, kinaseIndexes.end());
-//     std::random_shuffle(kinaseIndexes.begin(), kinaseIndexes.end());
-    
-//     std::cout<<"KIN"<<kinaseIndexes.size()<<std::endl;
-    
-//     std::random_shuffle(kinaseIndexes.begin(), kinaseIndexes.end());
-    
-    for(int i=0; i<kinasePerm; ++i )
-    {
-//         std::cout<<i<<std::endl;
-        auto sourceIndex = kinaseIndexes[i].first; //viewer_->getViewIndex(kinaseIndexes[i]);
-//        std::cout<<"SOURCE INDEX "<<sourceIndex<<std::endl;
-        
-        
-        auto spLengths = std::move(runSP(sourceIndex, Arw, mechRatio, IA, JA, L));
-        auto paths = formatPaths(sourceIndex);
-        
-        for(int i=0; i<paths.size(); ++i)
-            if(!paths[i].empty())
-                paths[i].totalWeight_ = spLengths[viewer_->getViewIndex( paths[i].visitOrder_[0])]; 
-//             paths[i].totalWeight_ = spLengths[i]; 
-        
-        permPaths_.push_back( paths);
-        
-        
-        
-        scorePaths(permPaths_[permPaths_.size()-1]);
-        
-//         std::sort(permPaths_[permPaths_.size()-1].begin(), permPaths_[permPaths_.size()-1].end(), [](const auto& lhs, const auto& rhs){
-//             return(   std::tie(lhs.nonMech_, lhs.length_/*, lhs.nodeScore_*/) 
-//                 < std::tie(rhs.nonMech_, rhs.length_/*, rhs.nodeScore_*/)             
-//             );
-//         });
-    }
+
 
 
 }
@@ -460,8 +408,8 @@ const std::vector<Path<GT>>& KinasePaths<GT>::getPaths()const
     return paths_;
 }
 
-template<class GT>
-const std::vector<std::vector<Path<GT>>>& KinasePaths<GT>::getPermPaths()const
-{
-    return permPaths_;
-}
+// template<class GT>
+// const std::vector<std::vector<Path<GT>>>& KinasePaths<GT>::getPermPaths()const
+// {
+//     return permPaths_;
+// }

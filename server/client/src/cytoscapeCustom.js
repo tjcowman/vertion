@@ -299,22 +299,17 @@ class CytoscapeCustom extends React.Component{
         }
     }
     
-    render(){
-
-//         {this.generateLegendNodes()}
+    renderExport(){
         return(
-        
-            <Card>
-            <Card.Body>
+            <div className= "border" style={{width: '200px',margin:'5px 0px' }}>
+                <Card.Body>
+              
+                    <Button style={{width:'100%', marginBottom:'5px'}} onClick={async () => {
+                        await navigator.clipboard.writeText(this.cy.nodes('[nodeType = "Protein"]').map((e) => e._private.data[this.state.exportField]).join('\n'));
+                    }}>Export Proteins</Button>
             
-                <div className= "border" style={{margin:'5px 0px' }}>
-                    <div style={{display:'inline-block'}} >
-                        <Button style={{margin:'5px'}} onClick={async () => {
-                            await navigator.clipboard.writeText(this.cy.nodes('[nodeType = "Protein"]').map((e) => e._private.data[this.state.exportField]).join('\n'));
-//                             console.log(this.cy.nodes('[nodeType = "Protein"]').map((e) => e._private.data.label))
-                        }}>Export Proteins</Button>
-                    </div>
-                    <div style={{width:'200px', margin:'5px', display:'inline-block', verticalAlign: 'middle'}}>
+                
+                    <div style={{ verticalAlign: 'middle'}}>
                         <Select 
                             options={[
                                 {value: 'label', label: 'Uniprot'},
@@ -323,39 +318,53 @@ class CytoscapeCustom extends React.Component{
                             onChange={this.handleExportChange}
                         />
                     </div>
-                </div>
+                </Card.Body>
+            </div>
+        );
+    }
+    
+    render(){
+
+//         {this.generateLegendNodes()}
+        return(
+        
+            <Card className="rounded-0">
+            <Card.Body>
             
+                
+                
             
             
                 <CytoscapeComponent className="border cyClass"  cy={(cy) => {this.cy = cy}} elements={this.props.elements} stylesheet={ this.computeStyle() } style={ { width: '600px', height: '400px', marginBottom:'10px' } }/>
            
-           
-                <Card className="styleSelectorContainer">
-                <Card.Body>
-                
-                    <label>Color</label>
-                    <Select
-                      
-                        options={Object.keys(this.props.cstyle.colors).map((e,i) => ({value: i, label: e }))}
-                        onChange={this.handleSetColorStyle}
-                    />
-                
-                    <label>Labels</label>
-                    <Select
-                        options={Object.keys(this.props.cstyle.labels).map((e,i) => ({value: i, label: e }))}
-                        onChange={this.handleSetLabelStyle}
-                    />
+                <div style={{display: 'inline-block', verticalAlign: 'top', marginLeft:'5px'}}>
+                <Card className="styleSelectorContainer rounded-0">
+                    <Card.Body>
                     
-                    <label>Sizes</label>
-                    <Select
-                        options={Object.keys(this.props.cstyle.sizes).map((e,i) => ({value: i, label: e }))}
-                        onChange={this.handleSetSizeStyle}
-                    />
+                        <label>Color</label>
+                        <Select
+                        
+                            options={Object.keys(this.props.cstyle.colors).map((e,i) => ({value: i, label: e }))}
+                            onChange={this.handleSetColorStyle}
+                        />
+                    
+                        <label>Labels</label>
+                        <Select
+                            options={Object.keys(this.props.cstyle.labels).map((e,i) => ({value: i, label: e }))}
+                            onChange={this.handleSetLabelStyle}
+                        />
+                        
+                        <label>Sizes</label>
+                        <Select
+                            options={Object.keys(this.props.cstyle.sizes).map((e,i) => ({value: i, label: e }))}
+                            onChange={this.handleSetSizeStyle}
+                        />
                     </Card.Body>
                 </Card>
            
-           
-
+                {this.renderExport()}
+                </div>
+                
                 {/*<CytoscapeLegend edgeMap={this.state.colorMapEdges} nodeMap={this.state.colorMapNodes}/>*/}
                 {this.props.elements.length > 0 ? <CytoscapeLegend edgeMap={this.generateLegendEdges()} nodeMap={this.generateLegendNodes()}/> : ""}
     

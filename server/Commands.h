@@ -355,7 +355,7 @@ namespace Commands
 //         std::cout<<sinkList<<std::endl;
         
         sinkList.sort(Sort::indexInc);
-        KP.compute(VertexI<GT>(sourceIndex), sinkList, args["mechRatio"], args["kinasePerm"], viewCache.lookupProximities(key));
+        KP.compute(VertexI<GT>(sourceIndex), sinkList, args["mechRatio"], viewCache.lookupProximities(key));
         viewCache.finishLookup(key);
    // std::cout<<"CMPTED"<<std::endl;    
         int pNum=0;
@@ -382,34 +382,34 @@ namespace Commands
         }
             
             
-        auto permTreesAr = json::array();
-        
-        for(const auto& permTree : KP.getPermPaths())
-        {
-            int pNum =0;
-            auto permTreeAr = json::array();
-            for(const auto& path : permTree)
-            {
-                permTreeAr[pNum]["totalWeight"] = path.totalWeight_;
-                
-                permTreeAr[pNum]["nodeScore"] = path.nodeScore_;
-                
-                for(const auto & e : path.visitOrder_)
-                    permTreeAr[pNum]["nodes"].push_back(e);
-            
-                for(const auto& e : path.edgeLabels_)
-                    permTreeAr[pNum]["edgeLabels"].push_back(e.getBits().to_ulong());
-                
-                ++pNum;
-            }
-            permTreesAr.push_back(permTreeAr);
-        }
+//         auto permTreesAr = json::array();
+//         
+//         for(const auto& permTree : KP.getPermPaths())
+//         {
+//             int pNum =0;
+//             auto permTreeAr = json::array();
+//             for(const auto& path : permTree)
+//             {
+//                 permTreeAr[pNum]["totalWeight"] = path.totalWeight_;
+//                 
+//                 permTreeAr[pNum]["nodeScore"] = path.nodeScore_;
+//                 
+//                 for(const auto & e : path.visitOrder_)
+//                     permTreeAr[pNum]["nodes"].push_back(e);
+//             
+//                 for(const auto& e : path.edgeLabels_)
+//                     permTreeAr[pNum]["edgeLabels"].push_back(e.getBits().to_ulong());
+//                 
+//                 ++pNum;
+//             }
+//             permTreesAr.push_back(permTreeAr);
+//         }
             
         ret["mainTree"] = mainTree;
-        ret["permTrees"] = permTreesAr;
+//         ret["permTrees"] = permTreesAr;
         
-        for(const auto& e : permTreesAr)
-            std::cout<<e.size()<<std::endl;
+//         for(const auto& e : permTreesAr)
+//             std::cout<<e.size()<<std::endl;
         return ret;
     }
 
