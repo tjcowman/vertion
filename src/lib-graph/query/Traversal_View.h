@@ -132,6 +132,11 @@ GraphList<EdgeElement<GT>> Traversal<GT>::shortestPaths(const VertexI<GT>& sourc
 template<class GT>
 struct Path
 {
+    bool empty()
+    {
+        return (visitOrder_.size() == 0 );
+    }
+    
     void push_back(typename GT::Index index, EdgeLabel<GT> edgeLabel)
     {
         indexes_.insert(index);

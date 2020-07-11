@@ -6,7 +6,7 @@ import {Button, Card} from 'react-bootstrap'
 
 // import fcose from 'cytoscape-fcose';
 
-import { YAxis, Line, Scatter, LineChart,ReferenceLine} from 'recharts';
+import { YAxis, XAxis, Line, ScatterChart, Scatter, LineChart,ReferenceLine} from 'recharts';
 import DefaultTooltipContent from 'recharts/lib/component/DefaultTooltipContent';
 
 import Axios from 'axios';
@@ -89,8 +89,8 @@ class PathSearchQueryComponent extends React.Component{
             densePathResponse: [],
 
             minWeight: 0,
-            kinasePerm: 0,
-            mechRatio: .01,
+            kinasePerm: 1,
+            mechRatio: 10,
             
             
             topk: 0,
@@ -131,7 +131,7 @@ class PathSearchQueryComponent extends React.Component{
     handleMinWeightSlider=(event)=>{
         let pathsPassing = [];
        
-        this.state.pathTreeResponse.map((p,i) => {if(p.nodeScore >= this.state.minWeightDisplay) pathsPassing.push(i) });
+        this.state.pathTreeResponse.map((p,i) => {if(p.nodeScore >= this.state.minWeightDisplay && p.nodes.length > 0) pathsPassing.push(i) });
         let nextTop = Math.min(this.state.topk, pathsPassing.length);
         let prevTop = this.state.topk;
 
@@ -231,7 +231,7 @@ class PathSearchQueryComponent extends React.Component{
         let versions = [1,20,21,22];// [...this.props.versionCardsO.cards[this.props.versionCardsO.activeCard].versions_s];
 
         
-        let sites =  this.state.siteText.split("\n").map((r) => (r.split("\t")) ).map((e) => [e[0], Number(e[1]), Number(e[2])]);
+        let sites =  this.state.siteText.split("\n").map((r) => (r.split("\t")) ).map((e) => [e[0], Number(e[1]), Number(e[2])]).filter(e => {return e[2] !== 0});
         let sitesMap = {}; // 
         this.state.siteText.split("\n").map((r) => (r.split("\t")) ).forEach((es) => (sitesMap[es[0]] = [Number(es[1]), Number(es[2])]));
         
@@ -245,7 +245,7 @@ class PathSearchQueryComponent extends React.Component{
             edgeLabels:  [0,1,2,3], //[...this.props.versionCardsO.cards[this.props.versionCardsO.activeCard].labelsE_s],
             minWeight: Number(this.state.minWeight),
             kinase: this.state.kinaseText,
-            kinasePerm:  10,// Number(this.state.kinasePerm),
+            kinasePerm:  Number(this.state.kinasePerm),
             mechRatio: Number(this.state.mechRatio),
             sites: sites
         };
@@ -254,14 +254,14 @@ class PathSearchQueryComponent extends React.Component{
             command = Object.assign(command, this.props.versionCardsO.getVersionDefinition(this.state.versionIndex));
         }
         
-        console.log("CMSENT", command)
+//         console.log("CMSENT", command)
         
         Axios.post('http://'+this.props.backAddr, JSON.stringify(command)).then((response)=>{
             console.log(response);
             //Define the sort order for paths
             const pathOrder = (l,r)=>{
-//                 return l.scoring.totalWeight - r.scoring.totalWeight;
-                return l.sd - r.sd;
+                return l.totalWeight - r.totalWeight;
+//                 return l.sdn - r.sdn;
             }
 
            let scorePerm2 = [];
@@ -270,7 +270,7 @@ class PathSearchQueryComponent extends React.Component{
             for(let pathIndex=0; pathIndex<response.data.permTrees[0].length; ++pathIndex){ 
                 let weights = [];
                 for(let itIndex=0; itIndex<response.data.permTrees.length; ++itIndex){
-                    weights.push(response.data.permTrees[itIndex][pathIndex].totalWeight);
+                    weights.push((response.data.permTrees[itIndex][pathIndex].totalWeight));
                 }
 
                 scorePerm2.push({
@@ -279,22 +279,38 @@ class PathSearchQueryComponent extends React.Component{
                     weightSD: standardDeviation(weights),
                 });
            }
-           
+      /*     let weights = [];
+            for(let pathIndex=0; pathIndex<response.data.permTrees[0].length; ++pathIndex){ 
+                
+                for(let itIndex=0; itIndex<response.data.permTrees.length; ++itIndex){
+                    weights.push((response.data.permTrees[itIndex][pathIndex].totalWeight));
+                }
 
-            console.log("PC2",scorePerm2)
+//                 scorePerm2.push({
+//                     nodeScore:response.data.permTrees[0][pathIndex].nodeScore, 
+//                     weightMean: average(weights),//weightMean,
+//                     weightSD: standardDeviation(weights),
+//                 });
+           }
+//            console.log("EXPERI", average(weights),  standardDeviation(weights))
+           */
+
+//             console.log("PC2",scorePerm2)
 
             //before sorting, these should be aligned
             response.data.mainTree = response.data.mainTree.map((e,i)=> ({...e, 
-                sd: (e.totalWeight-scorePerm2[i].weightMean) /scorePerm2[i].weightSD  //diff[i].sd
+                sdn: (e.totalWeight-scorePerm2[i].weightMean) /scorePerm2[i].weightSD  //diff[i].sd
                 
             }));
             
-            response.data.mainTree.sort(pathOrder);        
+            response.data.mainTree.sort(pathOrder);   
+            
+//             console.log(response.data.mainTree.slice(0,10).map(e=>(e.nodeScore)))
             
 //             response.data.permTrees.forEach(tree => tree.sort(pathOrder));
             
 
-            console.log("cmd",response.data);
+//             console.log("cmd",response.data);
 
             let sinkData = new Map();
             
@@ -474,6 +490,23 @@ class PathSearchQueryComponent extends React.Component{
                                             
                                     </Card.Body>
                                 </Card>
+                                {/*console.log("PTR",this.state.pathTreeResponse, this.state.pathTreeResponse.map(e => ({score: e.nodeScore , sd: -(e.sd)}) ))*/}
+                                {/*<Card >
+                                    <Card.Body>
+                                
+                                        <div className="border" >
+                                            <LineChart
+                                                margin={{top:0,right:0,bottom:0, left:0}}
+                                                width={200} height={100} data={ this.state.pathTreeResponse.map((e,i) => ({rank: i , sd: -(e.sd)}) )}
+                                            >
+                                                <YAxis  hide={true} type="number"   />
+                                                
+                                                <Line type='monotone' stroke='#8884d8' dataKey='sd' strokeWidth={3}/>
+//                                                 <ReferenceLine  y={this.state.minWeightDisplay}/>
+                                            </LineChart>
+                                        </div>
+                                    </Card.Body>
+                                </Card>*/}
                                 
 
                                 <Card>

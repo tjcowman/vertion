@@ -203,7 +203,7 @@ class App extends React.Component {
         if(queryIndexes.length > 0){
             Axios.post('http://'+this.state.backAddr,JSON.stringify({cmd:"lkpi", ids:queryIndexes})).then((response)=>{
 
-                console.log("R", response.data)
+//                 console.log("R", response.data)
                 let nodeData = this.state.nodeData.updateIndex(queryIndexes, response.data);
 
                 this.setState({nodeData: nodeData}, afterLookupFn

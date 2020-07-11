@@ -407,6 +407,9 @@ namespace Commands
             
         ret["mainTree"] = mainTree;
         ret["permTrees"] = permTreesAr;
+        
+        for(const auto& e : permTreesAr)
+            std::cout<<e.size()<<std::endl;
         return ret;
     }
 

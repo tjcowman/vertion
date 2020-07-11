@@ -63,16 +63,19 @@ void KinasePaths<GT>::scorePaths(std::vector<Path<GT>>& paths)
 {
     for(auto& path : paths)
     {
-        path.length_ = path.visitOrder_.size();
-        
-        path.nonMech_ = 0;
-        for(const auto& el : path.edgeLabels_)
-            if((el.getBits()  & std::bitset< GT::LabelSize>(9)).any()) //non mechech_
-                ++path.nonMech_;
-        
-        path.nodeScore_ = nodeScoreLookup_[viewer_->getViewIndex(path.visitOrder_[0])].first; //Looks at the compute score of the protein node containing the sites
-        path.nodeDirection_ = nodeScoreLookup_[viewer_->getViewIndex(path.visitOrder_[0])].second;
-        //nodeDirectionLookup_[viewer_->getViewIndex(path.visitOrder_[0])];
+        if(!path.empty())
+        {
+            path.length_ = path.visitOrder_.size();
+            
+            path.nonMech_ = 0;
+            for(const auto& el : path.edgeLabels_)
+                if((el.getBits()  & std::bitset< GT::LabelSize>(9)).any()) //non mechech_
+                    ++path.nonMech_;
+            
+            path.nodeScore_ = nodeScoreLookup_[viewer_->getViewIndex(path.visitOrder_[0])].first; //Looks at the compute score of the protein node containing the sites
+            path.nodeDirection_ = nodeScoreLookup_[viewer_->getViewIndex(path.visitOrder_[0])].second;
+            //nodeDirectionLookup_[viewer_->getViewIndex(path.visitOrder_[0])];
+        }
     }
 }
 
@@ -152,7 +155,7 @@ typename GT::Value KinasePaths<GT>::weightFunction(typename GT::Index row, typen
     
     
     //Prioritize proten->site KSA
-    if((L[edge].getBits() & std::bitset< GT::LabelSize>(6)).any())
+    if(!(L[edge].getBits() & std::bitset< GT::LabelSize>(6)).any())
         original = mechRatio;
     else original=1;
     
@@ -252,7 +255,8 @@ auto KinasePaths<GT>::formatPaths(typename GT::Index sourceIndex)const
         }
         else
         {
-            //std::cout<<"NOT PATHED "<<nodeScoreLookup_[i]<<" "<<i<<std::endl;
+            paths.push_back(Path<GT>());
+//             std::cout<<"NOT PATHED "<<" "<<std::endl;
         }
     }
     return paths;
@@ -290,7 +294,8 @@ void KinasePaths<GT>::compute(const VertexI<GT>& source, const GraphList<VertexS
     paths_ = formatPaths(sourceIndex);
     
     for(int i=0; i<paths_.size(); ++i)
-        paths_[i].totalWeight_ = spLengths[ viewer_->getViewIndex(paths_[i].visitOrder_[0]) ]; 
+        if(!paths_[i].empty())
+            paths_[i].totalWeight_ = spLengths[ viewer_->getViewIndex(paths_[i].visitOrder_[0]) ]; 
     
     
     
@@ -304,21 +309,27 @@ void KinasePaths<GT>::compute(const VertexI<GT>& source, const GraphList<VertexS
     
     //Now calculate the permutation paths
     auto numNodes = viewer_->size().first;
-    std::vector<typename GT::Index> kinaseIndexes;
+    std::vector<std::pair<typename GT::Index, typename GT::Value>> kinaseIndexes;
     
     for(typename GT::Index i=0; i<numNodes; ++i)
     {
-        if(viewer_->getLabels(i).getBits() == 4 )
-            kinaseIndexes.push_back(i);
+        if(viewer_->getLabels(i).getBits() == 4 && spLengths[ i ] != std::numeric_limits<typename GT::Value>::infinity() )
+            kinaseIndexes.push_back(std::make_pair(i,spLengths[ i ]));
     }
+    std::sort(kinaseIndexes.begin(),kinaseIndexes.end(), [](const auto& l, const auto& r){return r.second < l.second;});
+//     for(const auto& e : kinaseIndexes)
+//         std::cout<<e.second<<std::endl;
+//     kinaseIndexes.erase(kinaseIndexes.begin()+100, kinaseIndexes.end());
+//     std::random_shuffle(kinaseIndexes.begin(), kinaseIndexes.end());
+    
 //     std::cout<<"KIN"<<kinaseIndexes.size()<<std::endl;
     
-    std::random_shuffle(kinaseIndexes.begin(), kinaseIndexes.end());
+//     std::random_shuffle(kinaseIndexes.begin(), kinaseIndexes.end());
     
     for(int i=0; i<kinasePerm; ++i )
     {
 //         std::cout<<i<<std::endl;
-        auto sourceIndex = kinaseIndexes[i]; //viewer_->getViewIndex(kinaseIndexes[i]);
+        auto sourceIndex = kinaseIndexes[i].first; //viewer_->getViewIndex(kinaseIndexes[i]);
 //        std::cout<<"SOURCE INDEX "<<sourceIndex<<std::endl;
         
         
@@ -326,7 +337,8 @@ void KinasePaths<GT>::compute(const VertexI<GT>& source, const GraphList<VertexS
         auto paths = formatPaths(sourceIndex);
         
         for(int i=0; i<paths.size(); ++i)
-            paths[i].totalWeight_ = spLengths[viewer_->getViewIndex( paths[i].visitOrder_[0])]; 
+            if(!paths[i].empty())
+                paths[i].totalWeight_ = spLengths[viewer_->getViewIndex( paths[i].visitOrder_[0])]; 
 //             paths[i].totalWeight_ = spLengths[i]; 
         
         permPaths_.push_back( paths);
