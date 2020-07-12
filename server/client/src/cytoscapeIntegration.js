@@ -31,11 +31,6 @@ class CytoscapeIntegration extends React.Component{
     handleUnion=()=>{
         if(this.state.staleElements){
             this.props.handleComputeIntegrationData(()=>{
-//                 console.log("B4U", this.state, this.props.elements1)
-//                 console.log("res", [
-//                     ...this.props.elements1.filter(e => e.data.origin === 'b' || e.data.origin === 'l'),
-//                     ...this.props.elements2.filter(e => e.data.origin === 'r')
-//                 ])
                 this.setState({fnElements : [
                     ...this.props.elements1.filter(e => e.data.origin === 'b' || e.data.origin === 'l'),
                     ...this.props.elements2.filter(e => e.data.origin === 'r')

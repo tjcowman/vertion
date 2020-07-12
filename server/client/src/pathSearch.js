@@ -1,7 +1,7 @@
 import React from 'react';
 import {Button, Card, Row, Col, Tab, Tabs} from 'react-bootstrap'
 
-import {PathSearchQueryComponent, PathQueryComponent2, CutoffManagerComponent, ResultDisplay} from './pathSearchQuery.js'
+import {PathQueryComponent,  CutoffManagerComponent, ResultDisplay} from './pathSearchQuery.js'
 import {CytoscapeCustom} from './cytoscapeCustom.js'
 import {CytoscapeIntegration} from './cytoscapeIntegration.js'
 
@@ -23,7 +23,9 @@ class PathSearchComponent extends React.Component{
             topk: 10,
             minPathScore: 0,
              
-            response : {mainTree: []},
+//             response : {trees: [[]]}, // {kinase: #, tree: []}
+            trees: new Map(), 
+            
             siteData: new Map(),
             
             displayElements: [],
@@ -35,21 +37,30 @@ class PathSearchComponent extends React.Component{
         if(prevState.minPathScore != this.state.minPathScore){
             
             this.setState({
-                displayElements: [...this.updateNodes()]
+                displayElements: [...this.updateNodes(), ...this.updateEdges()]
             });
-//             console.log(this.updateNodes());   
         }
-        
     }
     
-    filterNodeScore(){
-        return this.state.response.mainTree.filter(path => path.nodeScore >this.state.minPathScore);
+    filterNodeScore(treeIndex){
+//         if(response.trees.length<treeIndex)
+//             console.log()
+        
+        return this.getTree(treeIndex).filter(path => path.nodeScore >this.state.minPathScore);
+    }
+    
+    
+    getTree(kinaseIndex){
+        if(this.state.trees.has(kinaseIndex))
+            return this.state.trees.get(kinaseIndex);
+        else
+            return [];
     }
     
     updateNodes=()=>{
         //Get the unique nodeIds used
         let nodeIds = new Set();        
-        this.filterNodeScore().slice(0,this.state.topk).forEach((p)=>(
+        this.filterNodeScore(0).slice(0,this.state.topk).forEach((p)=>(
             p.nodes.forEach(id => nodeIds.add(id))
         ))
         
@@ -84,14 +95,14 @@ class PathSearchComponent extends React.Component{
     updateEdges=()=>{
         let edges = [];
 
-        this.state.pathsPassing.map((arrI) => (this.state.pathTreeResponse[arrI])).slice(0,this.state.topk).forEach((p)=>{
-            for(let i=0; i<p.nodes.length-1; ++i ){
+        this.filterNodeScore(0).slice(0,this.state.topk).forEach((path)=>{
+            for(let i=0; i<path.nodes.length-1; ++i ){
                 edges.push({
                     data:{
-                        id: p.nodes[i] + '-' + p.nodes[i+1],
-                        source: p.nodes[i], 
-                        target: p.nodes[i+1], 
-                        edgeType: this.props.labelsUsed.nameLookupEdge(p.edgeLabels[i]).toString() 
+                        id: path.nodes[i] + '-' + path.nodes[i+1],
+                        source: path.nodes[i], 
+                        target: path.nodes[i+1], 
+                        edgeType: this.props.labelsUsed.nameLookupEdge(path.edgeLabels[i]).toString() 
                     }
                     
                 });
@@ -114,29 +125,68 @@ class PathSearchComponent extends React.Component{
     }
     
     //Gets the response data and ensures the nodeIndexes have been looked up before proceeding
-    getResponse=(response)=>{
+    getResponse=(responseTrees)=>{
+        
+        //Update the responseTrees with the current state IMPORTANT: doesnt change the state
+        this.state.trees.forEach(t=> {
+            
+            if(!responseTrees.has(t[0]))
+                responseTrees.set(t[0], t[1]);
+            
+        })
+        
+         console.log(responseTrees)
+        let nodeIndexes = [...responseTrees.values()].map(tree=>tree.map(path => path.nodes)).flat(3);
         
         let siteData =  new Map();
         
         //Computes some data for the node Indexes corresponding to terminal sites
-        let maxScore =  Math.max(...response.mainTree.map(path => path.nodeScore));
+        let maxScore =  Math.max([...responseTrees.values()].map(tree=>tree.map(path => path.nodeScore).flat()));
         let targetMax = 100;
         
-        response.mainTree.forEach(path =>{
+        [...responseTrees.values()].forEach(tree => tree.forEach(path =>{
             siteData.set(path.nodes[0], {
                 direction: path.direction, 
                 scoreNorm: path.nodeScore*(targetMax/maxScore) 
             });
-        });
+        }));
         
-        this.props.handleNodeLookupIndex(response.mainTree.map((path) => path.nodes).flat(),
-            ()=>{this.setState({response: response, siteData: siteData})}
-        )
+        
+//        
+        
+//         console.log(response);
+//         this.setState((prevState)=>({trees: new Map([...prevState.trees, ...response]) }),);
+        
+//         console.log(response);
+//         
+// //         response = {this.state.response}
+//         
+//         let siteData =  new Map();
+//         
+//         //Computes some data for the node Indexes corresponding to terminal sites
+//         let maxScore =  Math.max(...response.trees.map(tree=>tree.map(path => path.nodeScore).flat()));
+//         let targetMax = 100;
+//         
+//         response.trees.forEach(tree => tree.forEach(path =>{
+//             siteData.set(path.nodes[0], {
+//                 direction: path.direction, 
+//                 scoreNorm: path.nodeScore*(targetMax/maxScore) 
+//             });
+//         }));
+//         let nodeIndexes = response.trees.map(tree=>tree.map(path => path.nodes)).flat(3);
+// //         console.log(response.trees, nodeIndexes)
+//         this.props.handleNodeLookupIndex(nodeIndexes,
+//             ()=>{this.setState({response: response, siteData: siteData})}
+//         );
+        
+        this.props.handleNodeLookupIndex(nodeIndexes,
+            ()=>{this.setState({trees: responseTrees, siteData: siteData})}
+        );
     }
     
-    
+    //Only needs to use the first treeIndex as the site sets are shared
     derivePathPlotScores=()=>{
-        let terminalScores = { sparseFactor : 1, scores: this.state.response.mainTree.map((p,i) => (p.nodeScore) ).sort()};
+        let terminalScores = { sparseFactor : 1, scores: this.getTree(0).map((p,i) => (p.nodeScore) ).sort()};
             //sparsify the scores for plotting later
         if(terminalScores.scores.length > 199){
             let sparseFactor = Math.floor(terminalScores.scores.length/100);
@@ -146,97 +196,42 @@ class PathSearchComponent extends React.Component{
         return terminalScores;
     }
     
-    handleUpdateElements=(elements, stateName)=>{
-     
-        this.setState(prevState=>({
-            [stateName]: elements
-        }));
-        
-//         console.log("TEST",this.cy)
-    }
-    
-    handleComputeIntegrationData=(dependentFunction)=>{
-        let idMap = new Map();
-        
-        this.state.elements1.forEach(e => {
-            idMap.set(String(e.data.id), 'l');
-        });
-        
-        this.state.elements2.forEach(e => {
-            if(idMap.has(String(e.data.id))){
-                idMap.set(String(e.data.id), 'b');
-            }else{
-                idMap.set(String(e.data.id), 'r');
-            }
-        });
-        console.log(idMap)
+//     handleUpdateElements=(elements, stateName)=>{
+//      
+//         this.setState(prevState=>({
+//             [stateName]: elements
+//         }));
+//     }
+//     
+//     handleComputeIntegrationData=(dependentFunction)=>{
+//         let idMap = new Map();
+//         
+//         this.state.elements1.forEach(e => {
+//             idMap.set(String(e.data.id), 'l');
+//         });
+//         
+//         this.state.elements2.forEach(e => {
+//             if(idMap.has(String(e.data.id))){
+//                 idMap.set(String(e.data.id), 'b');
+//             }else{
+//                 idMap.set(String(e.data.id), 'r');
+//             }
+//         });
+//         console.log(idMap)
+// 
+//         this.setState(prevState=>({
+//             elements1 : this.state.elements1.map((e) => ({data:{...e.data, origin: idMap.get(String(e.data.id))}})),
+//             elements2 : this.state.elements2.map((e) => ({data:{...e.data, origin: idMap.get(String(e.data.id))}}))
+//         }), dependentFunction)
+//                    
+//     }
 
-        this.setState(prevState=>({
-            elements1 : this.state.elements1.map((e) => ({data:{...e.data, origin: idMap.get(String(e.data.id))}})),
-            elements2 : this.state.elements2.map((e) => ({data:{...e.data, origin: idMap.get(String(e.data.id))}}))
-        }), dependentFunction)
-                   
-//         let newElements = [...idMap.values()].map(e => ({data:{...e[0].data, origin: e[1]}} ));
-    }
-
-    render2(){
-        return(
-            <Card.Body>
-            <Tabs>
-                <Tab eventKey="q1" title="Kinase 1">
-                    <PathSearchQueryComponent 
-                        backAddr={this.props.backAddr}
-                        getVersionDefinition={this.props.getVersionDefinition}
-                        handleNodeLookupIndex={this.props.handleNodeLookupIndex}
-                        nodeData = {this.props.nodeData}
-                        versionCardsO={this.props.versionCardsO}
-                        handleLog={this.handleLog}
-                        labelsUsed = {this.props.labelsUsed}
-                        
-                        elementsName="elements1"
-                        elements={this.state.elements1}
-                        handleUpdateElements={this.handleUpdateElements}
-                    />
-                </Tab>
-                <Tab eventKey="q2" title="Kinase 2">
-                    <PathSearchQueryComponent
-                        backAddr={this.props.backAddr}
-                        getVersionDefinition={this.props.getVersionDefinition}
-                        handleNodeLookupIndex={this.props.handleNodeLookupIndex}
-                        nodeData = {this.props.nodeData}
-                        versionCardsO={this.props.versionCardsO}
-                        handleLog={this.handleLog}
-                        labelsUsed = {this.props.labelsUsed}
-                        
-                        elementsName="elements2"
-                        elements={this.state.elements2}
-                        handleUpdateElements={this.handleUpdateElements}
-                    />
-                </Tab>
-                
-                <Tab eventKey="qfn" title="Integration">
-                   
-                        <Card.Body>
-                        <CytoscapeIntegration 
-                            elements1={this.state.elements1} 
-                            elements2={this.state.elements2}
-                            handleComputeIntegrationData={this.handleComputeIntegrationData}
-                        />
-                        </Card.Body>
-                </Tab>
-                
-            </Tabs>
-            </Card.Body>
-        );
-        
-    }
-    
     render(){
         {console.log("PS QUERYST", this.state)}
         return(
             <Card.Body style={{whiteSpace:'nowrap'}}>
                 <div style={{margin:'10px'}}>
-                <PathQueryComponent2 
+                <PathQueryComponent 
                     backAddr={this.props.backAddr}
                     versionCards={this.props.versionCardsO}
                     getVersionDefinition={this.props.getVersionDefinition}

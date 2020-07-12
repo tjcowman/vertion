@@ -20,7 +20,7 @@ class KinasePaths
         KinasePaths(const IntegratedViewer<GT>& viewer);
         
         
-        void compute(const VertexI<GT>& source, const GraphList<VertexS<GT>>& sinks, float mechRatio,  const GraphList<VertexS<GT>>& globalProximity);
+        void compute(const std::vector<VertexI<GT>>& source, const GraphList<VertexS<GT>>& sinks, float mechRatio,  const GraphList<VertexS<GT>>& globalProximity);
         
         
         GraphList<EdgeElement<GT>> computeDense(const std::vector<typename GT::Index> & pathNodes)const;
@@ -28,7 +28,7 @@ class KinasePaths
         void printPathEdgeLists(std::ostream& os)const;
         void printPathJson(std::ostream& os)const;
         
-        const std::vector<Path<GT>>& getPaths()const;
+        const std::vector<std::vector<Path<GT>>>& getPaths()const;
 //         const std::vector<std::vector<Path<GT>>>& getPermPaths()const;
         
         float arg_minWeight_;
@@ -50,8 +50,8 @@ class KinasePaths
         std::vector<std::pair<typename GT::Index,EdgeLabel<GT>>> fromData_; //(source node, edgelabel)
 
         
-        
-        std::vector<Path<GT>> paths_;
+        //Filled out for each requested kinase
+        std::vector<std::vector<Path<GT>>> paths_;
 //         std::vector<std::vector<Path<GT>>> permPaths_;
         
         const IntegratedViewer<GT>* viewer_;
@@ -265,7 +265,7 @@ auto KinasePaths<GT>::formatPaths(typename GT::Index sourceIndex)const
 
 //NOTE: the paths are returned using global indexes
 template<class GT>
-void KinasePaths<GT>::compute(const VertexI<GT>& source, const GraphList<VertexS<GT>>& sinks, float mechRatio, const GraphList<VertexS<GT>>& globalProximity)
+void KinasePaths<GT>::compute(const std::vector<VertexI<GT>>& source, const GraphList<VertexS<GT>>& sinks, float mechRatio, const GraphList<VertexS<GT>>& globalProximity)
 {
     computeNodeScores(sinks);
     
@@ -286,21 +286,27 @@ void KinasePaths<GT>::compute(const VertexI<GT>& source, const GraphList<VertexS
         }
     }
 
-    
-    //Performs djikstras algorithm for the provided source and sink nodes
-    auto sourceIndex = viewer_->getViewIndex(source.index_);
-    auto spLengths = std::move(runSP(sourceIndex, Arw, mechRatio, IA, JA, L));
-    
-    paths_ = formatPaths(sourceIndex);
-    
-    for(int i=0; i<paths_.size(); ++i)
-        if(!paths_[i].empty())
-            paths_[i].totalWeight_ = spLengths[ viewer_->getViewIndex(paths_[i].visitOrder_[0]) ]; 
-    
-    
-    
-    scorePaths(paths_);
-
+    //TODO: TMP source[0]
+    paths_= std::vector<std::vector<Path<GT>>>(source.size());
+    for(int k=0; k<source.size(); ++k)
+    {
+        if(source[k].index_ !=  GT::invalidIndex)
+        {
+            //Performs djikstras algorithm for the provided source and sink nodes
+            auto sourceIndex = viewer_->getViewIndex(source[k].index_);
+            auto spLengths = std::move(runSP(sourceIndex, Arw, mechRatio, IA, JA, L));
+            
+            paths_[k] = formatPaths(sourceIndex);
+            
+            for(int i=0; i<paths_.size(); ++i)
+                if(!paths_[k][i].empty())
+                    paths_[k][i].totalWeight_ = spLengths[ viewer_->getViewIndex(paths_[k][i].visitOrder_[0]) ]; 
+            
+            
+            
+            scorePaths(paths_[k]);
+        }
+    }
 
 
 }
@@ -403,7 +409,7 @@ void KinasePaths<GT>::printPathJson(std::ostream& os)const
 }
 
 template<class GT>
-const std::vector<Path<GT>>& KinasePaths<GT>::getPaths()const
+const std::vector<std::vector<Path<GT>>>& KinasePaths<GT>::getPaths()const
 {
     return paths_;
 }

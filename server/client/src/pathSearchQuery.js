@@ -25,10 +25,12 @@ class Settings extends React.Component{
                 <Card style={{/*marginBottom: '10px'*/}}>
                     <Card.Header>Input</Card.Header>
                     <Card.Body>
-                        Kinase
-                        <input autoComplete="off" value={this.props.kinaseText} className="inputKinase form-control" name="kinaseText"  onChange={this.props.handleChange} ></input>
+                        Kinase 1
+                        <input autoComplete="off" value={this.props.kinaseText1} className="inputKinase form-control" name="kinaseText1"  onChange={this.props.handleChange} ></input>
+                        Kinase 2
+                        <input autoComplete="off" value={this.props.kinaseText2} className="inputKinase form-control" name="kinaseText2"  onChange={this.props.handleChange} ></input>
                         Sites
-                        <textarea autoComplete="off" value={this.props.siteText} className="inputSites form-control" name="siteText"   onChange={this.props.handleChange} ></textarea>
+                        <textarea autoComplete="off" value={this.props.siteText} className="inputSites form-control" name="siteText"   onChange={this.props.handleChangeSites} ></textarea>
                       {/*  <Button className="form-control" variant="primary" onClick={(e) =>this.handleSubmit(e)} >Submit</Button>*/}
                     </Card.Body>
                 </Card>
@@ -48,21 +50,39 @@ class Settings extends React.Component{
 }
 
 
-class PathQueryComponent2 extends React.Component{
+class PathQueryComponent extends React.Component{
     constructor(props){
         super(props);
         
         this.state={
             versionIndex: "T",
-            kinaseText: "P00533",
+            
+//             kinases: ["P00533", "P00533"],
+            
+//             kinaseMask : [],
+            lastKinases: [],
+            kinaseText1: "P00533",
+            kinaseText2: "P00533",
+            
+            lastKinase : ["", ""], //array storing the previous kinase queried
             siteText: "Q15459	359	-1.3219\nQ15459	451	0.5352\nP28482	185	4.4463\nP28482	187	4.4195\nQ8N3F8	273	-0.3219",
             minWeight: 0,
             mechRatio: 10,
         }
     }
     
+    
     parseKinase=()=>{
-        return this.state.kinaseText;
+//         let k = [];
+//         if(this.state.lastKinase[0] !== this.state.kinaseText1)
+//             k.push(this.state.kinaseText1);
+//         
+//         if(this.state.lastKinase[1] !== this.state.kinaseText2)
+//             k.push(this.state.kinaseText2);
+//         
+        return this.kinaseArrayFormat().filter((e,i) => this.state.lastKinases[i] !== e);
+        
+//         return k;
     }
     
     parseSites=()=>{
@@ -79,7 +99,38 @@ class PathQueryComponent2 extends React.Component{
 
     }
     
+    handleChangeSites=(event)=>{
+        let name = event.target.name;
+        let value= event.target.value;
+
+        this.setState({
+            [name]: value,
+            lastKinases : [] //need to reset kinases if the sites have changed
+        })
+
+    }
+    
+    kinaseArrayFormat=()=>{
+        return [this.state.kinaseText1, this.state.kinaseText2];
+    }
+    
+    computeKinaseMask=()=>{
+        let m = [];
+        let A = this.kinaseArrayFormat();
+        for(let i=0; i<A.length; ++i)
+            if(A[i] !== this.state.lastKinases[i])
+                m.push(i);
+            
+//         return this.kinaseArrayFormat().map((e,i) => e !== this.state.lastKinases[i] );
+            
+//             else
+//                 m.push(0);
+        return m;
+    }
+    
     handleSubmit=()=>{
+//         console.log(this.state);
+        
         let versionDef = this.props.versionCards.getVersionDefinition(this.state.versionIndex);
         let command = {cmd:"pths",
              ...versionDef, 
@@ -89,16 +140,27 @@ class PathQueryComponent2 extends React.Component{
             sites: this.parseSites()
         };
         
-        Axios.post('http://'+this.props.backAddr, JSON.stringify(command)).then((response)=>{
-            console.log(response);
-            //Define the sort order for paths
-            const pathOrder = (l,r)=>{
-                return l.totalWeight - r.totalWeight;
-            }
+        let mask=this.computeKinaseMask();
+        console.log(mask)
+        //Determine whether to query kinase or not
+        if(command.kinase.length> 0)
+            Axios.post('http://'+this.props.backAddr, JSON.stringify(command)).then((response)=>{
+                console.log(response);
+            
+                
+                this.setState({lastKinase : [this.state.kinaseText1, this.state.kinaseText2]});
+                this.setState({lastKinases : this.kinaseArrayFormat()});
+            
+                //Define the sort order for paths
+                const pathOrder = (l,r)=>{
+                    return l.totalWeight - r.totalWeight;
+                }
 
-            this.props.getResponse(response.data);
+                
+                let responseeTrees = new Map(response.data.trees.map((tree,i) => ([mask[i], tree])));
+                this.props.getResponse(responseeTrees);
 
-        });
+            });
         
     }
     
@@ -115,8 +177,10 @@ class PathQueryComponent2 extends React.Component{
                 component={<Settings 
                     minWeight={this.state.minWeight} 
                     handleChange={this.handleChange} 
+                     handleChangeSites={this.handleChangeSites} 
                     siteText={this.state.siteText}
-                    kinaseText={this.state.kinaseText}
+                    kinaseText1={this.state.kinaseText1}
+                    kinaseText2={this.state.kinaseText2}
                     mechRatio={this.state.mechRatio}
                 />} 
             />
@@ -222,347 +286,5 @@ const responseParser=(props)=>{
     
 }
 
-class PathSearchQueryComponent extends React.Component{
-    constructor(props){
-        super(props);
-
-         this.state={
-            versionIndex: undefined,
-             
-            kinaseText: "P00533",
-            siteText: "Q15459	359	-1.3219\nQ15459	451	0.5352\nP28482	185	4.4463\nP28482	187	4.4195\nQ8N3F8	273	-0.3219",
-            pathTreeResponse: [],
-//             pathTreePermutationResponse: [[]],
-            terminalScores: { sparseFactor :0, scores: []}, //the computed score value for the provided input set (basically avgs of sites / protein)
-            
-            densePathResponse: [],
-
-            minWeight: 0,
-           
-            mechRatio: 10,
-            
-            
-            topk: 0,
-            minWeightDisplay: 0,
-//             sitesMap:  new Set(),
-            
-            pathsPassing : [], //Retured paths that pass the specified cutoff of their log fold
-
-            sinkData : new Map(),
-        }
-        
-    }
-    
- 
-
-     
-    handleChange=(event)=>{
-        let name = event.target.name;
-        let value= event.target.value;
-
-        this.setState({
-            [name]: value,
-        })
-
-    }
-    
-    handleSliderChange=(event)=>{
-        let name = event.target.name;
-        let value= event.target.value;
-        
-        this.setState({
-            [name]: value,
-        }, this.handleUpdateElementsRendered())
-    }
-
-    handleMinWeightSlider=(event)=>{
-        let pathsPassing = [];
-       
-        this.state.pathTreeResponse.map((p,i) => {if(p.nodeScore >= this.state.minWeightDisplay && p.nodes.length > 0) pathsPassing.push(i) });
-        let nextTop = Math.min(this.state.topk, pathsPassing.length);
-        let prevTop = this.state.topk;
-
-        
-        this.setState({pathsPassing: pathsPassing, topk: nextTop}, ()=>{if(nextTop<prevTop)this.handleUpdateElementsRendered()} );
-    }
-    
-    updateNodes=()=>{
-        //Get the unique nodeIds used
-        let nodeIds = new Set();        
-        this.state.pathsPassing.map((arrI) => (this.state.pathTreeResponse[arrI])).slice(0,this.state.topk).forEach((p)=>(
-            p.nodes.forEach(id => nodeIds.add(id))
-        ))
-        
-        
-        let nodes =  [...nodeIds].map(id =>({
-              data: {
-                id: id,
-                nodeType: this.props.labelsUsed.nameLookupNode(this.props.nodeData.getEntry(id).labels).toString(), 
-                label:  this.props.nodeData.getEntry(id).name, 
-                pLabel: this.props.nodeData.getEntry(id).pname === "" ? undefined : this.props.nodeData.getEntry(id).pname,
-              }
-            })
-        );
-        
-        //For the terminal nodes update their values
-        nodes.forEach(n =>{
-            let lookup = this.state.sinkData.get(n.data.id);
-//             console.log(lookup)
-            if(typeof(lookup) !== 'undefined'){
-                n.pathTerm = 1;
-                n.data.scoreNorm = lookup.scoreNorm;
-                n.data.direction = lookup.direction;
-            }
-            
-//             console.log(n, n.nodeType)
-            if(n.data.nodeType === "Site"){
-                n.data.label = n.data.label.substring(n.data.label.search(':')+1 );
-                //console.log("f" ,n.data.label.substring(n.data.label.search(':')+1 ))
-//                 n.data.label = n.data.label.substring(n.data.label.search(':')+1 );
-            }
-            
-        })
-        
-        return nodes;
-    }
-    
-    updateEdges=()=>{
-        let edges = [];
-//         let 
-        
-        this.state.pathsPassing.map((arrI) => (this.state.pathTreeResponse[arrI])).slice(0,this.state.topk).forEach((p)=>{
-            for(let i=0; i<p.nodes.length-1; ++i ){
-                edges.push({
-                    data:{
-                        id: p.nodes[i] + '-' + p.nodes[i+1],
-                        source: p.nodes[i], 
-                        target: p.nodes[i+1], 
-                        edgeType: this.props.labelsUsed.nameLookupEdge(p.edgeLabels[i]).toString() 
-//                         color : 'black' 
-                    }
-                    
-                });
-            }
-        })
-        
-//         console.log("E", edges)
-        
-        //get unique indexes by using source target as key
-//         let uniqueIndexes = new Map(edges.map((e,i) => ([e.data.source + '-' +e.data.target, i])));
-        let uniqueIndexes = new Map(edges.map((e,i) => [e.data.id, i]));
-        
-        return [...uniqueIndexes.values()].map(i => edges[i]);
-        
-//         console.log("FFF", uniqueIndexes)
-        
-//         return edges;
-    }
-    
-    handleUpdateElementsRendered=()=>{        
-        let nodes = this.updateNodes();
-        
-        
-        let edges = this.updateEdges();
-
-        this.props.handleUpdateElements([...nodes, ...edges], this.props.elementsName);
-    }
-    
-    
-    handleSubmit=()=>{
-        this.props.handleUpdateElements([], this.props.elementsName);
-
-        let versions = [1,20,21,22];// [...this.props.versionCardsO.cards[this.props.versionCardsO.activeCard].versions_s];
-
-        
-        let sites =  this.state.siteText.split("\n").map((r) => (r.split("\t")) ).map((e) => [e[0], Number(e[1]), Number(e[2])]).filter(e => {return e[2] !== 0});
-        let sitesMap = {}; // 
-        this.state.siteText.split("\n").map((r) => (r.split("\t")) ).forEach((es) => (sitesMap[es[0]] = [Number(es[1]), Number(es[2])]));
-        
-        this.setState({sitesMap: sitesMap});
-        
-//         console.log(sitesParsed)
-        
-        
-        let command = {cmd:"pths", versions:versions, 
-            vertexLabels: [0,1,2],// [...this.props.versionCardsO.cards[this.props.versionCardsO.activeCard].labelsV_s],
-            edgeLabels:  [0,1,2,3], //[...this.props.versionCardsO.cards[this.props.versionCardsO.activeCard].labelsE_s],
-            minWeight: Number(this.state.minWeight),
-            kinase: this.state.kinaseText,
-            mechRatio: Number(this.state.mechRatio),
-            sites: sites
-        };
-        
-        if(typeof(this.state.versionIndex) !== 'undefined'){
-            command = Object.assign(command, this.props.versionCardsO.getVersionDefinition(this.state.versionIndex));
-        }
-        
-//         console.log("CMSENT", command)
-        
-        Axios.post('http://'+this.props.backAddr, JSON.stringify(command)).then((response)=>{
-            console.log(response);
-            //Define the sort order for paths
-            const pathOrder = (l,r)=>{
-                return l.totalWeight - r.totalWeight;
-//                 return l.sdn - r.sdn;
-            }
-
-  
-
-   
-            response.data.mainTree.sort(pathOrder);   
-
-
-            let sinkData = new Map();
-            
-            let terminalScores = { sparseFactor : 1, scores: response.data.mainTree.map((p,i) => (p.nodeScore) ).sort()};
-            //sparsify the scores for plotting later
-            if(terminalScores.scores.length > 199){
-                let sparseFactor = Math.floor(terminalScores.scores.length/100);
-                
-                terminalScores = { sparseFactor : sparseFactor, scores: terminalScores.scores.filter((e, i) => {return i % sparseFactor === 0})};
-            }
-            
-            let maxScore =  Math.max(...response.data.mainTree.map(p => p.nodeScore));
-            let targetMax = 100;
-            
-            response.data.mainTree.forEach(p =>{
-                sinkData.set(p.nodes[0], {
-                    direction: p.direction, 
-                    scoreNorm: p.nodeScore*(targetMax/maxScore) 
-                });
-            });
-            
-            //Compute normalized scores 
-            
-            
-            this.props.handleNodeLookupIndex(response.data.mainTree.map((p) => p.nodes).flat(), 
-                this.setState({
-                pathTreeResponse: response.data.mainTree, 
-//                 pathTreePermutationResponse: response.data.permTree,
-                terminalScores: terminalScores, 
-                sinkData: sinkData,
-                topk: 0,
-                minWeightDisplay: 0,
-            }, this.handleMinWeightSlider) /*, formatResponse*/ );
-            
-        });
-        
-    }
-    
-    handleKinaseInput=(event)=>{
-        this.setState({
-            kinaseText : event.target.value
-        })
-    }
-    handleSiteInput=(event)=>{
-        this.setState({
-            siteText : event.target.value
-        })
-    }
-    
-    handleEdgeClick=(event)=>{
-        console.log(event.target._private.data)
-    }
-    
-    handleNodeClick=(event)=>{
-        console.log(event.target._private.data)
-    }
-    
-    handleClickScore=(event)=>{
-        console.log("HI", event, event.activePayload[0].value);
-        
-        this.setState({ minWeightDisplay: event.activePayload[0].value}, this.handleMinWeightSlider);
-    }
-    
-    handleVersionChange=(event)=>{
-        this.setState({versionIndex: event.value})
-    }
-    
-    render(){  
-            let numScores = this.state.terminalScores.scores.length;
-            let scoreMax = this.state.terminalScores.scores[numScores-1];
-           
-        
-        return (
-           
-            <>
-            <Card.Body >
-               
-                    <QuerySettingsBar handleVersionChange={this.handleVersionChange} 
-                        versionCards={this.props.versionCardsO} 
-                        handleRun={this.handleSubmit} 
-                        component={<Settings minWeight={this.state.minWeight} 
-                            handleChange={this.handleChange} 
-                            siteText={this.state.siteText}
-                            kinaseText={this.state.kinaseText}
-                            mechRatio={this.state.mechRatio}
-                        />} 
-                    />
-                    
-                
-                            <div className="container">
-                            <div style={{display:'inline-block', margin:'5px'/*, backgroundColor:'green'*/}}>
-                                <Card >
-                                    <Card.Body>
-                                
-                                        <div className="border" >
-                                            <LineChart
-                                                margin={{top:0,right:0,bottom:0, left:0}}
-                                                width={200} height={100} data={this.state.terminalScores.scores.map((s, i) => ({rank: i*this.state.terminalScores.sparseFactor, score : s} ))}
-                                            >
-                                                <YAxis hide={true} type="number" domain={[0, 'dataMax']} />
-                                                <Line type='monotone' dataKey="score" stroke='#8884d8' strokeWidth={3} />
-                                                <ReferenceLine  y={this.state.minWeightDisplay}/>
-                                            </LineChart>
-                                        </div>
-                                        
-                                        <input type="range" name="minWeightDisplay" className="range-pathDisplayMinWeight" min="0" max={ numScores === 0 ? 0 : scoreMax}
-                                                value={this.state.minWeightDisplay} 
-                                                step={ isNaN(scoreMax) ? 0 : scoreMax/100} 
-                                                id="customRange2"
-                                                onChange={(e) => {this.handleChange(e)  }}
-                                                onMouseUp={(e)=> {this.handleMinWeightSlider(e)}} >
-                                        </input>
-                                            
-                                        <div>Score Cutoff = {Number(this.state.minWeightDisplay).toPrecision(5)}</div>
-                                            
-                                            
-                                    </Card.Body>
-                                </Card>
-           
-                                <Card>
-                                <Card.Body>
-                                    
-                                    <input type="range" name="topk" className="range-pathDisplayMinWeight" min="0" max={this.state.pathsPassing.length}
-                                        value={this.state.topk} step="1" id="customRange"
-                                        onChange={this.handleChange  }
-                                        onMouseUp={this.handleUpdateElementsRendered} >
-                                    </input>
-                                    <div>Display Top {this.state.topk} of {this.state.pathsPassing.length}</div>
-                                    </Card.Body>
-                                </Card>
-                            
-
-                            </div>
-                        
-                        
-                            <div className="plotNav">
-                                <CytoscapeCustom 
-                                    cstyle={{colors: cstyle.colors , labels: cstyle.labels, sizes :cstyle.sizes}}
-                                    elements={this.props.elements} 
-                                    handleNodeClick={this.handleNodeClick} 
-                                    handleEdgeClick={this.handleEdgeClick}
-                                />
-                            </div>
-
-                        </div>
-                   
-                </Card.Body>
-                </>
-        );
-    }
-
-}
-
-export {PathSearchQueryComponent, PathQueryComponent2,CutoffManagerComponent, ResultDisplay}
+export {PathQueryComponent,CutoffManagerComponent, ResultDisplay}
 
