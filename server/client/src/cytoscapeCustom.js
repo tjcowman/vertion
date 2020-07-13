@@ -12,6 +12,9 @@ import {base}  from './cytoStyles.js'
 import './cytoscapeCustom.css'
 
 
+
+
+
 const ggcol=(n)=>{
     let hues = [...Array(n)].map((e,i) => ((15 + 360/(n))*i)%360 );
     return  hues.map((h) => 'hsl('+h+',65%,65%)' )
@@ -93,27 +96,6 @@ class CytoscapeLegend extends React.Component{
     }
 }
 
-// class CytoscapeExport extends React.Component{
-//     constructor(props){
-//         super(props);
-//     }
-//     
-//     render(){
-//         {console.log("FF", this.props.cy)}
-//         return(
-//             
-//             <>
-//                 <Button onClick={async () => {
-//                     await navigator.clipboard.writeText(this.props.cy.nodes('[nodeType = "Protein"]').map((e) => e._private.data.label).join('\n'));
-//                     console.log(this.cy.nodes('[nodeType = "Protein"]').map((e) => e._private.data.label))
-//                 }}
-//                     
-//                 ></Button>
-//             
-//             </>
-//         )
-//     }
-// }
 
 class CytoscapeCustom extends React.Component{
     constructor(props){
@@ -122,9 +104,9 @@ class CytoscapeCustom extends React.Component{
         this.colorRef = React.createRef();
         
         this.state={
-            colorStyle : "",
-            labelStyle : "",
-            sizeStyle : "",
+            colorStyle : "none",
+            labelStyle : "none",
+            sizeStyle : "constant",
             
 //             editColorEdge : "",
 //             editColorNode : "",
@@ -139,10 +121,35 @@ class CytoscapeCustom extends React.Component{
         
     }
     
+    //Layouts
+     layout_fcose=()=>{
+        if(this.cy.elements().length>0){
+
+            this.cy.layout({name:'fcose',    }).run();
+            
+            
+            
+           ;
+            
+        }
+    }   
     
+    layout_fcoseP=()=>{
+        if(this.cy.elements().length>0){
+            
+            this.cy.nodes('[queryClass = "sourceKinase"]').lock();
+            
+            
+            (this.cy.layout({name:'fcose', randomize: false, qualiy: 'proof', stop:  ()=>{this.cy.nodes('[queryClass = "sourceKinase"]').unlock()}     }).run());
+            
+            
+            
+           ;
+            
+        }
+    }   
     
     componentDidUpdate(prevProps, prevState){
-//         console.log( this.state.colorMapEdges, prevState.colorMapEdges)
         
         if(this.props.elements.length > 0){//make sure elements actually exist
 //             this.cy.startBatch();
@@ -158,7 +165,7 @@ class CytoscapeCustom extends React.Component{
                 let colorMapBoth = ggColMap(new Set([...nodeTypeSet,...edgeTypeSet]));
                 this.setState({colorMapEdges : colorMapEdges, colorMapNodes: colorMapNodes, colorMapBoth: colorMapBoth}, this.colorElements);
                 
-                this.cy.layout({name:'fcose'}).run();
+                this.layout_fcose();
             }   
             else
             {
@@ -178,8 +185,11 @@ class CytoscapeCustom extends React.Component{
     }
     
     componentDidMount = () => {
-        this.cy.on('click', 'node', this.props.handleNodeClick);
+//         this.cy.on('click', 'node', this.props.handleNodeClick);
         this.cy.on('click', 'edge', this.props.handleEdgeClick);
+        
+        this.cy.on('click', 'node', (e)=>{console.log(e.target._private.data)} );
+        
     }
     
 
@@ -268,7 +278,7 @@ class CytoscapeCustom extends React.Component{
             let colorMap = new Map();
             
             s.forEach(e => {
-                if(e.selector.search("edge\\[") !== -1 || e.selector.search("\\[") === 0)
+                if(e.hasOwnProperty('legendName') && (e.selector.search("edge\\[") !== -1 || e.selector.search("\\[") === 0))
                     colorMap.set(e.legendName, e.style['background-color']);
             })
             
@@ -291,7 +301,7 @@ class CytoscapeCustom extends React.Component{
             let colorMap = new Map();
             
             s.forEach(e => {
-                if(e.selector.search("node\\[")!== -1 ||  e.selector.search("\\[") === 0)
+                if(e.hasOwnProperty('legendName') &&( e.selector.search("node\\[")!== -1 ||  e.selector.search("\\[") === 0))
                     colorMap.set(e.legendName, e.style['background-color']);
             })
             
@@ -323,6 +333,18 @@ class CytoscapeCustom extends React.Component{
         );
     }
     
+    renderLayout(){
+    
+        
+        return(
+            <div className="border" style={{padding: '5px', marginBottom:'5px'}}>
+            <Button
+                onClick={this.layout_fcose}
+            >Layout</Button>
+            </div>
+        );
+    }
+    
     render(){
 
 //         {this.generateLegendNodes()}
@@ -332,7 +354,7 @@ class CytoscapeCustom extends React.Component{
             <Card.Body>
             
                 
-                
+                {this.renderLayout()}
             
             
                 <CytoscapeComponent className="border cyClass"  cy={(cy) => {this.cy = cy}} elements={this.props.elements} stylesheet={ this.computeStyle() } style={ { width: '600px', height: '400px', marginBottom:'10px' } }/>
@@ -343,21 +365,23 @@ class CytoscapeCustom extends React.Component{
                     
                         <label>Color</label>
                         <Select
-                        
                             options={Object.keys(this.props.cstyle.colors).map((e,i) => ({value: i, label: e }))}
                             onChange={this.handleSetColorStyle}
+                            defaultValue={{label:this.state.colorStyle}}
                         />
                     
                         <label>Labels</label>
                         <Select
                             options={Object.keys(this.props.cstyle.labels).map((e,i) => ({value: i, label: e }))}
                             onChange={this.handleSetLabelStyle}
+                            defaultValue={{label:this.state.labelStyle}}
                         />
                         
                         <label>Sizes</label>
                         <Select
                             options={Object.keys(this.props.cstyle.sizes).map((e,i) => ({value: i, label: e }))}
                             onChange={this.handleSetSizeStyle}
+                            defaultValue={{label:this.state.sizeStyle}}
                         />
                     </Card.Body>
                 </Card>

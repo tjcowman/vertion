@@ -23,8 +23,9 @@ class PathSearchComponent extends React.Component{
             topk: 10,
             minPathScore: 0,
              
-//             response : {trees: [[]]}, // {kinase: #, tree: []}
             trees: new Map(), 
+            sourceIds : [],
+            
             
             siteData: new Map(),
             
@@ -33,20 +34,59 @@ class PathSearchComponent extends React.Component{
         
     }
     
+    //gets the ids of the input kinases
+    getPathSourceIds(){
+        
+        return(this.state.sourceIds);
+        
+        //return(trees)
+    }
+    
     componentDidUpdate(prevProps, prevState){
-        if(prevState.minPathScore != this.state.minPathScore){
-            
+         if(prevState.minPathScore !== this.state.minPathScore || prevState.trees !== this.state.trees){
+
             this.setState({
-                displayElements: [...this.updateNodes(), ...this.updateEdges()]
+                displayElements: this.updateElements()
             });
         }
     }
     
-    filterNodeScore(treeIndex){
-//         if(response.trees.length<treeIndex)
-//             console.log()
+    computeUniqueNodes(treeIndex){
+//         console.log(this.getTree(treeIndex))
+        return new Set(this.filterNodeScore([treeIndex]).map(path=>path.nodes).flat(2).map(i=>String(i)));
+//         return 1;
+    }
+    computeUniqueEdges(treeIndex){
+        let ids=[];
+        this.filterNodeScore([treeIndex]).forEach((path)=>{
+            for(let i=0; i<path.nodes.length-1; ++i ){
+                ids.push(
+                    path.nodes[i] + '-' + path.nodes[i+1], 
+                );
+            }
+        })
         
-        return this.getTree(treeIndex).filter(path => path.nodeScore >this.state.minPathScore);
+        return new Set(ids);
+    }
+    
+    computeElementIds(treeIndex){
+        let ids = new Set([...this.computeUniqueNodes(treeIndex), ...this.computeUniqueEdges(treeIndex)]);
+        return ids;
+    }
+    
+    //Returns the paths from the chosen trees
+    filterNodeScore(treeIndexes){
+        //Define the sort order for paths
+            const pathOrder = (l,r)=>{
+                return l.totalWeight - r.totalWeight;
+            }
+        
+        //gets the pathas in each tree that surpass the selection
+        let bigE = treeIndexes.map(i => this.getTree(i).filter(path => path.nodeScore >= this.state.minPathScore) );
+        let topk = bigE.map(tree =>
+            tree.slice().sort(pathOrder).slice(0, this.state.topk)
+        )
+        return topk.flat()
     }
     
     
@@ -57,12 +97,36 @@ class PathSearchComponent extends React.Component{
             return [];
     }
     
-    updateNodes=()=>{
+    //Computes the overlapping node and edge elements then formats the elements for display
+    updateElements=()=>{
+        let idK1 = this.computeElementIds(0);
+        let idK2 = this.computeElementIds(1);
+        
+        let idMap = new Map();
+        
+        idK1.forEach(e => {
+            idMap.set(e, 'l');
+        });
+        
+        idK2.forEach(e => {
+            if(idMap.has(e)){
+                idMap.set(e, 'b');
+            }else{
+                idMap.set(e, 'r');
+            }
+        });
+        return  [...this.updateNodes(idMap), ...this.updateEdges(idMap)];
+    }
+    
+    updateNodes=(integrationData)=>{
         //Get the unique nodeIds used
         let nodeIds = new Set();        
-        this.filterNodeScore(0).slice(0,this.state.topk).forEach((p)=>(
+        this.filterNodeScore([0,1]).forEach((p)=>(
             p.nodes.forEach(id => nodeIds.add(id))
         ))
+        
+        
+//         console.log(sourceIds);
         
         let nodes =  [...nodeIds].map(id =>({
               data: {
@@ -70,19 +134,28 @@ class PathSearchComponent extends React.Component{
                 nodeType: this.props.labelsUsed.nameLookupNode(this.props.nodeData.getEntry(id).labels).toString(), 
                 label:  this.props.nodeData.getEntry(id).name, 
                 pLabel: this.props.nodeData.getEntry(id).pname === "" ? undefined : this.props.nodeData.getEntry(id).pname,
+                origin: integrationData.get(String(id)),
               }
             })
         );
         
         //For the terminal nodes update their values
+        let sourceIds = new Set(this.getPathSourceIds());
+        console.log(sourceIds)
         nodes.forEach(n =>{
-            let lookup = this.state.siteData.get(n.data.id);
+            let lookup = this.state.siteData.get(String(n.data.id));
             if(typeof(lookup) !== 'undefined'){
                 n.pathTerm = 1;
                 n.data.scoreNorm = lookup.scoreNorm;
                 n.data.direction = lookup.direction;
             }
-
+            
+//             console.log(n.data.id)
+            if(sourceIds.has(String(n.data.id))){
+                n.data.queryClass = "sourceKinase";
+            }
+            
+            //Strip the protein uniprot from the sites
             if(n.data.nodeType === "Site"){
                 n.data.label = n.data.label.substring(n.data.label.search(':')+1 );
             }
@@ -92,17 +165,18 @@ class PathSearchComponent extends React.Component{
         return nodes;
     }
     
-    updateEdges=()=>{
+    updateEdges=(integrationData)=>{
         let edges = [];
 
-        this.filterNodeScore(0).slice(0,this.state.topk).forEach((path)=>{
+        this.filterNodeScore([0,1]).forEach((path)=>{
             for(let i=0; i<path.nodes.length-1; ++i ){
                 edges.push({
                     data:{
                         id: path.nodes[i] + '-' + path.nodes[i+1],
                         source: path.nodes[i], 
                         target: path.nodes[i+1], 
-                        edgeType: this.props.labelsUsed.nameLookupEdge(path.edgeLabels[i]).toString() 
+                        edgeType: this.props.labelsUsed.nameLookupEdge(path.edgeLabels[i]).toString(), 
+                         origin: integrationData.get(String(path.nodes[i] + '-' + path.nodes[i+1])),
                     }
                     
                 });
@@ -126,61 +200,39 @@ class PathSearchComponent extends React.Component{
     
     //Gets the response data and ensures the nodeIndexes have been looked up before proceeding
     getResponse=(responseTrees)=>{
-        
         //Update the responseTrees with the current state IMPORTANT: doesnt change the state
-        this.state.trees.forEach(t=> {
-            
-            if(!responseTrees.has(t[0]))
-                responseTrees.set(t[0], t[1]);
+       this.state.trees.forEach((k,v) => {
+           console.log("E",k,v)
+            if(!responseTrees.has(v) )
+                responseTrees.set(v, k);
             
         })
-        
-         console.log(responseTrees)
+
         let nodeIndexes = [...responseTrees.values()].map(tree=>tree.map(path => path.nodes)).flat(3);
         
         let siteData =  new Map();
         
         //Computes some data for the node Indexes corresponding to terminal sites
-        let maxScore =  Math.max([...responseTrees.values()].map(tree=>tree.map(path => path.nodeScore).flat()));
+        let maxScore =  Math.max(...[...responseTrees.values()].map(tree=>tree.map(path => path.nodeScore)).flat());
         let targetMax = 100;
         
-        [...responseTrees.values()].forEach(tree => tree.forEach(path =>{
-            siteData.set(path.nodes[0], {
-                direction: path.direction, 
-                scoreNorm: path.nodeScore*(targetMax/maxScore) 
+        let sourceIds = [];
+        
+        [...responseTrees.values()].forEach(tree => {
+            //Extract the valid source node ids
+            if(tree.length>0)
+                sourceIds.push(String(tree[0].nodes[tree[0].nodes.length-1]));
+            
+            tree.forEach(path =>{
+                siteData.set(String(path.nodes[0]), {
+                    direction: path.direction, 
+                    scoreNorm: path.nodeScore*(targetMax/maxScore) 
+                });
             });
-        }));
-        
-        
-//        
-        
-//         console.log(response);
-//         this.setState((prevState)=>({trees: new Map([...prevState.trees, ...response]) }),);
-        
-//         console.log(response);
-//         
-// //         response = {this.state.response}
-//         
-//         let siteData =  new Map();
-//         
-//         //Computes some data for the node Indexes corresponding to terminal sites
-//         let maxScore =  Math.max(...response.trees.map(tree=>tree.map(path => path.nodeScore).flat()));
-//         let targetMax = 100;
-//         
-//         response.trees.forEach(tree => tree.forEach(path =>{
-//             siteData.set(path.nodes[0], {
-//                 direction: path.direction, 
-//                 scoreNorm: path.nodeScore*(targetMax/maxScore) 
-//             });
-//         }));
-//         let nodeIndexes = response.trees.map(tree=>tree.map(path => path.nodes)).flat(3);
-// //         console.log(response.trees, nodeIndexes)
-//         this.props.handleNodeLookupIndex(nodeIndexes,
-//             ()=>{this.setState({response: response, siteData: siteData})}
-//         );
+        });
         
         this.props.handleNodeLookupIndex(nodeIndexes,
-            ()=>{this.setState({trees: responseTrees, siteData: siteData})}
+            ()=>{this.setState({trees: responseTrees, siteData: siteData, sourceIds: sourceIds})}
         );
     }
     
@@ -195,37 +247,7 @@ class PathSearchComponent extends React.Component{
         }
         return terminalScores;
     }
-    
-//     handleUpdateElements=(elements, stateName)=>{
-//      
-//         this.setState(prevState=>({
-//             [stateName]: elements
-//         }));
-//     }
-//     
-//     handleComputeIntegrationData=(dependentFunction)=>{
-//         let idMap = new Map();
-//         
-//         this.state.elements1.forEach(e => {
-//             idMap.set(String(e.data.id), 'l');
-//         });
-//         
-//         this.state.elements2.forEach(e => {
-//             if(idMap.has(String(e.data.id))){
-//                 idMap.set(String(e.data.id), 'b');
-//             }else{
-//                 idMap.set(String(e.data.id), 'r');
-//             }
-//         });
-//         console.log(idMap)
-// 
-//         this.setState(prevState=>({
-//             elements1 : this.state.elements1.map((e) => ({data:{...e.data, origin: idMap.get(String(e.data.id))}})),
-//             elements2 : this.state.elements2.map((e) => ({data:{...e.data, origin: idMap.get(String(e.data.id))}}))
-//         }), dependentFunction)
-//                    
-//     }
-
+  
     render(){
         {console.log("PS QUERYST", this.state)}
         return(

@@ -33,7 +33,8 @@
         {
             selector: 'edge',
             style: {
-                'line-color' : 'gray'  //'mapData(edgeType, 0, 8, red, blue)'
+                'line-color' : 'gray',  //'mapData(edgeType, 0, 8, red, blue)'
+                'source-arrow-color' : 'gray'
             }
         },
         {
@@ -95,34 +96,48 @@
         }
     ]
     
+    
+    const kc1= "orange";
+    const kc2= "green";
+    const bc = "blue";
+    
     export let color_integration = [
         {
             legendName: "Kinase 1",
             selector: "[origin = 'l']",
             style: {
-                'background-color': 'blue',
-                'line-color': 'blue',
-                'source-arrow-color' : 'blue'
+                'background-color': kc1,
+                'line-color': kc1,
+                'source-arrow-color' : kc1
             }
         },
         {
             legendName: "Kinase 2",
             selector: "[origin = 'r']",
             style: {
-                'background-color': 'yellow',
-                'line-color': 'yellow',
-                'source-arrow-color' : 'yellow'
+                'background-color': kc2,
+                'line-color': kc2,
+                'source-arrow-color' : kc2
             }
         },
         {
             legendName: "Both",
             selector: "[origin = 'b']",
             style: {
-                'background-color': 'green',
-                'line-color': 'green',
-                'source-arrow-color' : 'green'
+                'background-color': bc,
+                'line-color': bc,
+                'source-arrow-color' : bc
             }
         },
+        {
+     
+            selector: "[queryClass = 'sourceKinase']",
+            style: {
+            'border-color' : 'black',
+            'border-width' : '2'
+            }
+            
+        }
     ]
     
     export let colors = { none: color_monochrome, auto: color_auto, direction: color_direction

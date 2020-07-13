@@ -57,14 +57,10 @@ class PathQueryComponent extends React.Component{
         this.state={
             versionIndex: "T",
             
-//             kinases: ["P00533", "P00533"],
-            
-//             kinaseMask : [],
             lastKinases: [],
             kinaseText1: "P00533",
-            kinaseText2: "P00533",
+            kinaseText2: "P15056",
             
-            lastKinase : ["", ""], //array storing the previous kinase queried
             siteText: "Q15459	359	-1.3219\nQ15459	451	0.5352\nP28482	185	4.4463\nP28482	187	4.4195\nQ8N3F8	273	-0.3219",
             minWeight: 0,
             mechRatio: 10,
@@ -148,13 +144,9 @@ class PathQueryComponent extends React.Component{
                 console.log(response);
             
                 
-                this.setState({lastKinase : [this.state.kinaseText1, this.state.kinaseText2]});
                 this.setState({lastKinases : this.kinaseArrayFormat()});
             
-                //Define the sort order for paths
-                const pathOrder = (l,r)=>{
-                    return l.totalWeight - r.totalWeight;
-                }
+            
 
                 
                 let responseeTrees = new Map(response.data.trees.map((tree,i) => ([mask[i], tree])));
@@ -270,8 +262,9 @@ class ResultDisplay extends React.Component{
                  
             <div >
                 <CytoscapeCustom 
-                    cstyle={{colors: cstyle.colors , labels: cstyle.labels, sizes :cstyle.sizes}}
+                    cstyle={{colors: {...cstyle.colors, integration :cstyle.color_integration}  , labels: cstyle.labels, sizes :cstyle.sizes}}
                     elements={this.props.displayElements} 
+                    
                 />
             </div>
            

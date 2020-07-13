@@ -371,24 +371,24 @@ namespace Commands
             auto mainTree = json::array();
             for(const auto& path : tree)
             {
-    //             mainTree[pNum]["name"] =  "path-"+std::to_string(pNum);
-                mainTree[pNum]["nodeScore"] = path.nodeScore_;
-                mainTree[pNum]["direction"] = path.nodeDirection_;
-                mainTree[pNum]["nodes"] = std::vector<int>(); 
-                mainTree[pNum]["edgeLabels"] = std::vector<long>();
-                
-                mainTree[pNum]["totalWeight"] = path.totalWeight_;
-    //             std::cout<<path.totalWeight_<<std::endl;
-                //ret[pNum]["score"] = path.score_;
-                
-                
-                for(const auto & e : path.visitOrder_)
-                    mainTree[pNum]["nodes"].push_back(e);
-                
-                for(const auto& e : path.edgeLabels_)
-                    mainTree[pNum]["edgeLabels"].push_back(e.getBits().to_ulong());
+                 //Make sure there was a path
+                if(path.visitOrder_.size()>0)
+                {
+                    mainTree[pNum]["nodeScore"] = path.nodeScore_;
+                    mainTree[pNum]["direction"] = path.nodeDirection_;
+                    mainTree[pNum]["nodes"] = std::vector<int>(); 
+                    mainTree[pNum]["edgeLabels"] = std::vector<long>();
                     
-                ++pNum;
+                    mainTree[pNum]["totalWeight"] = path.totalWeight_;
+                    
+                    for(const auto & e : path.visitOrder_)
+                        mainTree[pNum]["nodes"].push_back(e);
+                    
+                    for(const auto& e : path.edgeLabels_)
+                        mainTree[pNum]["edgeLabels"].push_back(e.getBits().to_ulong());
+                    
+                    ++pNum;
+                }
             }
             ret["trees"].push_back( mainTree);
         }

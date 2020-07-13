@@ -298,7 +298,7 @@ void KinasePaths<GT>::compute(const std::vector<VertexI<GT>>& source, const Grap
             
             paths_[k] = formatPaths(sourceIndex);
             
-            for(int i=0; i<paths_.size(); ++i)
+            for(int i=0; i<paths_[k].size(); ++i)
                 if(!paths_[k][i].empty())
                     paths_[k][i].totalWeight_ = spLengths[ viewer_->getViewIndex(paths_[k][i].visitOrder_[0]) ]; 
             
