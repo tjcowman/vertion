@@ -97,11 +97,51 @@
     ]
     
     
-    const kc1= "orange";
-    const kc2= "green";
-    const bc = "blue";
+    const kc1= "#CD853F";
+    const kc2= "#DC143C" ;
+    const bc = "#008B8B";
     
     export let color_integration = [
+        {
+            selector: "node",
+            style:{
+                'border-color' : 'black',
+                'border-width' : '2'
+            }
+        },
+        
+        {
+            selector: "edge",
+            style:{
+                'width' : '3',
+
+            }
+        },
+        
+        {
+            selector: "edge[edgeType = 'Harboring']",
+            style:{
+                'width' : '3',
+                'line-style':'dashed'
+
+            }
+        },
+        {
+            selector: "node[nodeType = 'Site']",
+            style:{
+                shape: 'square',
+                'width' : '20',
+                'height' : '20'
+            }
+        },
+        {
+            selector: "node[nodeType = 'Kinase']",
+            style:{
+                shape: 'hexagon',
+            }
+        },
+        
+        
         {
             legendName: "Kinase 1",
             selector: "[origin = 'l']",
@@ -134,11 +174,28 @@
             selector: "[queryClass = 'sourceKinase']",
             style: {
             'border-color' : 'black',
-            'border-width' : '2'
+            'border-width' : '2',
+            'width' : '50',
+            'height' : '50',
+            'background-color': 'black'
+            }
+            
+        },
+        {
+     
+            selector: "[direction]",
+            style: {
+                'border-color' : 'black',
+                'border-style' : 'double',
+                'border-width' : '4'
             }
             
         }
     ]
+    
+    export let themes = { none: color_monochrome, auto: color_auto, direction: color_direction
+        
+    }
     
     export let colors = { none: color_monochrome, auto: color_auto, direction: color_direction
         
@@ -153,6 +210,15 @@
     }
     
     export let base = [
+        {
+            selector: "node",
+            style: {
+                'width':'30',
+                'height': '30'
+            }
+            
+        },
+    
         {
             selector: 'edge[edgeType = "Phosphorylation"]',
             style: {
