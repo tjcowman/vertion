@@ -148,6 +148,12 @@ class PathQueryComponent extends React.Component{
             
             
 
+//                 let distFn = []
+//                 response.data.trees.forEach(tree=> 
+//                 
+//                 )
+                
+                
                 
                 let responseeTrees = new Map(response.data.trees.map((tree,i) => ([mask[i], tree])));
                 this.props.getResponse(responseeTrees);
@@ -200,6 +206,21 @@ class CutoffManagerComponent extends React.Component{
         })
 
     }
+    
+    handleChangeTopK=(event)=>{
+        if(event.target.value > 50){
+            event.target.value=50;
+            
+        }else if(event.target.value < 0){
+            event.target.value=0;
+        }
+        
+        this.props.handleSetTopk(event.target.value);
+    }
+    
+    handleSetMinPathScore=(event)=>{
+        this.props.handleSetMinPathScore(event.target.value);
+    }
 
     render(){
         let numScores = this.props.terminalScores.scores.length;
@@ -227,7 +248,7 @@ class CutoffManagerComponent extends React.Component{
                                         step={ isNaN(scoreMax) ? 0 : scoreMax/100} 
                                         id="customRange2"
                                         onChange={ this.handleChange}
-                                        onMouseUp={this.props.handleSetState} >
+                                        onMouseUp={this.handleSetMinPathScore} >
                                 </input>
                                     
                                 <div>Score Cutoff = {Number(this.state.minPathScore).toPrecision(5)}</div>
@@ -240,7 +261,7 @@ class CutoffManagerComponent extends React.Component{
                         <Card className="rounded-0">
                             <Card.Body>
                                     <div>Top K</div>
-                                    <input  className="form-control" style={{width:'200px'}} name="topk" autoComplete="off" value={this.props.topk} onChange={this.props.handleSetState}></input>
+                                    <input type="number" className="form-control" style={{width:'200px'}} name="topk" autoComplete="off" value={this.props.topk} onChange={this.handleChangeTopK}></input>
                             </Card.Body>
                         </Card>
                         
