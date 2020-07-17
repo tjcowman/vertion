@@ -38,6 +38,16 @@ class CytoscapeLegend extends React.Component{
     render(){
         return(
             <>
+                    <div>
+                {[...this.props.basicMap.entries()].map((k, i) =>(
+                        <ListGroupItem className="colorItem" key={i}> 
+                            <button onClick={this.handleNodeColorSelect} edit="editColorNode" name={k[0]} value={k[1]} className="colorIcon" style={{backgroundColor:k[1]}}>
+                            </button>
+                            {k[0]}
+                        </ListGroupItem>
+                ))}
+                </div>
+            
                 <div style={this.props.edgeMap.size === 0 ? {display:'none'} : {}}>Edges :</div> 
                 <div>
                 {[...this.props.edgeMap.entries()].map((k, i) =>(
@@ -104,9 +114,11 @@ class CytoscapeCustom extends React.Component{
         this.colorRef = React.createRef();
         
         this.state={
-            colorStyle : "none",
-            labelStyle : "none",
-            sizeStyle : "constant",
+            colorStyle : "integration",
+            labelStyle : "None",
+            sizeStyle : "Constant",
+            
+            elementDescription: {}, 
             
 //             editColorEdge : "",
 //             editColorNode : "",
@@ -119,6 +131,27 @@ class CytoscapeCustom extends React.Component{
             colorMapBoth : new Map(),
         }
         
+    }
+    
+    formatElementDescription(){
+//         return(
+            const v = this.state.elementDescription;
+        
+            if(v.hasOwnProperty('nodeType'))
+            {
+                return (
+                    v.nodeType + ": " +
+                    (v.pLabel ? v.pLabel: v.label)
+                    
+                    
+                );
+            }else if(v.hasOwnProperty('edgeType')){
+                return(
+                    v.edgeType
+                )
+            }
+            
+//         );
     }
     
     //Layouts
@@ -186,10 +219,19 @@ class CytoscapeCustom extends React.Component{
     
     componentDidMount = () => {
 //         this.cy.on('click', 'node', this.props.handleNodeClick);
-        this.cy.on('click', 'edge', this.props.handleEdgeClick);
+//         this.cy.on('click', 'edge', this.props.handleEdgeClick);
         
-        this.cy.on('click', 'node', (e)=>{console.log(e.target._private.data)} );
+//         this.cy.on('click', 'node', (e)=>{console.log(e.target._private.data)} );
+        this.cy.on('click', this.handleElementClick);
         
+    }
+    
+    handleElementClick=(event)=>{
+        console.log(event.target._private.data);
+//         if(this.cy.elements(':selected').length<=1)
+            this.setState({elementDescription : event.target._private.data });
+//         else
+//              this.setState({elementDescription : {} });
     }
     
 
@@ -309,6 +351,19 @@ class CytoscapeCustom extends React.Component{
         }
     }
     
+    generateLegendShared=()=>{
+        let s = this.styleLookup(this.props.cstyle.colors, this.state.colorStyle);
+        
+        let colorMap = new Map();
+        
+        s.forEach(e => {
+            if(e.hasOwnProperty('legendNameBasic') )
+                colorMap.set(e.legendNameBasic, e.style['background-color']);
+        })
+        
+        return colorMap;
+    }
+    
     renderExport(){
         return(
             <div className= "border" style={{width: '200px',margin:'5px 0px' }}>
@@ -341,6 +396,8 @@ class CytoscapeCustom extends React.Component{
             <Button
                 onClick={this.layout_fcose}
             >Layout</Button>
+            
+            {this.formatElementDescription()}
             </div>
         );
     }
@@ -363,21 +420,21 @@ class CytoscapeCustom extends React.Component{
                 <Card className="styleSelectorContainer rounded-0">
                     <Card.Body>
                     
-                        <label>Color</label>
+                        {/*<label>Color</label>
                         <Select
                             options={Object.keys(this.props.cstyle.colors).map((e,i) => ({value: i, label: e }))}
                             onChange={this.handleSetColorStyle}
                             defaultValue={{label:this.state.colorStyle}}
-                        />
+                        />*/}
                     
-                        <label>Labels</label>
+                        <label style={{margin:'8px 0px'}}>Labels</label>
                         <Select
                             options={Object.keys(this.props.cstyle.labels).map((e,i) => ({value: i, label: e }))}
                             onChange={this.handleSetLabelStyle}
                             defaultValue={{label:this.state.labelStyle}}
                         />
                         
-                        <label>Sizes</label>
+                        <label style={{margin:'8px 0px'}}>Terminal Sizes</label>
                         <Select
                             options={Object.keys(this.props.cstyle.sizes).map((e,i) => ({value: i, label: e }))}
                             onChange={this.handleSetSizeStyle}
@@ -390,7 +447,7 @@ class CytoscapeCustom extends React.Component{
                 </div>
                 
                 {/*<CytoscapeLegend edgeMap={this.state.colorMapEdges} nodeMap={this.state.colorMapNodes}/>*/}
-                {this.props.elements.length > 0 ? <CytoscapeLegend edgeMap={this.generateLegendEdges()} nodeMap={this.generateLegendNodes()}/> : ""}
+                {this.props.elements.length > 0 ? <CytoscapeLegend basicMap={this.generateLegendShared()} edgeMap={this.generateLegendEdges()} nodeMap={this.generateLegendNodes()}/> : ""}
     
    
                 

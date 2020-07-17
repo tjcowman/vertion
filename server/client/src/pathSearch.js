@@ -1,9 +1,10 @@
 import React from 'react';
 import {Button, Card, Row, Col, Tab, Tabs} from 'react-bootstrap'
 
-import {PathQueryComponent,  CutoffManagerComponent, ResultDisplay} from './pathSearchQuery.js'
+import {PathQueryComponent,  CutoffManagerComponent, ResultDisplay, PathStats} from './pathSearchQuery.js'
 import {CytoscapeCustom} from './cytoscapeCustom.js'
 import {CytoscapeIntegration} from './cytoscapeIntegration.js'
+
 
 
 import './pathSearch.css'
@@ -25,9 +26,10 @@ class PathSearchComponent extends React.Component{
             kDisplayed: 0,
             minPathScore: 0,
              
-            
+            showPopout: false,
             trees: new Map(), 
             sourceIds : [],
+//             pathLengthByCutoff : [[]],
             
             
             siteData: new Map(),
@@ -49,7 +51,7 @@ class PathSearchComponent extends React.Component{
         
 
         if(
-//             prevState.minPathScore !== this.state.minPathScore || 
+            prevState.minPathScore !== this.state.minPathScore || 
             prevState.trees !== this.state.trees || 
             prevState.kDisplayed !== this.state.kDisplayed
            // (prevState.topk !== this.state.topk && this.state.topk <= this.state.kAvailable)
@@ -91,7 +93,7 @@ class PathSearchComponent extends React.Component{
                 return l.totalWeight - r.totalWeight;
             }
         
-        //gets the pathas in each tree that surpass the selection
+        //gets the paths in each tree that surpass the selection
         let bigE = treeIndexes.map(i => this.getTree(i).filter(path => path.nodeScore >= this.state.minPathScore) );
         let topk = bigE.map(tree =>
             tree.slice().sort(pathOrder).slice(0, this.state.topk)
@@ -242,6 +244,7 @@ class PathSearchComponent extends React.Component{
         
         //Computes some data for the node Indexes corresponding to terminal sites
         let maxScore =  Math.max(...[...responseTrees.values()].map(tree=>tree.map(path => path.nodeScore)).flat());
+        let minScore = 10;
         let targetMax = 100;
         
         let sourceIds = [];
@@ -254,10 +257,13 @@ class PathSearchComponent extends React.Component{
             tree.forEach(path =>{
                 siteData.set(String(path.nodes[0]), {
                     direction: path.direction, 
-                    scoreNorm: path.nodeScore*(targetMax/maxScore) 
+                    scoreNorm: Math.min(path.nodeScore*(targetMax/maxScore), minScore )
                 });
             });
         });
+        
+//         let pathLengthByCutoff = [...responseTrees.values()].map(tree => tree.map(path => ({score : path.nodeScore, length : path.totalWeight})).sort((l,r)=>{return l.score-r.score})) 
+        
         
         let kAvailable = Math.min(...[...responseTrees.values()].map(tree=> tree.map(path => path.nodeScore).filter(score=>score > this.state.minPathScore).length));
         let kDisplayed = Math.min(kAvailable,this.state.topk);
@@ -268,7 +274,8 @@ class PathSearchComponent extends React.Component{
                 siteData: siteData, 
                 sourceIds: sourceIds,
                 kAvailable : kAvailable,
-                kDisplayed : kDisplayed
+                kDisplayed : kDisplayed,
+//                 pathLengthByCutoff : pathLengthByCutoff
             })}
         );
     }
@@ -284,7 +291,7 @@ class PathSearchComponent extends React.Component{
         }
         return terminalScores;
     }
-  
+    
     render(){
         {console.log("PS QUERYST", this.state)}
         return(
@@ -306,8 +313,15 @@ class PathSearchComponent extends React.Component{
                         handleSetMinPathScore={this.handleSetMinPathScore}
                         handleSetTopk={this.handleSetTopk}
                         topk={this.state.topk}
+                        kAvailable={this.state.kAvailable}
                         minPathScore={this.minPathScore}
                     />
+     
+                    {/*this.getPopout()*/}
+                    {/*<button onClick={() => this.setPopoutOpen(!this.state.showPopout)}>
+                        toggle popout
+                    </button>*/}
+     
                  </div>
                 
                  <div style={{display:'inline-block', verticalAlign:'top', margin:'10px'}}>

@@ -143,7 +143,7 @@
         
         
         {
-            legendName: "Kinase 1",
+            legendNameBasic: "Kinase 1",
             selector: "[origin = 'l']",
             style: {
                 'background-color': kc1,
@@ -152,7 +152,7 @@
             }
         },
         {
-            legendName: "Kinase 2",
+            legendNameBasic: "Kinase 2",
             selector: "[origin = 'r']",
             style: {
                 'background-color': kc2,
@@ -161,7 +161,7 @@
             }
         },
         {
-            legendName: "Both",
+            legendNameBasic: "Both",
             selector: "[origin = 'b']",
             style: {
                 'background-color': bc,
@@ -193,19 +193,19 @@
         }
     ]
     
-    export let themes = { none: color_monochrome, auto: color_auto, direction: color_direction
+    export let themes = { None: color_monochrome, auto: color_auto, direction: color_direction
         
     }
     
-    export let colors = { none: color_monochrome, auto: color_auto, direction: color_direction
+    export let colors = { None: color_monochrome, auto: color_auto, direction: color_direction
         
     }
     
-    export let labels = { none: [], uniprot : label_uniprot, proteinName : label_proteinName
+    export let labels = { None: [], 'Uniprot ID': label_uniprot, 'Protein Name' : label_proteinName
         
     }
     
-    export let sizes = { constant: [], score : size_score
+    export let sizes = { Constant: [], 'Node Score' : size_score
         
     }
     
@@ -227,6 +227,15 @@
                  'source-arrow-shape': 'triangle'
             }
         
+        },
+        {
+            selector: ':selected',
+            css: {
+                'overlay-color': 'blue',
+                'overlay-opacity': 0.5,
+                'overlay-padding': 5,
+            }
+
         }
     ]
     

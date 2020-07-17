@@ -31,7 +31,7 @@ class KinasePaths
         const std::vector<std::vector<Path<GT>>>& getPaths()const;
 //         const std::vector<std::vector<Path<GT>>>& getPermPaths()const;
         
-        float arg_minWeight_;
+        float arg_weightFraction_;
         
     private:
         
@@ -40,7 +40,7 @@ class KinasePaths
         void computeNodeScores( const GraphList<VertexS<GT>>& sinks);
         //calculates the shortest paths given the current settings, returns the shortest path lengths
         auto runSP(typename GT::Index sourceIndex, const typename IntegratedViewer<GT>::ArrayA& A, float mechRatio, const typename IntegratedViewer<GT>::ArrayIA& IA, const typename IntegratedViewer<GT>::ArrayJA& JA, const typename IntegratedViewer<GT>::ArrayL& L);
-        auto formatPaths(typename GT::Index sourceIndex)const;
+        auto formatPaths(typename GT::Index sourceIndex,  const std::vector<typename GT::Value>& shortestPathLengths)const;
         void scorePaths(std::vector<Path<GT>>& paths);
         
         std::map<typename GT::Index, std::pair<typename GT::Value, int>> nodeScoreLookup_; //(Score,Direction)
@@ -226,20 +226,39 @@ auto KinasePaths<GT>::runSP(typename GT::Index sourceIndex, const typename Integ
 }
 
 template<class GT>
-auto KinasePaths<GT>::formatPaths(typename GT::Index sourceIndex)const
+auto KinasePaths<GT>::formatPaths(typename GT::Index sourceIndex,  const std::vector<typename GT::Value>& shortestPathLengths)const
 {
     std::vector<Path<GT>> paths;
-    //Traces the paths back from the sink nodes to fill out the computed paths
+    
+    
+
+    //compute the sorted scores for nodes that were pathable
+    std::vector<std::pair<typename GT::Value, typename GT::Index>> topPaths;
     for(const auto& e : nodeScoreLookup_)
     {
-        auto index = e.first;
-        auto score = e.second.first;
-
-        //scorelookup is based on viewIndexes
-        if(score < arg_minWeight_)
+        if( shortestPathLengths[e.first] != std::numeric_limits<typename GT::Value>::infinity())
         {
-            continue;
+            topPaths.push_back(std::make_pair(e.second.first,e.first));
         }
+        std::sort(topPaths.begin(), topPaths.end());
+    }
+    
+    //Traces the paths back from the sink nodes to fill out the computed paths
+    //for(const auto& e : nodeScoreLookup_)
+    for(typename GT::Index i=0; i<topPaths.size()*arg_weightFraction_; ++i)
+    {
+//         auto index = e.first;
+//         auto score = e.second.first;
+
+        auto index = topPaths[i].second;
+        auto score = topPaths[i].first;
+
+        
+        //scorelookup is based on viewIndexes
+//         if(score < arg_minWeight_)
+//         {
+//             continue;
+//         }
             
 //         if( shortestPathLengths[index] != std::numeric_limits<typename GT::Value>::infinity()) //make sure node was reachable
         if(fromData_[index].first != -1)
@@ -296,7 +315,7 @@ void KinasePaths<GT>::compute(const std::vector<VertexI<GT>>& source, const Grap
             auto sourceIndex = viewer_->getViewIndex(source[k].index_);
             auto spLengths = std::move(runSP(sourceIndex, Arw, mechRatio, IA, JA, L));
             
-            paths_[k] = formatPaths(sourceIndex);
+            paths_[k] = formatPaths(sourceIndex, spLengths);
             
             for(int i=0; i<paths_[k].size(); ++i)
                 if(!paths_[k][i].empty())

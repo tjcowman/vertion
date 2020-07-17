@@ -336,7 +336,7 @@ namespace Commands
 //     std::cout<<"VIEWCACHELOOKEDUP"<<std::endl;
     //         
         KinasePaths KP(IV);
-        KP.arg_minWeight_ = args["minWeight"];
+        KP.arg_weightFraction_ = args["weightFraction"];
         
         auto sourceNames = (args["kinase"].get<std::vector<std::string>>());
 //         std::cout<<"SOURCEINDEX" <<sourceIndex<<std::endl;

@@ -17,6 +17,15 @@ import * as cstyle from './cytoStyles.js'
 import './pathSearchQuery.css'
 
 
+export const  PathStats = (props) =>{
+    return(
+        <div style={{marginTop: '5px'}} className="border">
+            <Card.Body>
+            hi
+            </Card.Body>
+        </div>
+    );
+}
 
 class Settings extends React.Component{
     render(){
@@ -38,10 +47,11 @@ class Settings extends React.Component{
                 <Card>
                     <Card.Header>Settings</Card.Header>
                     <Card.Body>
-                        Minimum Weight
-                        <input className="form-control" value={this.props.minWeight} name="minWeight" onChange={this.props.handleChange}></input>
                         Mechanistic Ratio
-                        <input className="form-control" value={this.props.mechRatio} name="mechRatio" onChange={this.props.handleChange}></input>
+                        <input autoComplete="off"  className="form-control" type="number" value={this.props.mechRatio} name="mechRatio" onChange={(event)=>this.props.handleChangeRange(event,0,10000)}></input>
+                        Top Weight Fraction
+                        <input autoComplete="off" className="form-control" type="number" step=".1" value={this.props.minWeight} name="minWeight" onChange={(event)=>this.props.handleChangeRange(event,0,1)}></input>
+
                     </Card.Body>
                 </Card>
             </>
@@ -55,6 +65,8 @@ class PathQueryComponent extends React.Component{
         super(props);
         
         this.state={
+            staleQuery : true,
+            
             versionIndex: "T",
             
             lastKinases: [],
@@ -62,23 +74,29 @@ class PathQueryComponent extends React.Component{
             kinaseText2: "P15056",
             
             siteText: "Q15459	359	-1.3219\nQ15459	451	0.5352\nP28482	185	4.4463\nP28482	187	4.4195\nQ8N3F8	273	-0.3219",
-            minWeight: 0,
+            minWeight: .10,
             mechRatio: 10,
+        }
+    }
+    
+    //NOTE: TODO: Incorporate the kinase and site text into this check (currently uses the parse functions
+    componentDidUpdate(prevProps, prevState){
+//         console.log("FF");
+        if(
+            prevState.minWeight !== this.state.minWeight ||
+            prevState.mechRatio !== this.state.mechRatio ||
+            prevState.versionIndex !== this.state.versionIndex
+        ){
+//             console.log("wut")
+            //Note: need to rest the last kinases because they are no longer up to date
+            this.setState({staleQuery : true, lastKinases: [] });
         }
     }
     
     
     parseKinase=()=>{
-//         let k = [];
-//         if(this.state.lastKinase[0] !== this.state.kinaseText1)
-//             k.push(this.state.kinaseText1);
-//         
-//         if(this.state.lastKinase[1] !== this.state.kinaseText2)
-//             k.push(this.state.kinaseText2);
-//         
         return this.kinaseArrayFormat().filter((e,i) => this.state.lastKinases[i] !== e);
-        
-//         return k;
+
     }
     
     parseSites=()=>{
@@ -93,6 +111,20 @@ class PathQueryComponent extends React.Component{
             [name]: value,
         })
 
+    }
+    handleChangeRange=(event,min,max)=>{
+        let name = event.target.name;
+        let value= event.target.value;
+        
+        if(value < min)
+            value = min;
+        else if(value > max)
+            value = max;
+
+        this.setState({
+            [name]: value,
+            lastKinases : [] //need to reset kinases if the sites have changed
+        })
     }
     
     handleChangeSites=(event)=>{
@@ -130,7 +162,7 @@ class PathQueryComponent extends React.Component{
         let versionDef = this.props.versionCards.getVersionDefinition(this.state.versionIndex);
         let command = {cmd:"pths",
              ...versionDef, 
-            minWeight: Number(this.state.minWeight),
+            weightFraction: Number(this.state.minWeight),
             kinase: this.parseKinase(),
             mechRatio: Number(this.state.mechRatio),
             sites: this.parseSites()
@@ -138,9 +170,12 @@ class PathQueryComponent extends React.Component{
         
         let mask=this.computeKinaseMask();
         console.log(mask)
-        //Determine whether to query kinase or not
-        if(command.kinase.length> 0)
+        //Determine whether to query kinase or not 
+        //TODO: This is confusing, need special case to reQuery both kinases if any of the other parmaeters hve changed
+        if(command.kinase.length> 0 || this.state.staleQuery)
             Axios.post('http://'+this.props.backAddr, JSON.stringify(command)).then((response)=>{
+                
+                this.setState({staleQuery: false});
                 console.log(response);
             
                 
@@ -175,7 +210,8 @@ class PathQueryComponent extends React.Component{
                 component={<Settings 
                     minWeight={this.state.minWeight} 
                     handleChange={this.handleChange} 
-                     handleChangeSites={this.handleChangeSites} 
+                    handleChangeRange={this.handleChangeRange}
+                    handleChangeSites={this.handleChangeSites} 
                     siteText={this.state.siteText}
                     kinaseText1={this.state.kinaseText1}
                     kinaseText2={this.state.kinaseText2}
@@ -260,7 +296,7 @@ class CutoffManagerComponent extends React.Component{
                         
                         <Card className="rounded-0">
                             <Card.Body>
-                                    <div>Top K</div>
+                                    <div>Top K : [{this.props.kAvailable}]</div>
                                     <input type="number" className="form-control" style={{width:'200px'}} name="topk" autoComplete="off" value={this.props.topk} onChange={this.handleChangeTopK}></input>
                             </Card.Body>
                         </Card>
