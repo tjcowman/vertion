@@ -10,6 +10,8 @@ class BiMap
     
     auto begin()const;
     auto end()const;
+    auto beginr()const;
+    auto endr()const;
 
     void insert(std::pair<T1,T2> e);
 
@@ -84,6 +86,18 @@ auto BiMap<T1,T2>::end()const
 }
 
 template<class T1, class T2>
+auto BiMap<T1,T2>::beginr()const
+{
+    return reverse_.begin();
+}
+
+template<class T1, class T2>
+auto BiMap<T1,T2>::endr()const
+{
+    return reverse_.end();
+}
+
+template<class T1, class T2>
 const auto BiMap<T1,T2>::findf(const T1& key)const
 {
   auto it = forward_.find(key);
@@ -97,8 +111,8 @@ template<class T1, class T2>
 const auto BiMap<T1,T2>::findr(const T2& key)const
 {
   auto it = reverse_.find(key);
-  if(it == reverse_.end())
-    return end();
+  if(it == endr())
+    return endr();
   else
     return it;
 }

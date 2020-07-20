@@ -3,6 +3,7 @@
 #include "LabelMap.h"
 
 #include <fstream>
+#include "BiMap.h"
 
 
 template<class GT>
@@ -52,6 +53,7 @@ class VertexController
         void write_serial(std::ostream& os)const;
         
    
+        const auto& getBiMap()const;
         //const static typename GT::Index invalidIndex = std::numeric_limits<typename GT::Index>::max(); //TODO: Find appropriate place for this
     private:
         
@@ -62,8 +64,8 @@ class VertexController
 
         
         std::vector<std::pair<VertexId, VertexLabel<GT> > > ids_; //Stores the data associated with each node [index] [vertexStruct] [Labels]
-        std::map<std::string, Index> mappings_; //NOTE: the string is functionally the vertexInternal name
-
+//         std::map<std::string, Index> mappings_; //NOTE: the string is functionally the vertexInternal name
+        BiMap<typename GT::Index, std::string> mappings_;
         
         //Stores ids that were requested by ex: an indexEdgeList operation and were not found;
         mutable std::set<std::string> missingIds_;
@@ -72,7 +74,7 @@ class VertexController
 template<class GT>
 bool VertexController<GT>::contains(const std::string& id)const
 {
-     return (mappings_.find(id) != mappings_.end());
+     return (mappings_.findr(id) != mappings_.endr());
 }
 
 template<class GT>
@@ -96,9 +98,9 @@ std::vector<std::string> VertexController<GT>::getLabels()const
 template<class GT>
 auto VertexController<GT>::lookup(const std::string& id)const
 {
-    auto it = mappings_.find(id);
+    auto it = mappings_.findr(id);
     
-    if(it != mappings_.end())
+    if(it != mappings_.endr())
         return it->second;
     else
     {
@@ -136,8 +138,8 @@ void VertexController<GT>::insert(const VertexId& vertex, const VertexLabel<GT>&
     }
         
     //add to the keyMap (names)
-    mappings_.insert(std::make_pair(vertex.name_, ids_.size()));
-    
+    //mappings_.insert(std::make_pair(vertex.name_, ids_.size()));
+    mappings_.insert(std::make_pair( ids_.size(),vertex.name_));
     
     //add to the node structure
     ids_.push_back(std::make_pair(vertex,labels));
@@ -154,8 +156,8 @@ void VertexController<GT>::insert_merge(const VertexId& vertex, const VertexLabe
     else
     {
         //add to the keyMap (names)
-        mappings_.insert(std::make_pair(vertex.name_, ids_.size()));
-        
+//         mappings_.insert(std::make_pair(vertex.name_, ids_.size()));
+        mappings_.insert(std::make_pair( ids_.size(),vertex.name_));
         
         //add to the node structure
         ids_.push_back(std::make_pair(vertex,labels));
@@ -293,4 +295,10 @@ void VertexController<GT>::parseFromStream(std::istream& is, const VertexLabel<G
 
     }
     
+}
+
+template<class GT>
+const auto&  VertexController<GT>::getBiMap()const
+{
+    return mappings_;
 }

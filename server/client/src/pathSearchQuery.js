@@ -1,5 +1,5 @@
 import React from 'react';
-import {Button, Card, Tab, Tabs} from 'react-bootstrap'
+import {Button, Card, Tab, Tabs, Form} from 'react-bootstrap'
 
 // import Cytoscape from 'cytoscape';
 // import CytoscapeComponent from 'react-cytoscapejs';
@@ -31,9 +31,13 @@ class Settings extends React.Component{
     render(){
         return(
             <>
-                <Card style={{/*marginBottom: '10px'*/}}>
+                <Card style={{display: 'inline-block', verticalAlign:'top', marginRight: '10px'/*marginBottom: '10px'*/}}>
                     <Card.Header>Input</Card.Header>
+                    
+                    
+                    
                     <Card.Body>
+           
                         Kinase 1
                         <input autoComplete="off" value={this.props.kinaseText1} className="inputKinase form-control" name="kinaseText1"  onChange={this.props.handleChange} ></input>
                         Kinase 2
@@ -44,16 +48,33 @@ class Settings extends React.Component{
                     </Card.Body>
                 </Card>
                 
-                <Card>
-                    <Card.Header>Settings</Card.Header>
-                    <Card.Body>
-                        Mechanistic Ratio
-                        <input autoComplete="off"  className="form-control" type="number" value={this.props.mechRatio} name="mechRatio" onChange={(event)=>this.props.handleChangeRange(event,0,10000)}></input>
-                        Top Weight Fraction
-                        <input autoComplete="off" className="form-control" type="number" step=".1" value={this.props.minWeight} name="minWeight" onChange={(event)=>this.props.handleChangeRange(event,0,1)}></input>
+                <div style={{display: 'inline-block',verticalAlign:'top'}}>
+                    <Card >
+                        <Card.Header>Settings</Card.Header>
+                        <Card.Body>
+                            Mechanistic Ratio
+                            <input autoComplete="off"  className="form-control" type="number" value={this.props.mechRatio} name="mechRatio" onChange={(event)=>this.props.handleChangeRange(event,0,10000)}></input>
+                            Top Weight Fraction
+                            <input autoComplete="off" className="form-control" type="number" step=".1" value={this.props.minWeight} name="minWeight" onChange={(event)=>this.props.handleChangeRange(event,0,1)}></input>
 
-                    </Card.Body>
-                </Card>
+                        </Card.Body>
+                    </Card>
+                
+                    <Card style={{marginTop: '10px'}}>
+                        <Card.Header>Node Lookup</Card.Header>
+                        <Card.Body>
+                            
+                                
+                            <Form.Check value="uniprot" name="idType" checked={this.props.lookupType === 'uniprot'} onChange={this.props.handleLookupType} label="Uniprot Id" /> 
+                            
+                            <Form.Check value="pname" name="idType" checked={this.props.lookupType === 'pname'} onChange={this.props.handleLookupType} label="Protein Name"/>
+                        
+                    
+                        </Card.Body>
+                    </Card>
+                
+                
+                </div>
             </>
         );
     }
@@ -72,6 +93,7 @@ class PathQueryComponent extends React.Component{
             lastKinases: [],
             kinaseText1: "P00533",
             kinaseText2: "P15056",
+            lookupType: "uniprot",
             
             siteText: "Q15459	359	-1.3219\nQ15459	451	0.5352\nP28482	185	4.4463\nP28482	187	4.4195\nQ8N3F8	273	-0.3219",
             minWeight: .10,
@@ -85,14 +107,19 @@ class PathQueryComponent extends React.Component{
         if(
             prevState.minWeight !== this.state.minWeight ||
             prevState.mechRatio !== this.state.mechRatio ||
-            prevState.versionIndex !== this.state.versionIndex
+            prevState.versionIndex !== this.state.versionIndex ||
+            prevState.lookupType !== this.state.lookupType
         ){
 //             console.log("wut")
-            //Note: need to rest the last kinases because they are no longer up to date
+            //Note: need to reset the last kinases because they are no longer up to date
             this.setState({staleQuery : true, lastKinases: [] });
         }
     }
     
+    handleLookupType=(event)=>{
+        console.log(event.target)
+        this.setState({lookupType: event.target.value});
+    }
     
     parseKinase=()=>{
         return this.kinaseArrayFormat().filter((e,i) => this.state.lastKinases[i] !== e);
@@ -100,7 +127,26 @@ class PathQueryComponent extends React.Component{
     }
     
     parseSites=()=>{
-        return this.state.siteText.split("\n").map((r) => (r.split("\t")) ).map((e) => [e[0], Number(e[1]), Number(e[2])]).filter(e => {return e[2] !== 0});
+        let input = this.state.siteText.split("\n").map((r) => (r.match(/\S+/g)) );
+        console.log("INPUT", input)
+        if(input[0] === null)
+            return [];
+        
+        if(input[0].length === 1){
+        
+        }else if(input[0].length ===2){
+            input = input.map(r => [r[0], Number(r[1])]);
+        }else{
+            input = input.map(r => [r[0], Number(r[1]), Number(r[2])]);
+        }
+        
+//         input = input[0].length === 2 ? input.map(r => [r[0], Number(r[1])]) :
+//             input.map(r => [r[0], Number(r[1]), Number(r[2])])
+        if(input[0].length > 1)
+            input = input.filter(r => {return r[r.length-1] !== 0});
+           
+        return input;
+//         return this.state.siteText.split("\n").map((r) => (r.split("\t")) ).map((e) => [e[0], Number(e[1]), Number(e[2])]).filter(e => {return e[2] !== 0});
     }
     
     handleChange=(event)=>{
@@ -162,10 +208,12 @@ class PathQueryComponent extends React.Component{
         let versionDef = this.props.versionCards.getVersionDefinition(this.state.versionIndex);
         let command = {cmd:"pths",
              ...versionDef, 
+            lookupType: this.state.lookupType, //pname
             weightFraction: Number(this.state.minWeight),
             kinase: this.parseKinase(),
             mechRatio: Number(this.state.mechRatio),
-            sites: this.parseSites()
+            sites: this.parseSites(),
+            
         };
         
         let mask=this.computeKinaseMask();
@@ -216,6 +264,8 @@ class PathQueryComponent extends React.Component{
                     kinaseText1={this.state.kinaseText1}
                     kinaseText2={this.state.kinaseText2}
                     mechRatio={this.state.mechRatio}
+                    lookupType={this.state.lookupType}
+                    handleLookupType={this.handleLookupType}
                 />} 
             />
         )

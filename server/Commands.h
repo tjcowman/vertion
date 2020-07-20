@@ -296,68 +296,131 @@ namespace Commands
     };
     
     
-    struct PhosphorylationFold{
-        std::string name_;
-        int pos_;
-        float score_;
-    };
-
-    void from_json(const json& j, PhosphorylationFold& p)
-    {
-        j[0].get_to(p.name_);
-        j[1].get_to(p.pos_);
-        j[2].get_to(p.score_);
-    }
+//     struct PhosphorylationFold{
+//         std::string name_;
+//         int pos_;
+//         float score_;
+//     };
+// 
+//     void from_json(const json& j, PhosphorylationFold& p)
+//     {
+//         j[0].get_to(p.name_);
+//         j[1].get_to(p.pos_);
+//         j[2].get_to(p.score_);
+//     }
 
 //     template<class GT>
 //     static std::vector<typename GT::Index> kinaseIndexesCache;
 //     
     template<class GT>
+    GraphList<VertexS<GT>> parsePathSites(const BiMap<typename GT::Index, std::string>& idLookupMap, const json& siteArgs){
+        
+//         Check the number of columns, if 3, assume middle is sitebp and last is score
+        try
+        {
+            bool nameOnly = siteArgs[0].size() ==1;
+            bool scoreOnly = siteArgs[0].size() ==2;
+            
+            GraphList<VertexS<GT>> sinkList;
+            
+            if(nameOnly)
+            {
+                for(const auto& e : siteArgs)
+                {
+                    auto graphIndex = idLookupMap.findr(e[0]);
+                    
+                    if(graphIndex !=  idLookupMap.endr())  //GT::invalidIndex)
+                        sinkList.push_back(VertexS<GT>(graphIndex->second, 1));
+                }
+            }
+            else if(scoreOnly)
+            {
+                for(const auto& e : siteArgs)
+                {
+                    auto graphIndex = idLookupMap.findr(e[0]);
+                    
+                    if(graphIndex !=  idLookupMap.endr())  //GT::invalidIndex)
+                        sinkList.push_back(VertexS<GT>(graphIndex->second, e[1]));
+                }
+            }
+            else
+            {
+                for(const auto& e : siteArgs)
+                {
+                    auto graphIndex = idLookupMap.findr(e[0]);
+                    if(graphIndex != idLookupMap.endr())//GT::invalidIndex)
+                        sinkList.push_back(VertexS<GT>(graphIndex->second, e[2]) );
+                }
+                
+            }
+            
+            return sinkList;
+        }
+        catch (json::exception& e)
+        {
+             return GraphList<VertexS<GT>>();
+        }
+        
+    }
+
+    template<class GT>
     json pths(const VGraph<GT>& graph, ViewCache<GT>& viewCache, const json& args)
     {
-//         if(kinaseIndexesCache<GT>.size() == 0)
-//         {
-//           //  kinaseIndexes<GT> = std::vector<typename GT::Index>(10,0);
-//             
-//             std::vector<typename GT::Index> kinIndexes;
-//             
-//             for(const auto& e graph->)
-//             
-//             //calculate the kinaseIndexes
-//             std::cout<<"calculated kinIn"<<std::endl;
-//         }
-        
         json ret;
+        ret ["trees"] = json::array();
         
         
         ViewKey<GT> key = viewKeyFromArgs<GT>(args);
         IntegratedViewer<GT> IV = viewCache.lookup(key);
-        // IV.viewUnion(versions);
-//     std::cout<<"VIEWCACHELOOKEDUP"<<std::endl;
-    //         
+
         KinasePaths KP(IV);
         KP.arg_weightFraction_ = args["weightFraction"];
         
         auto sourceNames = (args["kinase"].get<std::vector<std::string>>());
 //         std::cout<<"SOURCEINDEX" <<sourceIndex<<std::endl;
         
-        GraphList<VertexS<GT>> sinkList;
-        for(const auto& e : args["sites"])
+        if(args["sites"].size() == 0)
         {
-            auto graphIndex = graph.lookupVertex((std::string)e[0]);
-            if(graphIndex != GT::invalidIndex)
-            {
-                sinkList.push_back(VertexS<GT>(graphIndex, e[2]));
-                //usedIndexes.insert(graphIndex);
-            }
+            for(const auto& e : sourceNames)
+            ret["trees"].push_back(json::array());
+            return ret;
+        }
+            
+        GraphList<VertexS<GT>> sinkList = args["lookupType"] == "pname" ? //Default to uniprot
+            parsePathSites<GT>(graph.alternateMapping_, args["sites"]) :
+            parsePathSites<GT>(graph.getVertexData().getBiMap(), args["sites"]);
+
+            
+        if(sinkList.size() == 0)
+        {
+            for(const auto& e : sourceNames)
+            ret["trees"].push_back(json::array());
+            return ret;
         }
         
         std::vector<VertexI<GT>> kinaseList;
-        for(const auto& e : sourceNames)
+        
+        if(args["lookupType"] == "uniprot")
         {
-            kinaseList.push_back(VertexI<GT>( graph.lookupVertex(e)));
+            for(const auto& e : sourceNames)
+                kinaseList.push_back(VertexI<GT>( graph.lookupVertex(e)));
+
         }
-//         std::cout<<"SINKLIST"<<std::endl;
+        else
+        {
+            for(const auto& e : sourceNames)
+            {
+                auto alternateMapping = graph.alternateMapping_.findr(e);
+                if(alternateMapping != graph.alternateMapping_.endr())
+                    kinaseList.push_back(VertexI<GT>(alternateMapping->second));
+            }    
+        }
+        
+//         if(kinaseList.size() == 0 || sinkList.size() ==0)
+//             return ret;
+        
+        //         std::cout<<"SINKLIST"<<std::endl;
+        
 //         std::cout<<sinkList<<std::endl;
         
         sinkList.sort(Sort::indexInc);
