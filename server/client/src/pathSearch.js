@@ -153,12 +153,13 @@ class PathSearchComponent extends React.Component{
         
         //For the terminal nodes update their values
         let sourceIds = new Set(this.getPathSourceIds());
-        console.log(sourceIds)
+//         console.log(sourceIds)
         nodes.forEach(n =>{
             let lookup = this.state.siteData.get(String(n.data.id));
             if(typeof(lookup) !== 'undefined'){
                 n.pathTerm = 1;
                 n.data.scoreNorm = lookup.scoreNorm;
+                n.data.score = lookup.score;
                 n.data.direction = lookup.direction;
             }
             
@@ -212,7 +213,7 @@ class PathSearchComponent extends React.Component{
     
     handleSetMinPathScore=(score)=>{
         let value= Number(score);
-        let newAvailable = Math.min(...[...this.state.trees.values()].map(tree=> tree.map(path => path.nodeScore).filter(score=>score > value).length));
+        let newAvailable = Math.max(...[...this.state.trees.values()].map(tree=> tree.map(path => path.nodeScore).filter(score=>score > value).length));
             this.setState({
                 kAvailable : newAvailable,
                 minPathScore: value,
@@ -257,15 +258,16 @@ class PathSearchComponent extends React.Component{
             tree.forEach(path =>{
                 siteData.set(String(path.nodes[0]), {
                     direction: path.direction, 
-                    scoreNorm: Math.min(path.nodeScore*(targetMax/maxScore), minScore )
+                    scoreNorm: Math.max(path.nodeScore*(targetMax/maxScore), minScore ),
+                    score: path.nodeScore
                 });
             });
         });
         
 //         let pathLengthByCutoff = [...responseTrees.values()].map(tree => tree.map(path => ({score : path.nodeScore, length : path.totalWeight})).sort((l,r)=>{return l.score-r.score})) 
+        console.log("Wut",...[...responseTrees.values()].map(tree=> tree.map(path => path.nodeScore).filter(score=>score > this.state.minPathScore).length));
         
-        
-        let kAvailable = Math.min(...[...responseTrees.values()].map(tree=> tree.map(path => path.nodeScore).filter(score=>score > this.state.minPathScore).length));
+        let kAvailable = Math.max(...[...responseTrees.values()].map(tree=> tree.map(path => path.nodeScore).filter(score=>score > this.state.minPathScore).length));
         let kDisplayed = Math.min(kAvailable,this.state.topk);
         
         this.props.handleNodeLookupIndex(nodeIndexes,
@@ -293,13 +295,14 @@ class PathSearchComponent extends React.Component{
     }
     
     render(){
-        {console.log("PS QUERYST", this.state)}
+        {/*console.log("PS QUERYST", this.state)*/}
         return(
             <Card.Body style={{whiteSpace:'nowrap'}}>
                 <div style={{margin:'10px'}}>
                 <PathQueryComponent 
                     backAddr={this.props.backAddr}
                     versionCards={this.props.versionCardsO}
+                    versionCardPlainText={this.props.versionCardPlainText}
                     getVersionDefinition={this.props.getVersionDefinition}
                     
                     getResponse={this.getResponse}

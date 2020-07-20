@@ -108,6 +108,8 @@ class App extends React.Component {
 
 
             versionCardsO: new VersionCards(),
+            versionCardPlainText : [""],
+            
             versionCardHandlers : {
                 add : this.handleAddVersionCard,
                 remove : this.handleRemoveVersionCard,
@@ -225,11 +227,16 @@ class App extends React.Component {
 
 
     handleAddVersionCard=()=>{
+        let versionCardPlainText = this.state.versionCardPlainText;
+        versionCardPlainText.push("");
         this.setState(prevState=>({
             
-            versionCardsO: prevState.versionCardsO.handleAddVersionCard().handleClickVersionCard(this.state.versionCardsO.cards.length-1)
+            versionCardsO: prevState.versionCardsO.handleAddVersionCard().handleClickVersionCard(this.state.versionCardsO.cards.length-1),
+            versionCardPlainText : versionCardPlainText
+            
             
         }))
+        console.log("PT", this.state.versionCardPlainText)
     }
 
     handleRemoveVersionCard=()=>{
@@ -237,8 +244,8 @@ class App extends React.Component {
             return;
         
         this.setState(prevState=>({
-            versionCardsO: prevState.versionCardsO.handleRemoveVersionCard()
-            
+            versionCardsO: prevState.versionCardsO.handleRemoveVersionCard(),
+             versionCardPlainText : prevState.versionCardPlainText.slice(0, Math.max(1, prevState.versionCardPlainText.length-1))
         }))
     }
 
@@ -275,8 +282,15 @@ class App extends React.Component {
             versionCardsO.cards[cardId].displayLabels = l;
         }
 
-        this.setState({versionCardsO: versionCardsO});
-//         console.log("VC ", this.state.versionCardsO)
+        
+        
+        this.setState(prevState=>({
+            versionCardsO: versionCardsO,
+            versionCardPlainText: [...prevState.versionCardPlainText].map((e,i)=> i === cardId ? prevState.versionCardsO.card(cardId).plainText(): e)
+        })/*, console.log(this.state.versionCardPlainText)*/);
+        
+//         this.setState(prevState=>({versionCardsO: prevState.versionCardsO.toggle(cardId, name,elementId)}));
+
     }
 
     handleCheckToggle=(name,cardId, elementId)=>{
@@ -434,6 +448,7 @@ class App extends React.Component {
                                     versionCardsO={this.state.versionCardsO}
 
                                     handleLog={this.handleLog}
+                                    labelsUsed = {this.state.labelsUsed}
                                 />
                             </Tab.Pane>
                             
@@ -449,6 +464,7 @@ class App extends React.Component {
 
 
                                     versionCardsO={this.state.versionCardsO}
+                                    versionCardPlainText={this.state.versionCardPlainText}
                                     handleLog={this.handleLog}
                                     labelsUsed = {this.state.labelsUsed}
                                 />

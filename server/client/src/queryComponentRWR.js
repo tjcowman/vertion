@@ -126,7 +126,8 @@ class QueryComponentRWR extends React.Component{
         
 //         let selectedNodes = [];
         //parse the restart vector nodes TODO: add weighting
-        let uniprotNames = this.state.nodeText.split('\n'); //.map(row=>(row.split('\t')));
+        let uniprotNames = this.state.nodeText.split('\n').filter(Boolean); //.map(row=>(row.split('\t')));
+        console.log("UP", uniprotNames)
   
         this.props.handleNodeLookup(uniprotNames, ()=> { 
             let selectedNodes2 = uniprotNames.map(e => ({i: this.props.nodeData.getIndex(e), v:1}) );
@@ -152,7 +153,7 @@ class QueryComponentRWR extends React.Component{
                         row : i,
                         value : e.value,
                         name: this.props.nodeData.getEntry(e.id).name,
-                        labels: this.props.nodeData.getEntry(e.id).labelsText
+                        labels: this.props.labelsUsed.nameLookupNode(this.props.nodeData.getEntry(e.id).labels).toString()  //this.props.nodeData.getEntry(e.id).labelsText
 
                     }))
 

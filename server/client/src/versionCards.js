@@ -38,6 +38,11 @@ class VersionCard{
         };
     }
 
+    plainText=()=>{
+//         console.log("WUT", this, ...this.versions_s)
+        return [...this.versions_s].toString();
+    }
+    
     toggle=(name, elementId)=>{
 
         let ns = this[name];
@@ -74,6 +79,25 @@ class VersionCards{
 
     getActiveCard=()=>{
       return this.cards[this.activeCard];
+    }
+    
+    toggle=(cardId, name, elementId)=>{
+        this.cards[cardId].toggle(name, elementId);
+        return this;
+    }
+    
+    card=(cardId)=>{
+//         console.log("?", this.cards[cardId])
+//         if(!isNaN(cardId))
+//             return new VersionCard;
+        
+//         console.log("WTF", this.cards.length, cardId, this.cards.length > cardId)
+        if(this.cards.length > cardId){
+//             console.log('YA')
+            return this.cards[cardId];
+        }else{
+            return new VersionCard;
+        }
     }
 
     getSelectedVersions=()=>{

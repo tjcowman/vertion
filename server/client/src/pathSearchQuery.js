@@ -43,7 +43,7 @@ class Settings extends React.Component{
                         Kinase 2
                         <input autoComplete="off" value={this.props.kinaseText2} className="inputKinase form-control" name="kinaseText2"  onChange={this.props.handleChange} ></input>
                         Sites
-                        <textarea autoComplete="off" value={this.props.siteText} className="inputSites form-control" name="siteText"   onChange={this.props.handleChangeSites} ></textarea>
+                        <textarea autoComplete="off" rows="5" value={this.props.siteText} className="inputSites form-control" name="siteText"   onChange={this.props.handleChangeSites} ></textarea>
                       {/*  <Button className="form-control" variant="primary" onClick={(e) =>this.handleSubmit(e)} >Submit</Button>*/}
                     </Card.Body>
                 </Card>
@@ -103,12 +103,19 @@ class PathQueryComponent extends React.Component{
     
     //NOTE: TODO: Incorporate the kinase and site text into this check (currently uses the parse functions
     componentDidUpdate(prevProps, prevState){
-//         console.log("FF");
+//         console.log("FF", 
+//                     prevProps.versionCardPlainText, 
+//                     this.props.versionCardPlainText
+//                    );
+       
         if(
             prevState.minWeight !== this.state.minWeight ||
             prevState.mechRatio !== this.state.mechRatio ||
             prevState.versionIndex !== this.state.versionIndex ||
-            prevState.lookupType !== this.state.lookupType
+            prevState.lookupType !== this.state.lookupType ||
+            prevProps.versionCardPlainText[prevState.versionIndex] !==this.props.versionCardPlainText[this.state.versionIndex]
+//             prevProps.versionCards.cards[prevState.versionIndex] !== this.props.versionCards.cards[this.state.versionIndex]
+//             prevProps.versionCards.card(prevState.versionIndex).plainText() !== this.props.versionCards.card(this.state.versionIndex).plainText()
         ){
 //             console.log("wut")
             //Note: need to reset the last kinases because they are no longer up to date
@@ -117,7 +124,7 @@ class PathQueryComponent extends React.Component{
     }
     
     handleLookupType=(event)=>{
-        console.log(event.target)
+//         console.log(event.target)
         this.setState({lookupType: event.target.value});
     }
     
@@ -127,25 +134,30 @@ class PathQueryComponent extends React.Component{
     }
     
     parseSites=()=>{
-        let input = this.state.siteText.split("\n").map((r) => (r.match(/\S+/g)) );
-        console.log("INPUT", input)
-        if(input[0] === null)
-            return [];
         
-        if(input[0].length === 1){
+//         try{
+            let input = this.state.siteText.split("\n").map((r) => (r.match(/\S+/g)) ).filter(Boolean);
+//             console.log("INPUT", input)
+            if(input[0] === null)
+                return [];
+            
+            if(input[0].length === 1){
+            
+            }else if(input[0].length ===2){
+                input = input.filter(r => r.length ==2).map(r => [r[0], Number(r[1])]);
+            }else{
+                input = input.filter(r => r.length ==3).map(r => [r[0], Number(r[1]), Number(r[2])]);
+            }
+            
+    //         input = input[0].length === 2 ? input.map(r => [r[0], Number(r[1])]) :
+    //             input.map(r => [r[0], Number(r[1]), Number(r[2])])
+            if(input[0].length > 1)
+                input = input.filter(r => {return r[r.length-1] !== 0});
         
-        }else if(input[0].length ===2){
-            input = input.map(r => [r[0], Number(r[1])]);
-        }else{
-            input = input.map(r => [r[0], Number(r[1]), Number(r[2])]);
-        }
-        
-//         input = input[0].length === 2 ? input.map(r => [r[0], Number(r[1])]) :
-//             input.map(r => [r[0], Number(r[1]), Number(r[2])])
-        if(input[0].length > 1)
-            input = input.filter(r => {return r[r.length-1] !== 0});
-           
-        return input;
+            return input
+//         }catch(e){ //Bad input format
+//             return [];
+//         }
 //         return this.state.siteText.split("\n").map((r) => (r.split("\t")) ).map((e) => [e[0], Number(e[1]), Number(e[2])]).filter(e => {return e[2] !== 0});
     }
     
@@ -217,14 +229,14 @@ class PathQueryComponent extends React.Component{
         };
         
         let mask=this.computeKinaseMask();
-        console.log(mask)
+//         console.log(mask)
         //Determine whether to query kinase or not 
         //TODO: This is confusing, need special case to reQuery both kinases if any of the other parmaeters hve changed
         if(command.kinase.length> 0 || this.state.staleQuery)
             Axios.post('http://'+this.props.backAddr, JSON.stringify(command)).then((response)=>{
                 
                 this.setState({staleQuery: false});
-                console.log(response);
+//                 console.log(response);
             
                 
                 this.setState({lastKinases : this.kinaseArrayFormat()});

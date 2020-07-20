@@ -364,6 +364,13 @@ class CytoscapeCustom extends React.Component{
         return colorMap;
     }
     
+    printJson=()=>{
+        let w = window.open("","",[]);
+        w.document.open();
+        w.document.write(JSON.stringify(this.cy.json()));
+        w.document.close();
+    }
+    
     renderExport(){
         return(
             <div className= "border" style={{width: '200px',margin:'5px 0px' }}>
@@ -384,6 +391,10 @@ class CytoscapeCustom extends React.Component{
                         />
                     </div>
                 </Card.Body>
+                
+                    <Button style={{width:'100%', marginBottom:'5px'}} onClick={this.printJson}>Export Json</Button>
+            
+                
             </div>
         );
     }
@@ -393,11 +404,14 @@ class CytoscapeCustom extends React.Component{
         
         return(
             <div className="border" style={{padding: '5px', marginBottom:'5px'}}>
-            <Button
-                onClick={this.layout_fcose}
-            >Layout</Button>
+                <Button className="btn-secondary" style={{display: 'inline-block'}}
+                    onClick={this.layout_fcose}
+                >Layout</Button>
+                
+                <div className="" style={{marginLeft:'5px', display: 'inline-block', padding: '2px', verticalAlign: 'middle'}}>
+                    {this.formatElementDescription()}
+                </div>
             
-            {this.formatElementDescription()}
             </div>
         );
     }
@@ -443,7 +457,7 @@ class CytoscapeCustom extends React.Component{
                     </Card.Body>
                 </Card>
            
-                {this.renderExport()}
+                {/*this.renderExport()*/}
                 </div>
                 
                 {/*<CytoscapeLegend edgeMap={this.state.colorMapEdges} nodeMap={this.state.colorMapNodes}/>*/}
