@@ -38,9 +38,10 @@ class VersionCard{
         };
     }
 
+    //TODO: make this a faster to compute/compare hash of some sort
     plainText=()=>{
 //         console.log("WUT", this, ...this.versions_s)
-        return [...this.versions_s].toString();
+        return [...this.versions_s, '-',...this.labelsV_s, '-', ...this.labelsE_s].toString();
     }
     
     toggle=(name, elementId)=>{
@@ -130,7 +131,7 @@ class VersionCards{
     //Used to get the relevant properties defining a version on the server, versions/labels/etc
     getVersionDefinition=(versionIndex)=>{
         
-        //TEMP
+        //TODO TEMP
         if(versionIndex === "T")
             return {versions:[1,20,21,22], vertexLabels:[0,1,2], edgeLabels:[0,1,2,3]}
         

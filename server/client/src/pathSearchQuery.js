@@ -98,6 +98,7 @@ class PathQueryComponent extends React.Component{
             siteText: "Q15459	359	-1.3219\nQ15459	451	0.5352\nP28482	185	4.4463\nP28482	187	4.4195\nQ8N3F8	273	-0.3219",
             minWeight: .10,
             mechRatio: 10,
+            localProximity: false,
         }
     }
     
@@ -159,6 +160,10 @@ class PathQueryComponent extends React.Component{
 //             return [];
 //         }
 //         return this.state.siteText.split("\n").map((r) => (r.split("\t")) ).map((e) => [e[0], Number(e[1]), Number(e[2])]).filter(e => {return e[2] !== 0});
+    }
+    
+    toggleLocalProximity=()=>{
+        this.setState({localProximity : !this.state.localProximity});
     }
     
     handleChange=(event)=>{
@@ -225,6 +230,7 @@ class PathQueryComponent extends React.Component{
             kinase: this.parseKinase(),
             mechRatio: Number(this.state.mechRatio),
             sites: this.parseSites(),
+            localProximity: this.state.localProximity,
             
         };
         
@@ -263,6 +269,9 @@ class PathQueryComponent extends React.Component{
     
     render(){
         return(
+            <>
+            <Button onClick={this.toggleLocalProximity}>{this.state.localProximity === true ? "Local" : "Global"}</Button>
+            
             <QuerySettingsBar 
                 handleVersionChange={this.handleVersionChange} 
                 versionCards={this.props.versionCards} 
@@ -280,6 +289,7 @@ class PathQueryComponent extends React.Component{
                     handleLookupType={this.handleLookupType}
                 />} 
             />
+            </>
         )
     }
 }

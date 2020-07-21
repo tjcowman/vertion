@@ -11,11 +11,21 @@ using json = nlohmann::json;
 template<class GT>
 ViewKey<GT> viewKeyFromArgs(const json& args)
 {
-    std::vector<typename GT::VersionIndex> versions = args["versions"].get<std::vector<typename GT::VersionIndex>>();
-    std::vector<typename GT::Index> vertexLabels = args["vertexLabels"].get<std::vector<typename GT::Index>>();
-    std::vector<typename GT::Index> edgeLabels = args["edgeLabels"].get<std::vector<typename GT::Index>>();
-
-    return(ViewKey<GT>(versions, VertexLab(vertexLabels), EdgeLab(edgeLabels)));
+    try
+    {
+        std::vector<typename GT::VersionIndex> versions = args.at("versions").get<std::vector<typename GT::VersionIndex>>();
+        std::vector<typename GT::Index> vertexLabels = args.at("vertexLabels").get<std::vector<typename GT::Index>>();
+        std::vector<typename GT::Index> edgeLabels = args.at("edgeLabels").get<std::vector<typename GT::Index>>();
+        return(ViewKey<GT>(versions, VertexLab(vertexLabels), EdgeLab(edgeLabels)));
+    }
+    catch (json::exception& e)
+    {
+     
+        return ViewKey<GT>();
+    }
+    
+    
+    
 }
 
 
@@ -369,20 +379,35 @@ namespace Commands
         json ret;
         ret ["trees"] = json::array();
         
-        
+        auto sourceNames = (args["kinase"].get<std::vector<std::string>>());
+       
         ViewKey<GT> key = viewKeyFromArgs<GT>(args);
+       
+        
+        if(!key.valid())
+        {
+            for(const auto& e : sourceNames)
+                ret["trees"].push_back(json::array());
+            return ret;   
+        }
+        
         IntegratedViewer<GT> IV = viewCache.lookup(key);
+        
+        
+        
+ 
+            
 
         KinasePaths KP(IV);
         KP.arg_weightFraction_ = args["weightFraction"];
         
-        auto sourceNames = (args["kinase"].get<std::vector<std::string>>());
+        
 //         std::cout<<"SOURCEINDEX" <<sourceIndex<<std::endl;
         
         if(args["sites"].size() == 0)
         {
             for(const auto& e : sourceNames)
-            ret["trees"].push_back(json::array());
+                ret["trees"].push_back(json::array());
             return ret;
         }
             
@@ -394,7 +419,7 @@ namespace Commands
         if(sinkList.size() == 0)
         {
             for(const auto& e : sourceNames)
-            ret["trees"].push_back(json::array());
+                ret["trees"].push_back(json::array());
             return ret;
         }
         
@@ -423,8 +448,12 @@ namespace Commands
         
 //         std::cout<<sinkList<<std::endl;
         
+//         std::cout<<viewCache.lookupProximities(key)<<std::endl;
+        
         sinkList.sort(Sort::indexInc);
-        KP.compute(kinaseList, sinkList, args["mechRatio"], viewCache.lookupProximities(key));
+        
+        
+        KP.compute(kinaseList, sinkList, args["mechRatio"], viewCache.lookupProximities(key), args["localProximity"]);
         viewCache.finishLookup(key);
    // std::cout<<"CMPTED"<<std::endl;    
         

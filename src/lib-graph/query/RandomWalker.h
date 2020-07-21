@@ -6,6 +6,10 @@
 #include "vertion.h"
 #include "query/IntegratedViewer.h"
 
+
+
+
+
 template<class Value>
 using it = typename std::vector<Value>::const_iterator ;
 
@@ -150,6 +154,56 @@ std::pair<long, std::vector<typename GT::Calc> > ChebySolver(
     
 template<class GT>
 using Walk = GraphList<VertexHP<GT>>;
+
+template<class GT>
+auto logStandardDeviation(Walk<GT>& walk)
+{
+    for(auto& e : walk)
+    {
+        e.value_ = -log(e.value_);
+    }
+    //compute mean
+    double total = 0.0;
+    for(const auto& e : walk)
+        total += e.value_;
+    double mean = total / walk.size();
+    
+    double o;
+    for(const auto& e : walk)
+        o += pow((e.value_ - mean),2);
+    
+    double sigma = sqrt(o/walk.size());
+        
+    
+}
+
+template<class GT> //Note: Intended for global RWR
+auto normalizedLog(Walk<GT>& walk, double min, double max)
+{
+    double maxV = std::numeric_limits<double>::min();
+    double minV = std::numeric_limits<double>::max();
+    for(auto& e : walk)
+    {
+        e.value_ = log(e.value_);
+        minV = std::min(minV, e.value_);
+        maxV = std::max(maxV, e.value_);
+    } //between non inclusive 0 and 10ish
+    
+//     std::cout<<walk<<std::endl;
+    
+    for(auto& e : walk)
+    {
+        e.value_ = (max-min) * ((e.value_ - minV ) / (maxV-minV)) + min;
+    }
+//     std::cout<<walk<<std::endl;
+//     for(const auto& e : walk)
+//     {
+//         min = std::min(min, e.value_);
+//         max = std::max(max, e.value_);
+// //         sum += e.value_;
+//     }
+}
+
 
 /** @class RandomWalker
  * Creates an object associated with a versioned graph for performing random walk with restarts calculations.

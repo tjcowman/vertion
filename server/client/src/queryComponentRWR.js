@@ -91,7 +91,7 @@ class QueryComponentRWR extends React.Component{
     constructor(props) {
         super(props);
         this.state = {
-            versionIndex: undefined,
+            versionIndex: 0,
             
             nodeText: "",
             

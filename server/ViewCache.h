@@ -59,6 +59,11 @@ struct ViewKey{
         edgeLabels_ = edgeLabels;
         key_ = generate_key(versions, nodeLabels,edgeLabels);
     }
+    
+    ViewKey()
+    {
+        key_= "";
+    }
 
     std::string generate_key(const std::vector<typename GT::VersionIndex>& versions, const VertexLabel<GT>& nodeLabels, const EdgeLabel<GT>& edgeLabels)
     {
@@ -74,9 +79,9 @@ struct ViewKey{
         return s;
     }
 
-    bool valid()
+    bool valid() //Needs to actually integrate at least 1 version 
     {
-      return key_ != "";
+      return versions_.size() >0 &&  key_ != "";
     }
 
     std::string key_;
@@ -203,7 +208,7 @@ class ViewCache
         
         std::vector<IntegratedViewer<GT>> viewData_;
         //Derived calculations, parallel to the viewData_
-        std::vector< std::pair< bool, GraphList<VertexS<GT>> > > viewProximities_;
+        std::vector< std::pair< bool, GraphList<VertexS<GT>> > > viewProximities_; //Stores standard deviation of -log 
         
 //         std::map<std::string, std::vector<typename GT::Index>> indexedNodeSets
 
@@ -291,7 +296,13 @@ const GraphList<VertexS<GT>>& ViewCache<GT>::lookupProximities(const ViewKey<GT>
         RandomWalker<GT> RW(viewData_[v]);
         typename RandomWalker<GT>::Args_Walk args_walk{.15, 1e-6, GraphList<VertexS<GT>>()};
         
-        viewProximities_[v] =   std::make_pair(true,GraphList<VertexS<GT>>(RW.walk(GraphList<VertexS<GT>>(), args_walk)));
+        //compute the proximity transformation
+        auto rawProximity = RW.walk(GraphList<VertexS<GT>>(), args_walk);
+        normalizedLog<GT>(rawProximity, .5, 2);
+        
+        
+        
+        viewProximities_[v] =   std::make_pair(true,rawProximity);
         
         return viewProximities_[v].second;
     }

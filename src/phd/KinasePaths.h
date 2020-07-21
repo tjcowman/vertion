@@ -20,7 +20,7 @@ class KinasePaths
         KinasePaths(const IntegratedViewer<GT>& viewer);
         
         
-        void compute(const std::vector<VertexI<GT>>& source, const GraphList<VertexS<GT>>& sinks, float mechRatio,  const GraphList<VertexS<GT>>& globalProximity);
+        void compute(const std::vector<VertexI<GT>>& source, const GraphList<VertexS<GT>>& sinks, float mechRatio,  const GraphList<VertexS<GT>>& globalProximity, bool localProximityOverride);
         
         
         GraphList<EdgeElement<GT>> computeDense(const std::vector<typename GT::Index> & pathNodes)const;
@@ -148,6 +148,7 @@ KinasePaths<GT>::KinasePaths(const IntegratedViewer<GT>& viewer)
 template<class GT>
 typename GT::Value KinasePaths<GT>::weightFunction(typename GT::Index row, typename GT::Index edge, typename GT::Value original, float mechRatio)const 
 {
+//     std::cout<<original<<std::endl;
      const auto & L = viewer_->getL();
     //disallow site->protein 
     if( (L[edge].getBits() == 4  && viewer_->getLabels(row).getBits() == 2)) 
@@ -156,15 +157,25 @@ typename GT::Value KinasePaths<GT>::weightFunction(typename GT::Index row, typen
     
     //Prioritize proten->site KSA
     if(!(L[edge].getBits() & std::bitset< GT::LabelSize>(6)).any())
-        original = mechRatio;
-    else original=1;
+        original = original * mechRatio;
+    else original=1 * original;
     
     
     //Weight to prefer paths including scoredNodes
-    auto it = nodeScoreLookup_.find(edge);
-    if(it != nodeScoreLookup_.end())
-        original = original * (.5/ it->second.first);
-
+//     auto it = nodeScoreLookup_.find(edge);
+//     if(it != nodeScoreLookup_.end())
+//     {
+// //         std::cout<<original<<" : "<<(.5/ it->second.first)<<std::endl;
+//         original = original * (.5/ it->second.first);
+//     }
+    
+//     auto it = nodeScoreLookup_.find(edge);
+//     if(it != nodeScoreLookup_.end())
+//     {
+//         original = original/2;
+//     }
+    
+        
     return original;    
 }
 
@@ -284,7 +295,7 @@ auto KinasePaths<GT>::formatPaths(typename GT::Index sourceIndex,  const std::ve
 
 //NOTE: the paths are returned using global indexes
 template<class GT>
-void KinasePaths<GT>::compute(const std::vector<VertexI<GT>>& source, const GraphList<VertexS<GT>>& sinks, float mechRatio, const GraphList<VertexS<GT>>& globalProximity)
+void KinasePaths<GT>::compute(const std::vector<VertexI<GT>>& source, const GraphList<VertexS<GT>>& sinks, float mechRatio, const GraphList<VertexS<GT>>& globalProximity, bool localProximityOverride)
 {
     computeNodeScores(sinks);
     
@@ -294,6 +305,23 @@ void KinasePaths<GT>::compute(const std::vector<VertexI<GT>>& source, const Grap
     const auto& L = viewer_->getL();
 
    // row is the node index, edge is the edge index ex: A_[edge] JA_[edge]
+//     std::cout<<globalProximity<<std::endl;
+    
+    
+//      auto proxUsed = &globalProximity;
+    
+//     if(localProximityOverride)
+//     {
+//         std::cout<<"PO"<<std::endl;
+//         RandomWalker<GT> RW(*viewer_);
+//         typename RandomWalker<GT>::Args_Walk args_walk{.15, 1e-6, GraphList<VertexS<GT>>()};
+//     
+//         GraphList<VertexS<GT>> localProximity = RW.walk(GraphList<VertexS<GT>>{VertexS<GT>(source[0].index_)}, args_walk);
+//         proxUsed =  &localProximity;
+//     }
+//     
+    
+
     for(typename GT::Index row=0; row<viewer_->size().first; ++row)
     {
         typename GT::Index lb = IA[row].s1();
@@ -301,7 +329,9 @@ void KinasePaths<GT>::compute(const std::vector<VertexI<GT>>& source, const Grap
         
         for(typename GraphType::GD::Index edge=lb; edge<rb; ++edge)
         {
-            Arw[edge] = weightFunction( row, edge, Arw[edge]* -log(globalProximity[JA[edge]].value_) , mechRatio );  //Use the rwr score to weight, global so will be no 0s
+//             std::cout<<-log(globalProximity[JA[edge]].value_)<< " : "<<Arw[edge]* -log(globalProximity[JA[edge]].value_)<<std::endl;
+            //Arw[edge] = weightFunction( row, edge, Arw[edge]* -log((*proxUsed)[JA[edge]].value_) , mechRatio );  //Use the rwr score to weight, global so will be no 0s
+            Arw[edge] = weightFunction( row, edge, Arw[edge]* (1/globalProximity[JA[edge]].value_) , mechRatio );  //Use the rwr score to weight, global so will be no 0s
         }
     }
 

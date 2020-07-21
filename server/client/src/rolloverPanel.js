@@ -43,6 +43,7 @@ class QuerySettingsBar extends React.Component{
                         <Select 
                             options={this.props.versionCards.cards.map((e,i)=> ({value: i, label: e.name}) )}
                             onChange={this.props.handleVersionChange}
+                            defaultValue={ {value: 0, label: this.props.versionCards.cards[0].name} }
                         />
                     </div>
                             
