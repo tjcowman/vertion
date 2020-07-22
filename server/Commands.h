@@ -393,16 +393,10 @@ namespace Commands
         
         IntegratedViewer<GT> IV = viewCache.lookup(key);
         
-        
-        
- 
-            
 
         KinasePaths KP(IV);
         KP.arg_weightFraction_ = args["weightFraction"];
         
-        
-//         std::cout<<"SOURCEINDEX" <<sourceIndex<<std::endl;
         
         if(args["sites"].size() == 0)
         {
@@ -441,17 +435,7 @@ namespace Commands
             }    
         }
         
-//         if(kinaseList.size() == 0 || sinkList.size() ==0)
-//             return ret;
-        
-        //         std::cout<<"SINKLIST"<<std::endl;
-        
-//         std::cout<<sinkList<<std::endl;
-        
-//         std::cout<<viewCache.lookupProximities(key)<<std::endl;
-        
         sinkList.sort(Sort::indexInc);
-        
         
         KP.compute(kinaseList, sinkList, args["mechRatio"], viewCache.lookupProximities(key), args["localProximity"]);
         viewCache.finishLookup(key);
@@ -487,6 +471,12 @@ namespace Commands
             
 
         return ret;
+    }
+    
+    template<class GT>
+    json validation(const VGraph<GT>& graph, ViewCache<GT>& viewCache, const json& args)
+    {
+        
     }
 
 //     template<class GT>

@@ -78,6 +78,8 @@ json CommandRunner<GT>::run(const json& command)const
             return Commands::mft<GT>(*graph_, *viewCache_, command);
         else if(command["cmd"] == "pths")
             return Commands::pths<GT>(*graph_, *viewCache_, command);
+        else if(command["cmd"] == "validation")
+            return Commands::validation<GT>(*graph_, *viewCache_, command);
 //         else if(command["cmd"] == "dpth")
 //             return Commands::dpth<GT>(*graph_, *viewCache_, command);
         else
