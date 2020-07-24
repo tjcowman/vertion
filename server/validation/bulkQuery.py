@@ -9,6 +9,14 @@ from statistics import mean
 
 hostname = 'http://localhost:9060/'
 
+
+#Interaction 1
+#Harboring 2
+#Phosphorylation 4
+#Co-Occurrence 8
+#mechanisticLabel = 
+
+
 def bitExtract(n) :
     ids = []
     counter = 0
@@ -86,7 +94,9 @@ class Path:
         for i in range(0,len(self.nodes)-1):
             self.edgeSet.add(str(self.nodes[i]) + str(self.nodes[i+1]))
         
-        
+    def proportionPPI(self):
+        #print(len(list(filter(lambda x: x == 1, self.edgeLabels))),len(self.edgeLabels))
+        return len(list(filter(lambda x: x == 1, self.edgeLabels)))/len(self.edgeLabels)
         
     def __repr__(self):
         return str(self.nodeScore) + '\n' + str(self.nodes)
@@ -94,22 +104,64 @@ class Path:
 class PathTree:
     def __init__(self, serverResponse ):
         self.paths = []
+        self.topk = -1 #refers to the computed path weight
+        self.topkScore = -1 #refers to the score of the node pathed to
+        self.pathsSelected = []
         
         for path in serverResponse:
             self.paths.append(Path(path))
             
+        #sort the obtained paths by ther total computed weightFraction
+        self.paths.sort(key =lambda x: x.nodeScore)
+            
         self.nodeSet = reduce(lambda x1,x2 : x1.union(x2), map( lambda x: x.nodeSet, self.paths))
         self.edgeSet = reduce(lambda x1,x2 : x1.union(x2), map( lambda x: x.edgeSet, self.paths))
         
+    def getPaths(self, topkScore, topk):
+        if self.topk == topk and self.topkScore == topkScore:
+            return self.pathsSelected
+        else:
+            self.updateIntegration( topkScore, topk)
+            return self.pathsSelected
+            
+        
+    #Uses the current topk to determine whether the pathTree needs to recalculate the node and edgeSets
+    def getNodeSet(self, topkScore,topk ):
+        if self.topk == topk and self.topkScore == topkScore:
+            return self.nodeSet
+        else:
+            self.updateIntegration( topkScore, topk)
+            return self.nodeSet
+        
+    def getEdgeSet(self, topkScore,topk):
+        if self.topk == topk and self.topkScore == topkScore:
+            return self.edgeSet
+        else:
+            self.updateIntegration( topkScore, topk)
+            return self.edgeSet
+        
+    def updateIntegration(self, topkScore, topk):
+        pathslice = self.paths[0: math.floor((len(self.paths)-1)*topkScore)]
+        pathslice.sort(key =lambda x: x.totalWeight)
+        
+        self.pathsSelected =pathslice[0:topk]
+        self.nodeSet = reduce(lambda x1,x2 : x1.union(x2), map( lambda x: x.nodeSet, self.pathsSelected))
+        self.edgeSet = reduce(lambda x1,x2 : x1.union(x2), map( lambda x: x.edgeSet, self.pathsSelected))
+        self.topk=topk
+        self.topkScore=topkScore
+        
+    def proportionPPI(self, topkScore, topk):
+        return mean(map(lambda x: x.proportionPPI(), self.getPaths(topkScore, topk)))
         
         #print(self.nodeSet)
      
-    def __repr__(self):
+    def __repr__(self, topk = float('inf')):
         return '\n'.join(map(str,self.paths))
         
 class PathForest:
     def __init__(self, serverResponse):
         self.trees = []
+        #self.topk = topk
         
         for tree in serverResponse['trees']:
             self.trees.append(PathTree(tree))
@@ -117,14 +169,24 @@ class PathForest:
             
     def __repr__(self):
         return '\n'.join(map(str, self.trees))
-        
-    def intersection(self):
-        return [reduce(lambda x1, x2: x1.intersection(x2), map(lambda x: x.nodeSet, self.trees)),
-                reduce(lambda x1, x2: x1.intersection(x2), map(lambda x: x.edgeSet, self.trees))]
+    
+    
+    def setOperation(self, setOp, topkScore, topk ):
+        return [
+            len(reduce(setOp, map(lambda x: x.getNodeSet( topkScore, topk), self.trees))),
+            len(reduce(setOp, map(lambda x: x.getEdgeSet( topkScore, topk), self.trees)))
+        ]
+
+    def proportionPPI(self, setOp, topkScore,topk):
+        return 
+    
     
     def meanSize(self):
         return [mean(map(lambda x: len(x.nodeSet), self.trees)),
                 mean(map(lambda x: len(x.edgeSet), self.trees))]
+    
+    def lowQualityEdges(self):
+        return 
         
         
 def determineVersionClass(rls):
@@ -251,7 +313,7 @@ def main():
     ss = ServerState(hostname)
     q = QuerySet()
     
-    versionDef = ss.versionDef([1,2,20,21,22])
+    versionDef = ss.versionDef([1,20,21,22])
 
     sites =  parseSites('/home/tcowman/githubProjects/cophos/data/raw/Processed_perturb/Phosphorylation_Data/phospho_data_c14.csv.uniprot')  #[['Q15459',359,-1.3219], ['Q15459',451,0.5352], ['P28482',185,4.4463], ['P28482',187,4.4195], ['Q8N3F8',273,-0.3219]]
     #kinase = ['P00533','P15056']
@@ -261,11 +323,11 @@ def main():
     q.addArg(['kinase' , [['P00533','P15056']]])
     q.addArg(['sites', [sites]])
     
-    q.addArg(['weightFraction', [1, .5, .2, .1, .05]], True)
+    q.addArg(['weightFraction', [1]], True)
     
     q.addArg(['lookupType', ['uniprot']])
     
-    q.addArg(['mechRatio', [100]], True)
+    q.addArg(['mechRatio', [1000]], True)
     
     q.addArg(['localProximity', [False]])
     
@@ -282,9 +344,19 @@ def main():
         F = PathForest(rq.json())
         
        
-        print(q.getTrackedArgs(), 
-              list(map(lambda x: len(x), F.intersection())), 
-              F.meanSize())
+        for topScore in [1, .1, .05]:
+            for topk in [20]:
+                print(
+                q.getTrackedArgs(),
+                topScore,
+                topk,
+                F.setOperation(set.intersection, topScore, topk), 
+                F.setOperation(set.union, topScore, topk), 
+                F.setOperation(set.difference, topScore,topk), 
+            
+                list(map(lambda x: x.proportionPPI(topScore, topk), F.trees)), 
+            #F.meanSize()
+                )
         
         q.baseIncrement()
     
