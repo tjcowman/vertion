@@ -3,9 +3,12 @@ import math
 import requests
 import json
 
-import numpy as np
+import numpy as np 
 from functools import reduce
-from statistics import mean
+from statistics import mean, stdev
+
+import itertools 
+flatten = itertools.chain.from_iterable
 
 hostname = 'http://localhost:9060/'
 
@@ -95,7 +98,6 @@ class Path:
             self.edgeSet.add(str(self.nodes[i]) + str(self.nodes[i+1]))
         
     def proportionPPI(self):
-        #print(len(list(filter(lambda x: x == 1, self.edgeLabels))),len(self.edgeLabels))
         return len(list(filter(lambda x: x == 1, self.edgeLabels)))/len(self.edgeLabels)
         
     def __repr__(self):
@@ -104,8 +106,6 @@ class Path:
 class PathTree:
     def __init__(self, serverResponse ):
         self.paths = []
-        self.topk = -1 #refers to the computed path weight
-        self.topkScore = -1 #refers to the score of the node pathed to
         self.pathsSelected = []
         
         for path in serverResponse:
@@ -117,51 +117,39 @@ class PathTree:
         self.nodeSet = reduce(lambda x1,x2 : x1.union(x2), map( lambda x: x.nodeSet, self.paths))
         self.edgeSet = reduce(lambda x1,x2 : x1.union(x2), map( lambda x: x.edgeSet, self.paths))
         
-    def getPaths(self, topkScore, topk):
-        if self.topk == topk and self.topkScore == topkScore:
-            return self.pathsSelected
-        else:
-            self.updateIntegration( topkScore, topk)
-            return self.pathsSelected
-            
+    def getPathMeasure(self, FnMeasure):
+        #paths=self.getPaths()
+        return map(lambda p: FnMeasure(p), self.pathsSelected)
         
+    def getPaths(self, ):
+            return self.pathsSelected
+
     #Uses the current topk to determine whether the pathTree needs to recalculate the node and edgeSets
-    def getNodeSet(self, topkScore,topk ):
-        if self.topk == topk and self.topkScore == topkScore:
+    def getNodeSet(self ):
             return self.nodeSet
-        else:
-            self.updateIntegration( topkScore, topk)
-            return self.nodeSet
-        
-    def getEdgeSet(self, topkScore,topk):
-        if self.topk == topk and self.topkScore == topkScore:
+
+    def getEdgeSet(self):
             return self.edgeSet
-        else:
-            self.updateIntegration( topkScore, topk)
-            return self.edgeSet
-        
+
     def updateIntegration(self, topkScore, topk):
         pathslice = self.paths[0: math.floor((len(self.paths)-1)*topkScore)]
         pathslice.sort(key =lambda x: x.totalWeight)
         
         self.pathsSelected =pathslice[0:topk]
+        #print(self.pathsSelected.edgeLabels)
         self.nodeSet = reduce(lambda x1,x2 : x1.union(x2), map( lambda x: x.nodeSet, self.pathsSelected))
         self.edgeSet = reduce(lambda x1,x2 : x1.union(x2), map( lambda x: x.edgeSet, self.pathsSelected))
         self.topk=topk
         self.topkScore=topkScore
-        
-    def proportionPPI(self, topkScore, topk):
-        return mean(map(lambda x: x.proportionPPI(), self.getPaths(topkScore, topk)))
-        
-        #print(self.nodeSet)
-     
+
     def __repr__(self, topk = float('inf')):
         return '\n'.join(map(str,self.paths))
         
 class PathForest:
     def __init__(self, serverResponse):
         self.trees = []
-        #self.topk = topk
+        self.topk = -1
+        self.topScore = -1
         
         for tree in serverResponse['trees']:
             self.trees.append(PathTree(tree))
@@ -171,16 +159,30 @@ class PathForest:
         return '\n'.join(map(str, self.trees))
     
     
-    def setOperation(self, setOp, topkScore, topk ):
+    def scoreFilter(self,topkScore, topk):
+        for tree in self.trees:
+            tree.updateIntegration(topkScore, topk)
+        
+    def summarize(self,pathMeasureFn):
+        return  [mean(list(flatten(map(lambda tree: tree.getPathMeasure(pathMeasureFn), self.trees)))),
+                stdev(list(flatten(map(lambda tree: tree.getPathMeasure(pathMeasureFn), self.trees))))]
+    
+    def setOperation(self, setOp ):
         return [
-            len(reduce(setOp, map(lambda x: x.getNodeSet( topkScore, topk), self.trees))),
-            len(reduce(setOp, map(lambda x: x.getEdgeSet( topkScore, topk), self.trees)))
+            len(reduce(setOp, map(lambda x: x.getNodeSet(), self.trees))),
+            len(reduce(setOp, map(lambda x: x.getEdgeSet(), self.trees)))
         ]
 
-    def proportionPPI(self, setOp, topkScore,topk):
-        return 
+    def proportionPPI(self):
+        #return mean(map(lambda x: x.proportionPPI(), self.trees))
+        #return mean(list(flatten(map(lambda tree: tree.getPathMeasure(lambda x: x.proportionPPI()), self.trees))))
+        return self.summarize(lambda x: x.proportionPPI())
     
+    def meanHops(self):
+        #return mean(list(flatten(map(lambda tree: tree.getPathMeasure(lambda x: len(x.edgeLabels)), self.trees))))
+        return self.summarize(lambda x: len(x.edgeLabels))
     
+    #Kind of replaced by union
     def meanSize(self):
         return [mean(map(lambda x: len(x.nodeSet), self.trees)),
                 mean(map(lambda x: len(x.edgeSet), self.trees))]
@@ -344,17 +346,24 @@ def main():
         F = PathForest(rq.json())
         
        
-        for topScore in [1, .1, .05]:
-            for topk in [20]:
+        for topScore in [1,.1,.05]: #np.round(np.arange(1,.05, -.05),2):
+            for topk in [10]:
+                F.scoreFilter(topScore, topk)
+                
                 print(
                 q.getTrackedArgs(),
                 topScore,
                 topk,
-                F.setOperation(set.intersection, topScore, topk), 
-                F.setOperation(set.union, topScore, topk), 
-                F.setOperation(set.difference, topScore,topk), 
+                
+                #Set operations on the sets of nodes and edges between kinase trees
+                F.setOperation(set.intersection), 
+                F.setOperation(set.union), 
+                F.setOperation(set.difference), 
             
-                list(map(lambda x: x.proportionPPI(topScore, topk), F.trees)), 
+                F.proportionPPI(),
+                F.meanHops()
+            
+                #list(map(lambda x: x.proportionPPI(topScore, topk), F.trees)), 
             #F.meanSize()
                 )
         
