@@ -358,25 +358,7 @@ def main_compute_dataFrame():
 
     q.begin()
 
-    #dfp = {
-        #'weightFraction' :[],
-        #'mechRatio' : [],
-        #'topScore' : [],
-        #'topk' : [],
-        
-        #'union_n' : [],
-        #'union_e' : [],
-        #'intersection_n' : [],
-        #'intersection_e' : [],
-        
-        #'propPPI_m' :[],
-        #'propPPI_sd': [],
-        #'hops_m': [],
-        #'hops_sd': [],
-        #'pathWeight_m': [],
-        #'pathWeight_sd': []
-    #}
-    
+
     dfp = {
         'weightFraction' :[],
         'mechRatio' : [],
@@ -397,38 +379,69 @@ def main_compute_dataFrame():
         'pathWeight_sd': []
     }
     
+    dfp2 = {
+        'weightFraction' :[],
+        'mechRatio' : [],
+        'topScore' : [],
+        'topk' : [],
+        'pathsUsed' : [],
+        
+        'propPPI' :[],
+        'hops': [],
+        'pathWeight': [],
+        
+        'union' : [],
+        'intersection' : [],
+        'difference' : []
+    }
+    
     while not q.end():
         pload = q.getArgs()
         rq = requests.post(hostname, data=json.dumps(pload))
         
         #analysis code
         F = PathForest(rq.json())
-        #print(F)
-        #for topScore in  np.round(np.arange(.05, 1, .05),2):
-        for topScore in np.round(np.arange(.02, 1, .02),2): #[ .005, .01, .015, .1, .2, .5, .75, 1] :# np.round(np.arange(.01, .1, .01),2):
-            for topk in [10, 50, 100]:
+
+        for topScore in np.round(np.arange(.01, 1, .01),3): #[ .005, .01, .015, .1, .2, .5, .75, 1] :# np.round(np.arange(.01, .1, .01),2):
+            for topk in [10, 20, 40]:
+            
+        #for topScore in [.01, .05, .1, .2, .4, .8]: #[ .005, .01, .015, .1, .2, .5, .75, 1] :# np.round(np.arange(.01, .1, .01),2):
+            #for topk in range(10, 500, 20):
+            
                 F.scoreFilter(topScore, topk)
                 
-                dfp["topk"].append(topk)
-                dfp["topScore"].append(topScore)
+                #dfp["topk"].append(topk)
+                #dfp["topScore"].append(topScore)
+                #dfp["pathsUsed"].append(F.getNumPathsUsed())
+                #[dfp[key].append(val) for (key,val) in q.getTrackedArgs()]
                 
-                dfp["pathsUsed"].append(F.getNumPathsUsed())
+                #[dfp[key].append(val) for (key,val) in zip(["union_n","union_e"], F.setOperation(set.union)) ]
+                #[dfp[key].append(val) for (key,val) in zip(["intersection_n","intersection_e"], F.setOperation(set.intersection)) ]
                 
-                
-                [dfp[key].append(val) for (key,val) in q.getTrackedArgs()]
-                
-                [dfp[key].append(val) for (key,val) in zip(["union_n","union_e"], F.setOperation(set.union)) ]
-                [dfp[key].append(val) for (key,val) in zip(["intersection_n","intersection_e"], F.setOperation(set.intersection)) ]
-                
-                
-                [dfp[key].append(val) for (key,val) in zip(["propPPI_m","propPPI_sd"], F.proportionPPI()) ]
-                [dfp[key].append(val) for (key,val) in zip(["hops_m","hops_sd"], F.meanHops()) ]
-                [dfp[key].append(val) for (key,val) in zip(["pathWeight_m","pathWeight_sd"],  F.meanPathWeight()) ]
+                #[dfp[key].append(val) for (key,val) in zip(["propPPI_m","propPPI_sd"], F.proportionPPI()) ]
+                #[dfp[key].append(val) for (key,val) in zip(["hops_m","hops_sd"], F.meanHops()) ]
+                #[dfp[key].append(val) for (key,val) in zip(["pathWeight_m","pathWeight_sd"],  F.meanPathWeight()) ]
         
+        
+                dfp2["topk"].append(topk)
+                dfp2["topScore"].append(topScore)
+                dfp2["pathsUsed"].append(F.getNumPathsUsed())
+                [dfp2[key].append(val) for (key,val) in q.getTrackedArgs()]
+                
+                
+                dfp2['propPPI'].append(F.proportionPPI()) 
+                dfp2['hops'].append( F.meanHops())
+                dfp2['pathWeight'].append(F.meanPathWeight())
+                
+                dfp2['union'].append(F.setOperation(set.union))
+                dfp2['intersection'].append(F.setOperation(set.intersection))
+                dfp2['difference'].append(F.setOperation(set.symmetric_difference))
         
         q.baseIncrement()
     
-    df = pd.DataFrame(data=dfp)
+    #df = pd.DataFrame(data=dfp)
+    df = pd.DataFrame(data=dfp2)
+    print(df)
     
     return df
 
@@ -437,7 +450,8 @@ def main_create_cache(df, filename):
     
 def main_load_cache(filename):
     return pd.read_csv(filename)
- 
+
+#def formatDataFrame 
  
 def main_plot(df):
     df['ifRatio'] = df.apply(lambda row: row.intersection_e / row.union_e, axis=1)
@@ -460,6 +474,52 @@ def main_plot(df):
 
     print(plt)
  
+ 
+def main_plot2(df):
+    print('\n')
+    
+    #extracts only the means from the speicified column lists
+    df[['hops', 'propPPI', 'pathWeight']] = df[['hops', 'propPPI', 'pathWeight']].applymap(lambda x: x[0])
+    
+    df['ifRatio'] = df.apply(lambda row: math.sqrt(pow(row.intersection[0] / row.union[0],2) + pow(row.intersection[1] / row.union[1], 2) ), axis=1)
+    #print(df)
+    #melths the set operation columns into a single value column
+    dft = pd.melt(df, var_name='setOp', id_vars=['topk', 'topScore', 'pathsUsed', 'propPPI', 'hops', 'pathWeight', 'ifRatio'], value_vars=['union'])
+    
+    #splits the node and edge set operations into seperate columns
+    dfs=pd.DataFrame(dft)
+    dfs[['nodes', 'edges']] = pd.DataFrame(dft.value.tolist(), index=dft.index)
+    DF = pd.concat([dft, dfs])
+    
+    #Filter trials where paths available was less than the desired topk (Note pathsUsedd must be 2 * topk as there are 2 trees)
+    DF = DF[DF.pathsUsed >= 2*DF.topk ]
+    
+    
+    #print(df[['hops', 'propPPI', 'pathWeight']].applymap(lambda x: x[0]))
+    #print(dft)
+    #print(pd.melt(df, id_vars=['topk', 'topScore', 'pathsUsed'], value_vars=['propPPI', 'hops', 'pathWeight']))
+    
+    #plt = (
+            #ggplot(data=df)        
+            #+facet_wrap('~topk')
+            #+geom_line(aes(x='topScore', y='hops') )
+    #)   
+    plt = (
+            ggplot(data=DF)        
+            +facet_wrap('~topk', scales='free_y')
+            +geom_line(aes(x='topScore', y='edges', color='setOp') )
+             +geom_line(aes(x='topScore', y='nodes'), color='blue' )
+    )   
+    
+    #plt = (
+        #ggplot(data=DF)        
+        #+facet_wrap('~topScore', scales='free_y')
+        #+geom_line(aes(x='topk', y='ifRatio') )
+        #+scale_y_log10()
+    #)   
+    
+    print(plt)
+ 
 def main():
     
     df = None
@@ -468,10 +528,10 @@ def main():
         if args.mode == "C":
             main_create_cache(df,"df.tmp")
             return
-        main_plot(df)
+        main_plot2(df)
     elif args.mode == "P":
         df = main_load_cache("df.tmp")
-        main_plot(df)
+        main_plot2(df)
    
     #print(df)
   
