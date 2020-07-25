@@ -3,7 +3,14 @@ import math
 import requests
 import json
 
+from plotnine import *
+
 import numpy as np 
+import pandas as pd
+
+import argparse
+parser = argparse.ArgumentParser()
+
 from functools import reduce
 from statistics import mean, stdev
 
@@ -11,6 +18,10 @@ import itertools
 flatten = itertools.chain.from_iterable
 
 hostname = 'http://localhost:9060/'
+
+parser.add_argument('--mode', required=True) #M-emory C-toCache U-plotCache 
+args = parser.parse_args()
+
 
 
 #Interaction 1
@@ -162,10 +173,14 @@ class PathForest:
     def scoreFilter(self,topkScore, topk):
         for tree in self.trees:
             tree.updateIntegration(topkScore, topk)
-        
+    
+    def getNumPathsUsed(self):
+        return (sum(map(lambda tree: len(tree.pathsSelected), self.trees)))
+    
+    #Warpping one of the pathMEasure lambdas in this will return the mean and standard deviation for the selected paths 
     def summarize(self,pathMeasureFn):
-        return  [mean(list(flatten(map(lambda tree: tree.getPathMeasure(pathMeasureFn), self.trees)))),
-                stdev(list(flatten(map(lambda tree: tree.getPathMeasure(pathMeasureFn), self.trees))))]
+        return  [round(mean(list(flatten(map(lambda tree: tree.getPathMeasure(pathMeasureFn), self.trees)))),3),
+                round(stdev(list(flatten(map(lambda tree: tree.getPathMeasure(pathMeasureFn), self.trees)))),3)]
     
     def setOperation(self, setOp ):
         return [
@@ -174,13 +189,15 @@ class PathForest:
         ]
 
     def proportionPPI(self):
-        #return mean(map(lambda x: x.proportionPPI(), self.trees))
-        #return mean(list(flatten(map(lambda tree: tree.getPathMeasure(lambda x: x.proportionPPI()), self.trees))))
         return self.summarize(lambda x: x.proportionPPI())
     
     def meanHops(self):
-        #return mean(list(flatten(map(lambda tree: tree.getPathMeasure(lambda x: len(x.edgeLabels)), self.trees))))
         return self.summarize(lambda x: len(x.edgeLabels))
+    
+    def meanPathWeight(self):
+        return self.summarize(lambda x: x.totalWeight)
+    
+    
     
     #Kind of replaced by union
     def meanSize(self):
@@ -223,6 +240,8 @@ def parseSites(filename):
         return sites
  
 #def runQuerySet(ss, ):
+
+
 
 class QuerySet():
     def __init__(self):
@@ -299,25 +318,29 @@ class QuerySet():
             if self.trackArgVals[i]:
                 m.append(str(self.args[i][1][self.baseCounter[i]]))
         
-        return '\t'.join(m)
+        
+        #print("hi",m)
+        return (zip(self.getTrackedArgsHeader(), m))
+        #return '\t'.join(m)
         
     def getTrackedArgsHeader(self):
         m = []
         for i in range(0, len(self.args)):
             if self.trackArgVals[i]:
                 m.append(str(self.args[i][0]))
-        
-        return '\t'.join(m)
+       
+        return m
+        #return '\t'.join(m)
     #def nextPayload():
         #return 
  
-def main():
+def main_compute_dataFrame():
     ss = ServerState(hostname)
     q = QuerySet()
     
-    versionDef = ss.versionDef([1,20,21,22])
+    versionDef = ss.versionDef([8,20,21,22])
 
-    sites =  parseSites('/home/tcowman/githubProjects/cophos/data/raw/Processed_perturb/Phosphorylation_Data/phospho_data_c14.csv.uniprot')  #[['Q15459',359,-1.3219], ['Q15459',451,0.5352], ['P28482',185,4.4463], ['P28482',187,4.4195], ['Q8N3F8',273,-0.3219]]
+    sites =   parseSites('/home/tcowman/githubProjects/cophos/data/raw/Processed_perturb/Phosphorylation_Data/phospho_data_c14.csv.uniprot')  #[['Q15459',359,-1.3219], ['Q15459',451,0.5352], ['P28482',185,4.4463], ['P28482',187,4.4195], ['Q8N3F8',273,-0.3219]]
     #kinase = ['P00533','P15056']
     
     q.addArg(['cmd', ['pths']])
@@ -332,44 +355,125 @@ def main():
     q.addArg(['mechRatio', [1000]], True)
     
     q.addArg(['localProximity', [False]])
-    
-    
-    #q.iterateAll()
-    
+
     q.begin()
-    print(q.getTrackedArgsHeader())
+
+    #dfp = {
+        #'weightFraction' :[],
+        #'mechRatio' : [],
+        #'topScore' : [],
+        #'topk' : [],
+        
+        #'union_n' : [],
+        #'union_e' : [],
+        #'intersection_n' : [],
+        #'intersection_e' : [],
+        
+        #'propPPI_m' :[],
+        #'propPPI_sd': [],
+        #'hops_m': [],
+        #'hops_sd': [],
+        #'pathWeight_m': [],
+        #'pathWeight_sd': []
+    #}
+    
+    dfp = {
+        'weightFraction' :[],
+        'mechRatio' : [],
+        'topScore' : [],
+        'topk' : [],
+        'pathsUsed' : [],
+        
+        'union_n' : [],
+        'union_e' : [],
+        'intersection_n' : [],
+        'intersection_e' : [],
+        
+        'propPPI_m' :[],
+        'propPPI_sd': [],
+        'hops_m': [],
+        'hops_sd': [],
+        'pathWeight_m': [],
+        'pathWeight_sd': []
+    }
+    
     while not q.end():
         pload = q.getArgs()
         rq = requests.post(hostname, data=json.dumps(pload))
         
         #analysis code
         F = PathForest(rq.json())
-        
-       
-        for topScore in [1,.1,.05]: #np.round(np.arange(1,.05, -.05),2):
-            for topk in [10]:
+        #print(F)
+        #for topScore in  np.round(np.arange(.05, 1, .05),2):
+        for topScore in np.round(np.arange(.02, 1, .02),2): #[ .005, .01, .015, .1, .2, .5, .75, 1] :# np.round(np.arange(.01, .1, .01),2):
+            for topk in [10, 50, 100]:
                 F.scoreFilter(topScore, topk)
                 
-                print(
-                q.getTrackedArgs(),
-                topScore,
-                topk,
+                dfp["topk"].append(topk)
+                dfp["topScore"].append(topScore)
                 
-                #Set operations on the sets of nodes and edges between kinase trees
-                F.setOperation(set.intersection), 
-                F.setOperation(set.union), 
-                F.setOperation(set.difference), 
-            
-                F.proportionPPI(),
-                F.meanHops()
-            
-                #list(map(lambda x: x.proportionPPI(topScore, topk), F.trees)), 
-            #F.meanSize()
-                )
+                dfp["pathsUsed"].append(F.getNumPathsUsed())
+                
+                
+                [dfp[key].append(val) for (key,val) in q.getTrackedArgs()]
+                
+                [dfp[key].append(val) for (key,val) in zip(["union_n","union_e"], F.setOperation(set.union)) ]
+                [dfp[key].append(val) for (key,val) in zip(["intersection_n","intersection_e"], F.setOperation(set.intersection)) ]
+                
+                
+                [dfp[key].append(val) for (key,val) in zip(["propPPI_m","propPPI_sd"], F.proportionPPI()) ]
+                [dfp[key].append(val) for (key,val) in zip(["hops_m","hops_sd"], F.meanHops()) ]
+                [dfp[key].append(val) for (key,val) in zip(["pathWeight_m","pathWeight_sd"],  F.meanPathWeight()) ]
+        
         
         q.baseIncrement()
     
+    df = pd.DataFrame(data=dfp)
+    
+    return df
+
+def main_create_cache(df, filename):
+    df.to_csv(filename)
+    
+def main_load_cache(filename):
+    return pd.read_csv(filename)
  
+ 
+def main_plot(df):
+    df['ifRatio'] = df.apply(lambda row: row.intersection_e / row.union_e, axis=1)
+    plt = (
+        ggplot(data=df)        
+        +facet_wrap('~topk')
+        #+ geom_line(aes(x='topScore', y='hops_m') )
+        #+geom_errorbar(aes(x='topScore', ymax='hops_m+hops_sd', ymin='hops_m-hops_sd') )
+        #+ geom_line(aes(x='topScore', y='pathWeight_m') ) 
+        #+geom_line(aes(x='topScore', y='intersection_e'),color='red' )
+        +geom_line(aes(x='topScore', y='hops_m'),color='blue' )
+        #+geom_line(aes(x='topScore', y='union_e') )
+    )   
+            
+    #plt =(ggplot(df, aes('factor(topScore)', 'factor(topk)', fill='pathWeight_m'))
+        #+ geom_tile(aes(width=.95, height=.95))
+        #+ geom_text(aes(label='pathsUsed'), size=10)
+    #)
+                
+
+    print(plt)
+ 
+def main():
+    
+    df = None
+    if args.mode  !="P":
+        df = main_compute_dataFrame()
+        if args.mode == "C":
+            main_create_cache(df,"df.tmp")
+            return
+        main_plot(df)
+    elif args.mode == "P":
+        df = main_load_cache("df.tmp")
+        main_plot(df)
+   
+    #print(df)
   
 
 if __name__ == "__main__":
