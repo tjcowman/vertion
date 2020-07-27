@@ -20,8 +20,33 @@ flatten = itertools.chain.from_iterable
 hostname = 'http://localhost:9060/'
 
 parser.add_argument('--mode', required=True) #M-emory C-toCache U-plotCache 
+parser.add_argument('--trial', required=True)
 args = parser.parse_args()
 
+
+#kinaseByStudy = {
+    #14: []
+#}
+
+kinMap = {
+    'EGFR' : 'P00533',
+    'RAF1' : 'P04049',
+    'BRAF' : 'P15056',
+    'ERK1' : 'P27361',
+    'ERK2' : 'P28482',
+    'Akt1' : 'P31749',
+    'MEK2' : 'P36507',
+    'MEK1' : 'Q02750',
+    'Abl' : 'P00519',
+    'Lck' : 'P06239',
+    'AurA' : 'Q93GF5',
+    'AurB' : 'M4SMN9',
+    'ATM' : 'Q13315',
+    'ATR' : 'Q13535',
+    'RAF1' :'P04049',
+    'PDGFRB' : 'P09619',
+    'PKCA' : 'P17252'
+}
 
 
 #Interaction 1
@@ -106,10 +131,16 @@ class Path:
         self.nodeSet = set(self.nodes)
         self.edgeSet = set()
         for i in range(0,len(self.nodes)-1):
-            self.edgeSet.add(str(self.nodes[i]) + str(self.nodes[i+1]))
+            self.edgeSet.add(str(self.nodes[i]) + '-' + str(self.nodes[i+1]))
+        
+    def hopLength(self):
+        return len(self.edgeLabels)
         
     def proportionPPI(self):
-        return len(list(filter(lambda x: x == 1, self.edgeLabels)))/len(self.edgeLabels)
+        if self.hopLength() == 0:
+            return 0
+        else:
+            return len(list(filter(lambda x: x == 1, self.edgeLabels))) / self.hopLength()
         
     def __repr__(self):
         return str(self.nodeScore) + '\n' + str(self.nodes)
@@ -182,11 +213,30 @@ class PathForest:
         return  [round(mean(list(flatten(map(lambda tree: tree.getPathMeasure(pathMeasureFn), self.trees)))),3),
                 round(stdev(list(flatten(map(lambda tree: tree.getPathMeasure(pathMeasureFn), self.trees)))),3)]
     
-    def setOperation(self, setOp ):
-        return [
-            len(reduce(setOp, map(lambda x: x.getNodeSet(), self.trees))),
-            len(reduce(setOp, map(lambda x: x.getEdgeSet(), self.trees)))
+    def setOperation(self, setOp ): #Intra
+        #return [
+            #len(reduce(setOp, map(lambda x: x.getNodeSet(), self.trees))),
+            #len(reduce(setOp, map(lambda x: x.getEdgeSet(), self.trees)))
+        #]
+        return list(map( lambda x: len(x), self.setOperationIntra(setOp)))
+    
+    
+    def setOperationIntra(self, setOp):
+         return [
+            reduce(setOp, map(lambda x: x.getNodeSet(), self.trees)),
+            reduce(setOp, map(lambda x: x.getEdgeSet(), self.trees))
         ]
+    
+    def setOperationInter(self, otherForest, setOpIntra, setOpInter):
+        s1 = self.setOperationIntra(setOpIntra) #returns a [{}, {}] 
+        s2 = otherForest.setOperationIntra(setOpIntra)
+        
+        return [setOpInter(s1[0],s2[0]) ,setOpInter(s1[1],s2[1])]
+        
+        #return [s1[0].setOp(s2[0], s1[1].setOp(s2[1]))]
+        
+        #return map(lambda x:  [setOp(x[0]),setOp(x[1])],  zip(s1,s2))
+        
 
     def proportionPPI(self):
         return self.summarize(lambda x: x.proportionPPI())
@@ -330,33 +380,44 @@ class QuerySet():
                 m.append(str(self.args[i][0]))
        
         return m
-        #return '\t'.join(m)
-    #def nextPayload():
-        #return 
- 
-def main_compute_dataFrame():
+
+    def makeQuery(self):
+        pload = self.getArgs()
+        rq = requests.post(hostname, data=json.dumps(pload))
+        
+        #analysis code
+        F = PathForest(rq.json())
+        return F
+
+        
+
+def initialize_query_set(siteFile, kinaseList):
     ss = ServerState(hostname)
     q = QuerySet()
     
     versionDef = ss.versionDef([8,20,21,22])
 
-    sites =   parseSites('/home/tcowman/githubProjects/cophos/data/raw/Processed_perturb/Phosphorylation_Data/phospho_data_c14.csv.uniprot')  #[['Q15459',359,-1.3219], ['Q15459',451,0.5352], ['P28482',185,4.4463], ['P28482',187,4.4195], ['Q8N3F8',273,-0.3219]]
-    #kinase = ['P00533','P15056']
+    sites =   parseSites(siteFile)  #[['Q15459',359,-1.3219], ['Q15459',451,0.5352], ['P28482',185,4.4463], ['P28482',187,4.4195], ['Q8N3F8',273,-0.3219]]
+    kinase = list(map(lambda x: kinMap[x], kinaseList ))
     
     q.addArg(['cmd', ['pths']])
     q.addArgs(versionDef)
-    q.addArg(['kinase' , [['P00533','P15056']]])
+    
+    q.addArg(['kinase' , [kinase]])
+    
     q.addArg(['sites', [sites]])
-    
     q.addArg(['weightFraction', [1]], True)
-    
     q.addArg(['lookupType', ['uniprot']])
-    
     q.addArg(['mechRatio', [1000]], True)
-    
     q.addArg(['localProximity', [False]])
-
     q.begin()
+    return q
+
+#def compute queryForest(query_set):
+
+ 
+def main_compute_dataFrame(siteFile, kinaseList):
+    q = initialize_query_set(siteFile, kinaseList)
 
 
     dfp = {
@@ -396,11 +457,14 @@ def main_compute_dataFrame():
     }
     
     while not q.end():
-        pload = q.getArgs()
-        rq = requests.post(hostname, data=json.dumps(pload))
-        
+
         #analysis code
-        F = PathForest(rq.json())
+        F = q.makeQuery()
+        
+        #Print some summary stats for debugging
+        print("Summary")
+        print(list(map(lambda tree: len(tree.paths), F.trees)))
+        
 
         for topScore in np.round(np.arange(.01, 1, .01),3): #[ .005, .01, .015, .1, .2, .5, .75, 1] :# np.round(np.arange(.01, .1, .01),2):
             for topk in [10, 20, 40]:
@@ -453,6 +517,25 @@ def main_load_cache(filename):
 
 #def formatDataFrame 
  
+def computeForestOverlap(querySet1, querySet2):
+    F1 = querySet1.makeQuery()
+    F2 = querySet2.makeQuery()
+    
+    for topScore in np.round(np.arange(.01, 1, .01),3): #[ .005, .01, .015, .1, .2, .5, .75, 1] :# np.round(np.arange(.01, .1, .01),2):
+        for topk in [20]:
+    
+        
+            F1.scoreFilter(topScore, topk)
+            F2.scoreFilter(topScore, topk)
+        
+            res = list(F1.setOperationInter(F2, set.union, set.intersection)) #intra op, inter op
+            
+            res = [len(res[0]), len(res[1])]
+            #res = map(len, res)
+            
+            print(topScore, topk, res)
+    return "done"
+ 
 def main_plot(df):
     df['ifRatio'] = df.apply(lambda row: row.intersection_e / row.union_e, axis=1)
     plt = (
@@ -484,7 +567,7 @@ def main_plot2(df):
     df['ifRatio'] = df.apply(lambda row: math.sqrt(pow(row.intersection[0] / row.union[0],2) + pow(row.intersection[1] / row.union[1], 2) ), axis=1)
     #print(df)
     #melths the set operation columns into a single value column
-    dft = pd.melt(df, var_name='setOp', id_vars=['topk', 'topScore', 'pathsUsed', 'propPPI', 'hops', 'pathWeight', 'ifRatio'], value_vars=['union'])
+    dft = pd.melt(df, var_name='setOp', id_vars=['topk', 'topScore', 'pathsUsed', 'propPPI', 'hops', 'pathWeight', 'ifRatio'], value_vars=['difference', 'union'])
     
     #splits the node and edge set operations into seperate columns
     dfs=pd.DataFrame(dft)
@@ -504,11 +587,13 @@ def main_plot2(df):
             #+facet_wrap('~topk')
             #+geom_line(aes(x='topScore', y='hops') )
     #)   
+    
+    #GOOD
     plt = (
             ggplot(data=DF)        
             +facet_wrap('~topk', scales='free_y')
-            +geom_line(aes(x='topScore', y='edges', color='setOp') )
-             +geom_line(aes(x='topScore', y='nodes'), color='blue' )
+            +geom_line(aes(x='topScore', y='nodes', color='setOp') )
+            +geom_line(aes(x='topScore', y='edges' , color='setOp'), linetype='dashed') 
     )   
     
     #plt = (
@@ -521,10 +606,53 @@ def main_plot2(df):
     print(plt)
  
 def main():
+    #Note Null model is difficult because we are always selecting real kinases and real protein phosphorylstion sites that experience phos changes under some studied perturbation
+    #The way the search is done results in similar topology profiles for each query
+    #Try looking at the the overlap (union) of the tree net from same aite pair to different phos sites
+    
+    toTrialName = lambda x: '/home/tcowman/githubProjects/cophos/data/raw/Processed_perturb/Phosphorylation_Data/phospho_data_c' +str(x)+'.csv.uniprot'
+    trials = [
+        #multiple kinases, choose 2
+        {'siteFile' : toTrialName(17),'kinaseList' : ['EGFR', 'BRAF']}, #0
+        {'siteFile' : toTrialName(49),'kinaseList' : ['EGFR', 'BRAF']}, #1
+        {'siteFile' : toTrialName(17),'kinaseList' : ['MEK1', 'MEK2']}, #2
+        {'siteFile' : toTrialName(49),'kinaseList' : ['MEK1', 'MEK2']}, #3
+        
+        #Exactly 2 kinases
+        {'siteFile' : toTrialName(69),'kinaseList' : ['MEK1', 'MEK2']}, #4
+        {'siteFile' : toTrialName(70),'kinaseList' : ['MEK1', 'MEK2']}, #5
+         
+        {'siteFile' : toTrialName(36),'kinaseList' : ['ATM', 'ATR']}, #6
+        {'siteFile' : toTrialName(5),'kinaseList' : ['ATM', 'ATR']}, #7
+        
+        {'siteFile' : toTrialName(25),'kinaseList' : ['AurA', 'AurB']}, #8
+        
+        
+        #NULL models?
+        {'siteFile' : toTrialName(36),'kinaseList' : ['MEK1', 'MEK2']}, #9
+        {'siteFile' : toTrialName(69),'kinaseList' : ['ATM', 'ATR']}, #10
+        
+        #NULL 2??? Different Kin
+        {'siteFile' : toTrialName(36),'kinaseList' : ['MEK1', 'ATR']}, #11
+        
+        
+        #??
+        {'siteFile' :  toTrialName(38),'kinaseList' : ['ERK1', 'ERK2']}, #11
+
+    ]
+    #print(trials)
+    
+    
+    #NewTest
+    print(computeForestOverlap(
+        initialize_query_set( toTrialName(17) , ['EGFR', 'BRAF']),
+        initialize_query_set( toTrialName(49) , ['EGFR', 'BRAF'])
+    ))  
+    #exit()
     
     df = None
     if args.mode  !="P":
-        df = main_compute_dataFrame()
+        df = main_compute_dataFrame(trials[int(args.trial)]['siteFile'], trials[int(args.trial)]['kinaseList'])
         if args.mode == "C":
             main_create_cache(df,"df.tmp")
             return
