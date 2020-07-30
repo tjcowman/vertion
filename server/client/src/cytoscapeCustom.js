@@ -228,8 +228,12 @@ class CytoscapeCustom extends React.Component{
     
     handleElementClick=(event)=>{
         console.log(event.target._private.data);
+        
+        if(event.target._private.data.hasOwnProperty('score'))
+            this.props.handleSubmitDensePath(event.target._private.data.id);
+        
 //         if(this.cy.elements(':selected').length<=1)
-            this.setState({elementDescription : event.target._private.data });
+        this.setState({elementDescription : event.target._private.data });
 //         else
 //              this.setState({elementDescription : {} });
     }

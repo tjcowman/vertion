@@ -10,3 +10,4 @@ server/bin
 server/client/node_modules
 
 server/test/*.res
+server/validation/plots

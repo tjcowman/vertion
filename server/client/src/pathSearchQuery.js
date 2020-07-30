@@ -263,6 +263,8 @@ class PathQueryComponent extends React.Component{
         
     }
     
+ 
+    
     handleVersionChange=(event)=>{
         this.setState({versionIndex: event.value})
     }
@@ -393,7 +395,7 @@ class ResultDisplay extends React.Component{
                 <CytoscapeCustom 
                     cstyle={{colors: {...cstyle.colors, integration :cstyle.color_integration}  , labels: cstyle.labels, sizes :cstyle.sizes}}
                     elements={this.props.displayElements} 
-                    
+                    handleSubmitDensePath={this.props.handleSubmitDensePath}
                 />
             </div>
            

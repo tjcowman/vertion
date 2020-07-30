@@ -2,6 +2,7 @@
 import math
 import requests
 import json
+import random
 
 from plotnine import *
 
@@ -21,8 +22,10 @@ hostname = 'http://localhost:9060/'
 
 parser.add_argument('--mode', required=True) #M-emory C-toCache U-plotCache 
 parser.add_argument('--trial', required=True)
+parser.add_argument('--plotSuff', required=True)
+parser.add_argument('--permuteSiteScores', default=False)
 args = parser.parse_args()
-
+outputFormat = 'png'
 
 #kinaseByStudy = {
     #14: []
@@ -177,8 +180,11 @@ class PathTree:
         pathslice = self.paths[0: math.floor((len(self.paths)-1)*topkScore)]
         pathslice.sort(key =lambda x: x.totalWeight)
         
-        self.pathsSelected =pathslice[0:topk]
-        #print(self.pathsSelected.edgeLabels)
+        
+
+       #NOTE: temporarily remove topk filterin
+        self.pathsSelected =pathslice
+        #self.pathsSelected =pathslice[0:topk]
         self.nodeSet = reduce(lambda x1,x2 : x1.union(x2), map( lambda x: x.nodeSet, self.pathsSelected))
         self.edgeSet = reduce(lambda x1,x2 : x1.union(x2), map( lambda x: x.edgeSet, self.pathsSelected))
         self.topk=topk
@@ -287,7 +293,21 @@ def parseSites(filename):
             if tokens is not None:
                 sites.append(tokens)
         
-        return sites
+        
+        if args.permuteSiteScores:
+            scores = list(map(lambda x: x[2],sites))
+            random.shuffle(scores)
+            
+            for i in range(0,len(sites)):
+                sites[i][2]=scores[i]
+            
+        for line in sites:
+            print(line)
+            #exit()
+            
+            
+            
+    return sites
  
 #def runQuerySet(ss, ):
 
@@ -408,7 +428,7 @@ def initialize_query_set(siteFile, kinaseList):
     q.addArg(['sites', [sites]])
     q.addArg(['weightFraction', [1]], True)
     q.addArg(['lookupType', ['uniprot']])
-    q.addArg(['mechRatio', [1000]], True)
+    q.addArg(['mechRatio', [1]], True)
     q.addArg(['localProximity', [False]])
     q.begin()
     return q
@@ -466,13 +486,15 @@ def main_compute_dataFrame(siteFile, kinaseList):
         print(list(map(lambda tree: len(tree.paths), F.trees)))
         
 
-        for topScore in np.round(np.arange(.01, 1, .01),3): #[ .005, .01, .015, .1, .2, .5, .75, 1] :# np.round(np.arange(.01, .1, .01),2):
-            for topk in [10, 20, 40]:
+        for topScore in np.round(np.arange(.02, 1, .01),3): #[ .005, .01, .015, .1, .2, .5, .75, 1] :# np.round(np.arange(.01, .1, .01),2):
+            for topk in [10]: #[10, 20, 40]:
             
         #for topScore in [.01, .05, .1, .2, .4, .8]: #[ .005, .01, .015, .1, .2, .5, .75, 1] :# np.round(np.arange(.01, .1, .01),2):
             #for topk in range(10, 500, 20):
             
-                F.scoreFilter(topScore, topk)
+                F.scoreFilter(topScore, topScore)
+            
+                #F.scoreFilter(topScore, topk)
                 
                 #dfp["topk"].append(topk)
                 #dfp["topScore"].append(topScore)
@@ -521,41 +543,72 @@ def computeForestOverlap(querySet1, querySet2):
     F1 = querySet1.makeQuery()
     F2 = querySet2.makeQuery()
     
-    for topScore in np.round(np.arange(.01, 1, .01),3): #[ .005, .01, .015, .1, .2, .5, .75, 1] :# np.round(np.arange(.01, .1, .01),2):
-        for topk in [20]:
+    dfp={
+            'topScore' : [],
+            'topk' : [],
+            'pathsUsed' : [],
+            #'union' : [],
+            'nodeDiff' : [],
+            'edgeDiff' : [],
+            'nodeUn' : [],
+            'edgeUn' : []
+        }
     
-        
+    for topScore in np.round(np.arange(.02, 1, .01),3): 
+        for topk in  [20]: #[10,20,40]:
             F1.scoreFilter(topScore, topk)
             F2.scoreFilter(topScore, topk)
-        
-            res = list(F1.setOperationInter(F2, set.union, set.intersection)) #intra op, inter op
+            #dfp["totalWeight"].append() 
+            dfp["topk"].append(topk)
+            dfp["topScore"].append(topScore)
+            dfp["pathsUsed"].append(min(F1.getNumPathsUsed(),F2.getNumPathsUsed() ) )
             
+        
+ 
+        
+            res = list(F1.setOperationInter(F2, set.union, set.symmetric_difference)) #intra op, inter op
             res = [len(res[0]), len(res[1])]
+            
+            dfp["nodeDiff"].append(res[0])
+            dfp["edgeDiff"].append(res[1])
+            
+            res = list(F1.setOperationInter(F2, set.union, set.intersection)) #intra op, inter op
+            res = [len(res[0]), len(res[1])]
+            dfp["nodeUn"].append(res[0])
+            dfp["edgeUn"].append(res[1])
+            
+            
+           
             #res = map(len, res)
             
-            print(topScore, topk, res)
-    return "done"
- 
-def main_plot(df):
-    df['ifRatio'] = df.apply(lambda row: row.intersection_e / row.union_e, axis=1)
+            #print(topScore, topk, res)
+    
+    DF = pd.DataFrame(data=dfp)     
+    #print(DF)     
+    #DF['ifRatio'] = DF.apply(lambda row: math.sqrt(pow( row.nodeUn/row.nodeDiff ,2) + pow(row.edgeUn/row.edgeDiff , 2) ), axis=1)
+    DF['ifRatio'] = DF.apply(lambda row:  (row.edgeUn)/(row.edgeDiff), axis=1)
+    DF = DF[DF.pathsUsed >= 2*DF.topk ]
+   
+    
+    
     plt = (
-        ggplot(data=df)        
-        +facet_wrap('~topk')
-        #+ geom_line(aes(x='topScore', y='hops_m') )
-        #+geom_errorbar(aes(x='topScore', ymax='hops_m+hops_sd', ymin='hops_m-hops_sd') )
-        #+ geom_line(aes(x='topScore', y='pathWeight_m') ) 
-        #+geom_line(aes(x='topScore', y='intersection_e'),color='red' )
-        +geom_line(aes(x='topScore', y='hops_m'),color='blue' )
-        #+geom_line(aes(x='topScore', y='union_e') )
-    )   
-            
-    #plt =(ggplot(df, aes('factor(topScore)', 'factor(topk)', fill='pathWeight_m'))
-        #+ geom_tile(aes(width=.95, height=.95))
-        #+ geom_text(aes(label='pathsUsed'), size=10)
-    #)
-                
+            ggplot(data=DF)        
 
-    print(plt)
+            +scale_x_reverse( breaks= np.round(np.arange(0 ,1,.1), 2) )
+            #+scale_y_log10()
+            +facet_wrap('~topk')
+            +geom_line(aes(x='topScore', y='ifRatio') )
+            #+geom_line(aes(x='topScore', y='nodeDiff') )
+            #+geom_line(aes(x='topScore', y='edgeDiff' ), linetype='dashed') 
+            #+geom_line(aes(x='topScore', y='nodeUn'), color='red' )
+            #+geom_line(aes(x='topScore', y='edgeUn' ), color='red', linetype='dashed') 
+            +xlab('Phosphorylation Threshold (Top %)')
+            +ylab('Nodes (solid) - Edges (dashed)')
+            
+    )   
+    #print(plt)
+    plt.save(filename='validation/plots/kinSiteDiff'+'.'+outputFormat, width=15, height=6, limitsize=False)
+    #return "done"
  
  
 def main_plot2(df):
@@ -564,10 +617,11 @@ def main_plot2(df):
     #extracts only the means from the speicified column lists
     df[['hops', 'propPPI', 'pathWeight']] = df[['hops', 'propPPI', 'pathWeight']].applymap(lambda x: x[0])
     
-    df['ifRatio'] = df.apply(lambda row: math.sqrt(pow(row.intersection[0] / row.union[0],2) + pow(row.intersection[1] / row.union[1], 2) ), axis=1)
+    df['ifRatio'] = df.apply(lambda row: ( row.intersection[1]) / (row.difference[1]), axis=1)
+    #df['ifRatio'] = df.apply(lambda row: math.sqrt(pow(row.intersection[0] / row.difference[0],2) + pow(row.intersection[1] / row.difference[1], 2) ), axis=1)
     #print(df)
     #melths the set operation columns into a single value column
-    dft = pd.melt(df, var_name='setOp', id_vars=['topk', 'topScore', 'pathsUsed', 'propPPI', 'hops', 'pathWeight', 'ifRatio'], value_vars=['difference', 'union'])
+    dft = pd.melt(df, var_name='setOp', id_vars=['topk', 'topScore', 'pathsUsed', 'propPPI', 'hops', 'pathWeight', 'ifRatio'], value_vars=['difference', 'intersection'])
     
     #splits the node and edge set operations into seperate columns
     dfs=pd.DataFrame(dft)
@@ -582,28 +636,57 @@ def main_plot2(df):
     #print(dft)
     #print(pd.melt(df, id_vars=['topk', 'topScore', 'pathsUsed'], value_vars=['propPPI', 'hops', 'pathWeight']))
     
+    
+    #non topk
     #plt = (
-            #ggplot(data=df)        
+         #ggplot(data=df)     
+            #+scale_x_reverse( breaks= np.round(np.arange(0 ,1,.1), 2) )
+            #+geom_line(aes(x='topScore', y='hops') )
+            #+ylab('Mean Path Length (Hops)')
+            #+xlab('Phosphorylation Threshold (Top %)')
+    #)   
+    #plt.save(filename='validation/plots/hopDistanceNT'+args.plotSuff+'.'+outputFormat, width=15, height=6, limitsize=False)
+    
+    
+    #plt = (
+            #ggplot(data=df)     
+            #+scale_x_reverse( breaks= np.round(np.arange(0 ,1,.1), 2) )
             #+facet_wrap('~topk')
             #+geom_line(aes(x='topScore', y='hops') )
+            #+ylab('Mean Path Length (Hops)')
+            #+xlab('Phosphorylation Threshold (Top %)')
     #)   
+    #plt.save(filename='validation/plots/hopDistance'+args.plotSuff+'.'+outputFormat, width=15, height=6, limitsize=False)
     
     #GOOD
-    plt = (
-            ggplot(data=DF)        
-            +facet_wrap('~topk', scales='free_y')
-            +geom_line(aes(x='topScore', y='nodes', color='setOp') )
-            +geom_line(aes(x='topScore', y='edges' , color='setOp'), linetype='dashed') 
-    )   
-    
     #plt = (
-        #ggplot(data=DF)        
-        #+facet_wrap('~topScore', scales='free_y')
-        #+geom_line(aes(x='topk', y='ifRatio') )
-        #+scale_y_log10()
+            #ggplot(data=DF)        
+
+            #+scale_x_reverse( breaks= np.round(np.arange(0 ,1,.1), 2) )
+            ##+scale_y_log10()
+            ##+facet_wrap('~topk')
+            #+geom_line(aes(x='topScore', y='nodes', color='setOp') )
+            #+geom_line(aes(x='topScore', y='edges' , color='setOp'), linetype='dashed') 
+            #+xlab('Phosphorylation Threshold (Top %)')
+            #+ylab('Nodes (solid) - Edges (dashed)')
+            
     #)   
     
-    print(plt)
+    plt = (
+            ggplot(data=DF)        
+
+            +scale_x_reverse( breaks= np.round(np.arange(0 ,1,.1), 2) )
+            #+scale_y_log10()
+            #+facet_wrap('~topk')
+            +geom_line(aes(x='topScore', y='ifRatio', color='setOp') )
+            +xlab('Phosphorylation Threshold (Top %)')
+            +ylab('Nodes (solid) - Edges (dashed)')
+            
+    )   
+    
+    plt.save(filename='validation/plots/pathTreeOverlap'+args.plotSuff+'.'+outputFormat, width=15, height=6, limitsize=False)
+    
+
  
 def main():
     #Note Null model is difficult because we are always selecting real kinases and real protein phosphorylstion sites that experience phos changes under some studied perturbation
@@ -645,10 +728,10 @@ def main():
     
     #NewTest
     print(computeForestOverlap(
-        initialize_query_set( toTrialName(17) , ['EGFR', 'BRAF']),
-        initialize_query_set( toTrialName(49) , ['EGFR', 'BRAF'])
+        initialize_query_set( toTrialName(17) , ['BRAF']),
+        initialize_query_set( toTrialName(49) , ['BRAF'])
     ))  
-    #exit()
+    exit()
     
     df = None
     if args.mode  !="P":

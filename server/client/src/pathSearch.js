@@ -161,6 +161,7 @@ class PathSearchComponent extends React.Component{
                 n.data.scoreNorm = lookup.scoreNorm;
                 n.data.score = lookup.score;
                 n.data.direction = lookup.direction;
+                n.data.pathIndex = lookup.pathIndex
             }
             
 //             console.log(n.data.id)
@@ -250,22 +251,43 @@ class PathSearchComponent extends React.Component{
         
         let sourceIds = [];
         
-        [...responseTrees.values()].forEach(tree => {
+        [...responseTrees.values()].forEach((tree,treeIndex) => {
             //Extract the valid source node ids
             if(tree.length>0)
                 sourceIds.push(String(tree[0].nodes[tree[0].nodes.length-1]));
             
-            tree.forEach(path =>{
+            tree.forEach((path,i) =>{
                 siteData.set(String(path.nodes[0]), {
                     direction: path.direction, 
                     scoreNorm: Math.max(path.nodeScore*(targetMax/maxScore), minScore ),
-                    score: path.nodeScore
+                    score: path.nodeScore,
+                    pathIndex: []
                 });
+                
+            });
+            
+//             console.log(treeIndex,tree)
+            
+            
+        });
+        
+        //Gets the path index for each site node in all trees
+        [...responseTrees.entries()].forEach((tree) => {
+//             console.log(treeIndex, tree)
+            tree[1].forEach((path,i) =>{
+                siteData.get(String(path.nodes[0])).pathIndex[tree[0]] = i;
+//                 siteData.get(String(path.nodes[0])).pathIndex.push(i)
+//                 siteData.get(String(path.nodes[0])).pathIndex.push(i+1)
+                 
             });
         });
         
+        
+        console.log("HERE", siteData)
+        
+        
 //         let pathLengthByCutoff = [...responseTrees.values()].map(tree => tree.map(path => ({score : path.nodeScore, length : path.totalWeight})).sort((l,r)=>{return l.score-r.score})) 
-        console.log("Wut",...[...responseTrees.values()].map(tree=> tree.map(path => path.nodeScore).filter(score=>score > this.state.minPathScore).length));
+//         console.log("Wut",...[...responseTrees.values()].map(tree=> tree.map(path => path.nodeScore).filter(score=>score > this.state.minPathScore).length));
         
         let kAvailable = Math.max(...[...responseTrees.values()].map(tree=> tree.map(path => path.nodeScore).filter(score=>score > this.state.minPathScore).length));
         let kDisplayed = Math.min(kAvailable,this.state.topk);
@@ -293,6 +315,15 @@ class PathSearchComponent extends React.Component{
         }
         return terminalScores;
     }
+    
+    
+    handleSubmitDensePath=(nodeId)=>{
+//         gets the nodes correspondign to the paths
+        console.log([...this.state.trees.entries()].map((tree)=>tree[1][this.state.siteData.get(nodeId).pathIndex[tree[0]]].nodes ))        
+        
+//         console.log([...this.state.trees].map((tree, treeId)=>tree[this.state.siteData.get(nodeId)[treeId] ].nodes ))
+    }
+
     
     render(){
         {/*console.log("PS QUERYST", this.state)*/}
@@ -330,6 +361,7 @@ class PathSearchComponent extends React.Component{
                  <div style={{display:'inline-block', verticalAlign:'top', margin:'10px'}}>
                     <ResultDisplay
                         displayElements={this.state.displayElements}
+                        handleSubmitDensePath={this.handleSubmitDensePath}
                     />
                 </div>
                 
