@@ -16,7 +16,7 @@
             selector: 'edge[color_auto]',
             style: {
                 'line-color' : 'data(color_auto)',
-                'source-arrow-color' : 'data(color_auto)'  
+                'target-arrow-color' : 'data(color_auto)'  
             }
         },
         {
@@ -34,7 +34,7 @@
             selector: 'edge',
             style: {
                 'line-color' : 'gray',  //'mapData(edgeType, 0, 8, red, blue)'
-                'source-arrow-color' : 'gray'
+                'target-arrow-color' : 'gray'
             }
         },
         {
@@ -148,7 +148,7 @@
             style: {
                 'background-color': kc1,
                 'line-color': kc1,
-                'source-arrow-color' : kc1
+                'target-arrow-color' : kc1
             }
         },
         {
@@ -157,7 +157,7 @@
             style: {
                 'background-color': kc2,
                 'line-color': kc2,
-                'source-arrow-color' : kc2
+                'target-arrow-color' : kc2
             }
         },
         {
@@ -166,7 +166,7 @@
             style: {
                 'background-color': bc,
                 'line-color': bc,
-                'source-arrow-color' : bc
+                'target-arrow-color' : bc
             }
         },
         {
@@ -223,8 +223,8 @@
             selector: 'edge[edgeType = "Phosphorylation"]',
             style: {
 //                 'line-color' : 'orange',
-                'curve-style': 'bezier',
-                 'source-arrow-shape': 'triangle'
+                    'curve-style': 'bezier',
+                 'target-arrow-shape': 'triangle'
             }
         
         },

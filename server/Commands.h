@@ -476,8 +476,66 @@ namespace Commands
     template<class GT>
     json validation(const VGraph<GT>& graph, ViewCache<GT>& viewCache, const json& args)
     {
-        
+           json ret = json::array();
+           return ret;
     }
+    
+    template<class GT>
+    json dpth(const VGraph<GT>& graph, ViewCache<GT>& viewCache, const json& args)
+    {
+        ViewKey<GT> key = viewKeyFromArgs<GT>(args);
+       
+        if(!key.valid())
+        {
+            return json::array();
+        }
+        
+        auto nodes = args["pathNodes"].get<std::vector<typename GT::Index>>();
+        GraphList<VertexS<GT>> restartVector;
+        for(const auto & e : nodes)
+            restartVector.push_back(VertexS<GT>(e));
+        
+        IntegratedViewer<GT> IV = viewCache.lookup(key);
+        
+        
+        //computation code here
+        RandomWalker<GT> RW(IV);
+
+        typename RandomWalker<GT>::Args_Walk args_walk{.15, 1e-6, GraphList<VertexS<GT>>()};
+        auto res = RW.walk(restartVector, args_walk);
+        
+        std::cout<<"RWR size "<<res.size()<<std::endl;
+        res.sort(Sort::valueDec);
+        res.resize(10+restartVector.size());
+        res.push_back(restartVector);
+        std::cout<<"RWRS size "<<res.size()<<std::endl;
+        auto edges = IV.mapVertexes(res);
+        std::cout<<"E size "<<edges.size()<<std::endl;
+        
+//         densePath.push_back(EdgeElement<GT>(viewer_->getOriginalIndex(e), currentIndex_G, 1, viewer_->getLabels(viewer_->getOriginalIndex(e), currentIndex_G)));
+        
+        
+        viewCache.finishLookup(key);
+        json ret = json::array();;
+        for(const auto& e : edges)
+            ret.push_back(e);
+        return ret;
+//         
+        //json ret = json::array();;
+        //return ret;
+//         json ret = json::array();;
+//         ViewKey<GT> key = viewKeyFromArgs<GT>(args);
+//         IntegratedViewer<GT> IV = viewCache.lookup(key);
+//         
+//         KinasePaths KP(IV);
+//         auto edges = KP.computeDense(args["nodes"].get<std::vector<typename GT::Index>>());
+//         
+//         for(const auto& e : edges)
+//             ret.push_back(e);
+        
+//         return ret;
+    }
+    
 
 //     template<class GT>
 //     json dpth(const VGraph<GT>& graph, ViewCache<GT>& viewCache, const json& args)

@@ -58,12 +58,15 @@ class IntegratedViewer
 
         void viewUnion(std::vector<typename GT::VersionIndex> versions);
 
+        /*Creates a set of edges corresponding to the nodes requested*/
         GraphList<EdgeElement<GT>> mapVertexes(const GraphList<VertexU<GT>>& nodes)const;
 
         typename GT::Index getDegree(typename GT::Index i)const;
         GraphList<VertexI<GT>> getDegrees()const;
         std::vector<std::pair<typename GT::Index,  EdgeLabel<GT>>> getlabeledRow(typename GT::Index index)const;
 
+        
+        
         const auto& getA()const;
         const auto& getJA()const;
         const auto& getIA()const;
@@ -480,24 +483,46 @@ GraphList<EdgeElement<GT>> IntegratedViewer<GT>::mapVertexes(const GraphList<Ver
     GraphList<EdgeElement<GT>> retVal;
     bool restrictive=true;
 
+    std::vector<typename GT::Index> viewIndexes;
+    std::transform(nodes.begin(), nodes.end(), std::back_inserter(viewIndexes), [this](const auto& e){return getViewIndex(e.index_);});
+    
     std::set<typename GT::Index> nodesUsed;
-    for(const auto& e : nodes.getElements())
-        nodesUsed.insert(e.index_);
+    for(const auto& e : viewIndexes)
+        nodesUsed.insert(e);
 
-    for(auto e : nodes.getElements())
+    for(auto e :viewIndexes)
     {
-        auto index1 = IA_[e.index_].s1();
-        auto index2 = index1 + IA_[e.index_].s2();
+        auto index1 = IA_[e].s1();
+        auto index2 = index1 + IA_[e].s2();
 
 
         for(;index1<index2; ++index1)
         {
             if(!restrictive || nodesUsed.find(JA_[index1])!=nodesUsed.end())
             {
-                retVal.push_back(EdgeElement<GT>(e.index_, JA_[index1], A_[index1], L_[index1]));
+                retVal.push_back(EdgeElement<GT>(getOriginalIndex(e), getOriginalIndex(JA_[index1]), A_[index1], L_[index1]));
             }
         }
     }
+    
+//     std::set<typename GT::Index> nodesUsed;
+//     for(const auto& e : nodes.getElements())
+//         nodesUsed.insert(getViewIndex(e.index_));
+// 
+//     for(auto e : nodes.getElements())
+//     {
+//         auto index1 = IA_[e.index_].s1();
+//         auto index2 = index1 + IA_[e.index_].s2();
+// 
+// 
+//         for(;index1<index2; ++index1)
+//         {
+//             if(!restrictive || nodesUsed.find(JA_[index1])!=nodesUsed.end())
+//             {
+//                 retVal.push_back(EdgeElement<GT>(e.index_, JA_[index1], A_[index1], L_[index1]));
+//             }
+//         }
+//     }
     //std::cout<<retVal<<std::endl;
 
 

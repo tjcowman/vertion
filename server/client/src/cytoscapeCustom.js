@@ -11,9 +11,10 @@ import {base}  from './cytoStyles.js'
 
 import './cytoscapeCustom.css'
 
+// var cytoscape = require('cytoscape');
+var undoRedo = require('cytoscape-undo-redo');
 
-
-
+undoRedo( Cytoscape ); 
 
 const ggcol=(n)=>{
     let hues = [...Array(n)].map((e,i) => ((15 + 360/(n))*i)%360 );
@@ -110,7 +111,21 @@ class CytoscapeLegend extends React.Component{
 class CytoscapeCustom extends React.Component{
     constructor(props){
         super(props);
+        
+        const options = {
+            isDebug: false, // Debug mode for console messages
+            actions: {},// actions to be added
+            undoableDrag: false, // Whether dragging nodes are undoable can be a function as well
+            stackSizeLimit: undefined, // Size limit of undo stack, note that the size of redo stack cannot exceed size of undo stack
+            ready: function () { // callback when undo-redo is ready
 
+            }
+        }
+        
+        this.ur = ()=> { return this.cy.undoRedo(options)}
+
+//          cy={(cy) => {this.cy = cy}}
+         
         this.colorRef = React.createRef();
         
         this.state={
@@ -129,6 +144,10 @@ class CytoscapeCustom extends React.Component{
             colorMapEdges : new Map(),
             colorMapNodes : new Map(),
             colorMapBoth : new Map(),
+            
+            test: undefined,
+//             elementsLocal : [],
+//             lastDenseElements : undefined,  
         }
         
     }
@@ -220,22 +239,42 @@ class CytoscapeCustom extends React.Component{
     componentDidMount = () => {
 //         this.cy.on('click', 'node', this.props.handleNodeClick);
 //         this.cy.on('click', 'edge', this.props.handleEdgeClick);
-        
+//         let this.ur = this.cy.undoRedo();
+//         let ur = this.cy.undoRedo() 
+//         cy={(cy) => {this.cy = cy}}
+//         ur.action("displayDensePath");
 //         this.cy.on('click', 'node', (e)=>{console.log(e.target._private.data)} );
         this.cy.on('click', this.handleElementClick);
+//         this.setState({ lastDenseElements :this.cy.collection()});
         
     }
     
     handleElementClick=(event)=>{
-        console.log(event.target._private.data);
+//         console.log(event.target._private.data);
         
-        if(event.target._private.data.hasOwnProperty('score'))
-            this.props.handleSubmitDensePath(event.target._private.data.id);
+//         this.setState({ });
+        
+//         console.log("ur", this.ur)
+        
+//         this.cy.remove(this.cy.elements('[dense]'));
+        //.do("remove", (this.cy.elements('[dense]')));
+        
+        if(event.target._private.data.hasOwnProperty('score')){
+             this.ur().undoAll()
+            this.ur().do("remove", this.cy.elements())
+            
+            this.props.handleSubmitDensePath(event.target._private.data.id, ()=>{
+//                 console.log(this.props.denseElements)
+                this.ur().do("add",(this.props.denseElements));
+                
+            });
+        }
         
 //         if(this.cy.elements(':selected').length<=1)
         this.setState({elementDescription : event.target._private.data });
-//         else
-//              this.setState({elementDescription : {} });
+     
+//         console.log("G",this.props.denseElements)
+//         this.cy.add(this.props.denseElements);
     }
     
 
@@ -403,6 +442,18 @@ class CytoscapeCustom extends React.Component{
         );
     }
     
+    
+    renderMainPaths=()=>{
+//         this.props.elements= []
+//         console.log("G", this.state.elementsLocal)
+//         this.cy.remove(this.cy.elements());
+//         console.log("FF", this.props.elements)
+//         this.cy.add(this.props.elements)
+//         this.cy.data(this.props.elements); 
+    }
+    
+
+    
     renderLayout(){
     
         
@@ -411,6 +462,11 @@ class CytoscapeCustom extends React.Component{
                 <Button className="btn-secondary" style={{display: 'inline-block'}}
                     onClick={this.layout_fcose}
                 >Layout</Button>
+                
+                <Button className="btn-secondary" style={{display: 'inline-block'}}
+                    onClick={()=>{this.ur().undoAll()}}
+                >Back</Button>
+                
                 
                 <div className="" style={{marginLeft:'5px', display: 'inline-block', padding: '2px', verticalAlign: 'middle'}}>
                     {this.formatElementDescription()}

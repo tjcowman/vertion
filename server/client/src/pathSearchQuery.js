@@ -88,7 +88,7 @@ class PathQueryComponent extends React.Component{
         this.state={
             staleQuery : true,
             
-            versionIndex: "T",
+//             versionIndex: "T",
             
             lastKinases: [],
             kinaseText1: "P00533",
@@ -96,7 +96,7 @@ class PathQueryComponent extends React.Component{
             lookupType: "uniprot",
             
             siteText: "Q15459	359	-1.3219\nQ15459	451	0.5352\nP28482	185	4.4463\nP28482	187	4.4195\nQ8N3F8	273	-0.3219",
-            minWeight: .10,
+            minWeight: 1, //.10,
             mechRatio: 10,
             localProximity: false,
         }
@@ -114,7 +114,8 @@ class PathQueryComponent extends React.Component{
             prevState.mechRatio !== this.state.mechRatio ||
             prevState.versionIndex !== this.state.versionIndex ||
             prevState.lookupType !== this.state.lookupType ||
-            prevProps.versionCardPlainText[prevState.versionIndex] !==this.props.versionCardPlainText[this.state.versionIndex]
+//             prevProps.selectedVersionDefinition !== this.props.selectedVersionDefinition
+            prevProps.versionCardPlainText[prevProps.selectedVersionIndex] !==this.props.versionCardPlainText[this.props.selectedVersionIndex]
 //             prevProps.versionCards.cards[prevState.versionIndex] !== this.props.versionCards.cards[this.state.versionIndex]
 //             prevProps.versionCards.card(prevState.versionIndex).plainText() !== this.props.versionCards.card(this.state.versionIndex).plainText()
         ){
@@ -222,7 +223,7 @@ class PathQueryComponent extends React.Component{
     handleSubmit=()=>{
 //         console.log(this.state);
         
-        let versionDef = this.props.versionCards.getVersionDefinition(this.state.versionIndex);
+        let versionDef = this.props.versionCards.getVersionDefinition(this.props.selectedVersionIndex);
         let command = {cmd:"pths",
              ...versionDef, 
             lookupType: this.state.lookupType, //pname
@@ -266,13 +267,15 @@ class PathQueryComponent extends React.Component{
  
     
     handleVersionChange=(event)=>{
-        this.setState({versionIndex: event.value})
+        console.log(event.value, this.props.versionCards)
+        this.props.handleSelectVersion((event.value));
+//         this.setState({versionIndex: event.value})
     }
     
     render(){
         return(
             <>
-            <Button onClick={this.toggleLocalProximity}>{this.state.localProximity === true ? "Local" : "Global"}</Button>
+            {/*<Button onClick={this.toggleLocalProximity}>{this.state.localProximity === true ? "Local" : "Global"}</Button>*/}
             
             <QuerySettingsBar 
                 handleVersionChange={this.handleVersionChange} 
@@ -395,6 +398,7 @@ class ResultDisplay extends React.Component{
                 <CytoscapeCustom 
                     cstyle={{colors: {...cstyle.colors, integration :cstyle.color_integration}  , labels: cstyle.labels, sizes :cstyle.sizes}}
                     elements={this.props.displayElements} 
+                    denseElements={this.props.displayDenseElements}
                     handleSubmitDensePath={this.props.handleSubmitDensePath}
                 />
             </div>

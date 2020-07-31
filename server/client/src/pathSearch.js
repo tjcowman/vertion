@@ -1,17 +1,23 @@
 import React from 'react';
+import Axios from 'axios';
 import {Button, Card, Row, Col, Tab, Tabs} from 'react-bootstrap'
 
 import {PathQueryComponent,  CutoffManagerComponent, ResultDisplay, PathStats} from './pathSearchQuery.js'
 import {CytoscapeCustom} from './cytoscapeCustom.js'
 import {CytoscapeIntegration} from './cytoscapeIntegration.js'
 
-
+import * as setLib from './setLib.js'
 
 import './pathSearch.css'
 
+import * as cstyle from './cytoStyles.js'
+
+import './cytoscapeCustom.css'
 
 import Cytoscape from 'cytoscape';
+import CytoscapeComponent from 'react-cytoscapejs';
 import fcose from 'cytoscape-fcose';
+
 Cytoscape.use( fcose );
 
 
@@ -31,10 +37,15 @@ class PathSearchComponent extends React.Component{
             sourceIds : [],
 //             pathLengthByCutoff : [[]],
             
-            
+            selectedVersionIndex: "T",
+//             selectedVersionDefinition: this.props.versionCardsO.getVersionDefinition("T"), //Temp value fo testing normally []
             siteData: new Map(),
             
+            
+            nodeIds: new Set(),
+            edgeIds: new Set(),
             displayElements: [],
+            displayDenseElements: [],
         }
         
     }
@@ -136,7 +147,7 @@ class PathSearchComponent extends React.Component{
         this.filterNodeScore([0,1]).forEach((p)=>(
             p.nodes.forEach(id => nodeIds.add(id))
         ))
-        
+        this.setState({nodeIds: nodeIds});
         
 //         console.log(sourceIds);
         
@@ -179,23 +190,35 @@ class PathSearchComponent extends React.Component{
         return nodes;
     }
     
+    edgeIdFromNodeIds=(i1,i2)=>{
+        if(i1<i2)
+            return i1+'-'+i2;
+        else
+            return i2+'-'+i1;
+    }
+    
     updateEdges=(integrationData)=>{
         let edges = [];
+        let edgeIds = new Set();
 
         this.filterNodeScore([0,1]).forEach((path)=>{
             for(let i=0; i<path.nodes.length-1; ++i ){
+                let id = this.edgeIdFromNodeIds(path.nodes[i+1] , path.nodes[i]); //path.nodes[i+1] + '-' + path.nodes[i];
+                edgeIds.add(id);
                 edges.push({
                     data:{
-                        id: path.nodes[i] + '-' + path.nodes[i+1],
-                        source: path.nodes[i], 
-                        target: path.nodes[i+1], 
+                        id: id,
+                        //NOTE: tracing the path backwards so source comes second
+                        source: path.nodes[i+1], 
+                        target: path.nodes[i], 
                         edgeType: this.props.labelsUsed.nameLookupEdge(path.edgeLabels[i]).toString(), 
-                         origin: integrationData.get(String(path.nodes[i] + '-' + path.nodes[i+1])),
+                        origin: integrationData.get(String(path.nodes[i] + '-' + path.nodes[i+1])),
                     }
                     
                 });
             }
-        })
+        });
+        this.setState({edgeIds: edgeIds});
         let uniqueIndexes = new Map(edges.map((e,i) => [e.data.id, i]));
         
         return [...uniqueIndexes.values()].map(i => edges[i]);
@@ -317,17 +340,100 @@ class PathSearchComponent extends React.Component{
     }
     
     
-    handleSubmitDensePath=(nodeId)=>{
-//         gets the nodes correspondign to the paths
-        console.log([...this.state.trees.entries()].map((tree)=>tree[1][this.state.siteData.get(nodeId).pathIndex[tree[0]]].nodes ))        
+    
+//     updateDenseElements=()=>{
+//         elements = []
+//         
+//         console.log("hi")
+//         
+//         this.setState({displayDenseElements: elements})
+//     }
+    
+    handleSubmitDensePath=(nodeId, fn)=>{
+        let versionDef = this.props.versionCardsO.getVersionDefinition(this.state.selectedVersionIndex);
+  
+        //gets the nodes corresponding to the paths
+        let paths = [...this.state.trees.entries()].map((tree)=>tree[1][this.state.siteData.get(nodeId).pathIndex[tree[0]]].nodes );
+        
+        console.log(versionDef)
+        let command = {cmd:"dpth",
+             ...versionDef, 
+            pathNodes: paths.flat()
+            
+        };
+        
+
+      
+        
+        Axios.post('http://'+this.props.backAddr, JSON.stringify(command)).then((response)=>{
+        
+            const updateDenseElements=()=>{
+                
+                let elements = []//this.state.displayElements
+                
+                let newNodeIds =  nodeIndexes; //response.data.map(edge)
+                
+                //takes the ids added by the dense path and addes them to the elements
+//                 setLib.difference(new Set(newNodeIds),this.state.nodeIds )
+                newNodeIds.forEach(id =>{
+                   console.log(id)
+                    elements.push(
+                        {data: {
+                            id: id,
+                            dense: nodeId,
+                            nodeType: this.props.labelsUsed.nameLookupNode(this.props.nodeData.getEntry(id).labels).toString(), 
+                            label:  this.props.nodeData.getEntry(id).name, 
+                            pLabel: this.props.nodeData.getEntry(id).pname === "" ? undefined : this.props.nodeData.getEntry(id).pname,
+//                             origin: integrationData.get(String(id)),
+                    }});
+                      
+                })
+                
+                
+                //Now add the new edges
+//                 let newEdgeIds = response.data.map(edge => edge.i1 +'-'+edge.i2);
+                response.data.forEach(edge=>{
+                    let id =  this.edgeIdFromNodeIds(edge.i1, edge.i2);//edge.i1 + '-'+edge.i2;
+                     if(!this.state.edgeIds.has(id)){
+                        elements.push(
+                            {data:{
+                                id: id,
+                                dense: nodeId,
+                                source: edge.i1, 
+                                target: edge.i2,
+                                edgeType: this.props.labelsUsed.nameLookupEdge(edge.l).toString(), 
+                            
+                        }});
+                    }
+                })
+                
+                
+                
+                
+                this.setState({displayDenseElements: elements}, fn)
+            }
+            
+            
+//             console.log(response)
+            
+            let nodeIndexes = response.data.map(edge => [edge.i1, edge.i2]).flat()
+            this.props.handleNodeLookupIndex(nodeIndexes, updateDenseElements)
+        
+    
+        });
         
 //         console.log([...this.state.trees].map((tree, treeId)=>tree[this.state.siteData.get(nodeId)[treeId] ].nodes ))
     }
 
+    handleSelectVersion=(index)=>{
+//         console.log(vdef)
+        this.setState({selectedVersionIndex: index});
+    }
     
     render(){
         {/*console.log("PS QUERYST", this.state)*/}
         return(
+            //TODO: Remove the unecessary version card and such passing
             <Card.Body style={{whiteSpace:'nowrap'}}>
                 <div style={{margin:'10px'}}>
                 <PathQueryComponent 
@@ -337,6 +443,9 @@ class PathSearchComponent extends React.Component{
                     getVersionDefinition={this.props.getVersionDefinition}
                     
                     getResponse={this.getResponse}
+                    
+                    selectedVersionIndex ={this.state.selectedVersionIndex}
+                    handleSelectVersion={this.handleSelectVersion}
                 />
                 </div>
                 
@@ -361,9 +470,23 @@ class PathSearchComponent extends React.Component{
                  <div style={{display:'inline-block', verticalAlign:'top', margin:'10px'}}>
                     <ResultDisplay
                         displayElements={this.state.displayElements}
+                        displayDenseElements={this.state.displayDenseElements}
                         handleSubmitDensePath={this.handleSubmitDensePath}
                     />
                 </div>
+                
+                {/*
+                <CytoscapeComponent className="border cyClass"  cy={(cy) => {this.cy = cy}} 
+                    elements={this.state.displayDenseElements}  
+                    style={ { width: '600px', height: '400px', marginBottom:'10px' } }
+                />*/}
+                
+                {/*<div >
+                    <CytoscapeCustom 
+                        cstyle={{colors: {...cstyle.colors, integration :cstyle.color_integration}  , labels: cstyle.labels, sizes :cstyle.sizes}}
+                        elements={this.state.displayDenseElements} 
+                    />
+                </div>*/}
                 
             </Card.Body>
         );
