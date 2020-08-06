@@ -224,6 +224,7 @@ class RandomWalker
         
         
         Walk<GT> walk(const GraphList<VertexS<GT>>&  restartWeights, Args_Walk args=Args_Walk());
+        
         template<typename Solver>
         Walk<GT> walk(typename GT::Calc alpha, typename GT::Calc epsilon,  GraphList<VertexHP<GT>> restartWeights, GraphList<VertexHP<GT>> initialRanks, Solver solver);
         

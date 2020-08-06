@@ -201,13 +201,27 @@ class CytoscapeCustom extends React.Component{
         }
     }   
     
+    
+    
+    
     componentDidUpdate(prevProps, prevState){
+        
+//         console.log(prevProps.densePath, this.props.densePath)
+//         if(prevProps.densePath !== this.props.densePath){
+// //             console.log('reseting ele')
+// //             this.ur().undoAll();
+//             
+//         }
+        
         
         if(this.props.elements.length > 0){//make sure elements actually exist
 //             this.cy.startBatch();
-            if(this.props.elements !== prevProps.elements){ 
-//                 this.cy.removeData();
-            
+            if(this.props.elements !== prevProps.elements /*||this.props.denseElements !== prevProps.denseElements*/){ 
+                
+                this.cy.elements().remove();
+                this.cy.add(this.props.elements)
+                
+//              this.ur().reset();
                 let edgeTypeSet = new Set();
                 let nodeTypeSet = new Set();
                 this.cy.edges().forEach((n) => {edgeTypeSet.add(n._private.data.edgeType); /*console.log(n._private.data.edgeType);*/})
@@ -218,6 +232,7 @@ class CytoscapeCustom extends React.Component{
                 this.setState({colorMapEdges : colorMapEdges, colorMapNodes: colorMapNodes, colorMapBoth: colorMapBoth}, this.colorElements);
                 
                 this.layout_fcose();
+//                 console.log("LO", this.props.elements, prevProps.elements)
             }   
             else
             {
@@ -250,24 +265,31 @@ class CytoscapeCustom extends React.Component{
     }
     
     handleElementClick=(event)=>{
-//         console.log(event.target._private.data);
+        console.log(event.target._private.data);
         
 //         this.setState({ });
         
 //         console.log("ur", this.ur)
+        console.log('click')
         
 //         this.cy.remove(this.cy.elements('[dense]'));
         //.do("remove", (this.cy.elements('[dense]')));
         
         if(event.target._private.data.hasOwnProperty('score')){
-             this.ur().undoAll()
-            this.ur().do("remove", this.cy.elements())
+
             
             this.props.handleSubmitDensePath(event.target._private.data.id, ()=>{
 //                 console.log(this.props.denseElements)
-                this.ur().do("add",(this.props.denseElements));
+//                              this.ur().undoAll()
+//             this.ur().do("remove", this.cy.elements())
+            
+//             console.log('removed')
                 
+//                 this.ur().do("add", this.props.denseElements);
+//                 console.log('added')
+                this.layout_fcose()
             });
+           
         }
         
 //         if(this.cy.elements(':selected').length<=1)
@@ -464,7 +486,7 @@ class CytoscapeCustom extends React.Component{
                 >Layout</Button>
                 
                 <Button className="btn-secondary" style={{display: 'inline-block'}}
-                    onClick={()=>{this.ur().undoAll()}}
+                    onClick={this.props.handleResetMainView}
                 >Back</Button>
                 
                 
@@ -476,11 +498,19 @@ class CytoscapeCustom extends React.Component{
         );
     }
     
+   
+   clear=()=>{
+       this.cy.elements().remove()
+   }
+    
+    
+    
     render(){
-
+            {console.log("THICYCUS", this)}
 //         {this.generateLegendNodes()}
+       
         return(
-        
+            
             <Card className="rounded-0">
             <Card.Body>
             
@@ -488,7 +518,7 @@ class CytoscapeCustom extends React.Component{
                 {this.renderLayout()}
             
             
-                <CytoscapeComponent className="border cyClass"  cy={(cy) => {this.cy = cy}} elements={this.props.elements} stylesheet={ this.computeStyle() } style={ { width: '600px', height: '400px', marginBottom:'10px' } }/>
+                <CytoscapeComponent className="border cyClass"  cy={(cy) => {this.cy = cy}} elements={[]}/*elements={this.props.elements}*/ stylesheet={ this.computeStyle() } style={ { width: '600px', height: '400px', marginBottom:'10px' } }/>
            
                 <div style={{display: 'inline-block', verticalAlign: 'top', marginLeft:'5px'}}>
                 <Card className="styleSelectorContainer rounded-0">

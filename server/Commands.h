@@ -480,61 +480,177 @@ namespace Commands
            return ret;
     }
     
+    /*
+     * Settings: 
+     */
     template<class GT>
     json dpth(const VGraph<GT>& graph, ViewCache<GT>& viewCache, const json& args)
     {
         ViewKey<GT> key = viewKeyFromArgs<GT>(args);
+        
        
         if(!key.valid())
         {
             return json::array();
         }
-        
-        auto nodes = args["pathNodes"].get<std::vector<typename GT::Index>>();
-        GraphList<VertexS<GT>> restartVector;
-        for(const auto & e : nodes)
-            restartVector.push_back(VertexS<GT>(e));
-        
         IntegratedViewer<GT> IV = viewCache.lookup(key);
+        KinasePaths KP(IV);
+        KP.arg_weightFraction_ = 1;
+        //Assume 2 paths 
+        auto nodes = args["pathNodes"].get<std::vector<std::vector<typename GT::Index>>>();
+        
+        GraphList<VertexS<GT>>  kinSet1;
+        GraphList<VertexS<GT>>  kinSet2;
+        
+        for(const auto& e : nodes[0])
+            if(IV.getLabels(IV.getViewIndex(e)) == 2)
+                kinSet1.push_back(VertexS<GT>(e,1));
+                
+        for(const auto& e : nodes[1])
+            if(IV.getLabels(IV.getViewIndex(e)) == 2)
+                kinSet2.push_back(VertexS<GT>(e,1));
+        
+            
+        std::cout<<kinSet1.size()<<" ::: "<<kinSet2.size()<<std::endl;
+            
+        json ret = json();
+          
+        
+        KP.computeCrossPaths2(kinSet1, kinSet2, 1, viewCache.lookupProximities(key), false);
+        for(const auto& tree : KP.getPaths())
+        {
+            int pNum=0;
+            auto mainTree = json::array();
+            for(const auto& path : tree)
+            {
+                 //Make sure there was a path
+                if(path.visitOrder_.size()>0)
+                {
+//                     mainTree[pNum]["nodeScore"] = path.nodeScore_;
+//                     mainTree[pNum]["direction"] = path.nodeDirection_;
+                    mainTree[pNum]["nodes"] = std::vector<int>(); 
+                    mainTree[pNum]["edgeLabels"] = std::vector<long>();
+                    
+//                     mainTree[pNum]["totalWeight"] = path.totalWeight_;
+                    
+                    for(const auto & e : path.visitOrder_)
+                        mainTree[pNum]["nodes"].push_back(e);
+                    
+                    for(const auto& e : path.edgeLabels_)
+                        mainTree[pNum]["edgeLabels"].push_back(e.getBits().to_ulong());
+                    
+                    ++pNum;
+                }
+            }
+            ret["branches"].push_back( mainTree);
+        }
         
         
-        //computation code here
-        RandomWalker<GT> RW(IV);
+        KP.computeCrossPaths2(kinSet2, kinSet1, 1, viewCache.lookupProximities(key), false);
+        for(const auto& tree : KP.getPaths())
+        {
+            int pNum=0;
+            auto mainTree = json::array();
+            for(const auto& path : tree)
+            {
+                 //Make sure there was a path
+                if(path.visitOrder_.size()>0)
+                {
+//                     mainTree[pNum]["nodeScore"] = path.nodeScore_;
+//                     mainTree[pNum]["direction"] = path.nodeDirection_;
+                    mainTree[pNum]["nodes"] = std::vector<int>(); 
+                    mainTree[pNum]["edgeLabels"] = std::vector<long>();
+                    
+//                     mainTree[pNum]["totalWeight"] = path.totalWeight_;
+                    
+                    for(const auto & e : path.visitOrder_)
+                        mainTree[pNum]["nodes"].push_back(e);
+                    
+                    for(const auto& e : path.edgeLabels_)
+                        mainTree[pNum]["edgeLabels"].push_back(e.getBits().to_ulong());
+                    
+                    ++pNum;
+                }
+            }
+            ret["branches"].push_back( mainTree);
+        }
+        
 
-        typename RandomWalker<GT>::Args_Walk args_walk{.15, 1e-6, GraphList<VertexS<GT>>()};
-        auto res = RW.walk(restartVector, args_walk);
-        
-        std::cout<<"RWR size "<<res.size()<<std::endl;
-        res.sort(Sort::valueDec);
-        res.resize(10+restartVector.size());
-        res.push_back(restartVector);
-        std::cout<<"RWRS size "<<res.size()<<std::endl;
-        auto edges = IV.mapVertexes(res);
-        std::cout<<"E size "<<edges.size()<<std::endl;
-        
-//         densePath.push_back(EdgeElement<GT>(viewer_->getOriginalIndex(e), currentIndex_G, 1, viewer_->getLabels(viewer_->getOriginalIndex(e), currentIndex_G)));
-        
+       std::cout<<ret<<std::endl;
         
         viewCache.finishLookup(key);
-        json ret = json::array();;
-        for(const auto& e : edges)
-            ret.push_back(e);
-        return ret;
-//         
-        //json ret = json::array();;
-        //return ret;
-//         json ret = json::array();;
-//         ViewKey<GT> key = viewKeyFromArgs<GT>(args);
-//         IntegratedViewer<GT> IV = viewCache.lookup(key);
-//         
-//         KinasePaths KP(IV);
-//         auto edges = KP.computeDense(args["nodes"].get<std::vector<typename GT::Index>>());
-//         
+//         json ret = json::array();
 //         for(const auto& e : edges)
 //             ret.push_back(e);
-        
-//         return ret;
+        return ret;
     }
+    
+//      template<class GT>
+//     json dpth(const VGraph<GT>& graph, ViewCache<GT>& viewCache, const json& args)
+//     {
+//         ViewKey<GT> key = viewKeyFromArgs<GT>(args);
+//        
+//         if(!key.valid())
+//         {
+//             return json::array();
+//         }
+//         IntegratedViewer<GT> IV = viewCache.lookup(key);
+//         
+//         auto nodes = args["pathNodes"].get<std::vector<typename GT::Index>>();
+//         GraphList<VertexS<GT>> restartVector;
+//         for(const auto & e : nodes)
+//             restartVector.push_back(VertexS<GT>(IV.getViewIndex(e),1));
+//         
+//        
+//         
+//         
+//         computation code here
+//         RandomWalker<GT> RW(IV);
+// 
+//         typename RandomWalker<GT>::Args_Walk args_walk{.15, 1e-6, GraphList<VertexS<GT>>()};
+//         auto res = RW.walk(restartVector, args_walk);
+//         auto degrees = IV.getDegrees();
+//         
+//         Divide weights by the background?
+//         auto backgroundProx = viewCache.lookupProximities(key);
+//         for(typename GT::Index i=0; i< res.size(); ++i)
+//         {
+//             auto originalIndex =  IV.getOriginalIndex(res[i].index_);
+//             std::cout<<res[i]<<"\t";
+//             res[i].value_ = res[i].value_ / degrees[i].value_;// log(res[i].value_) / pow(degrees[i].value_,2);
+//             res[i].value_ = res[i].value_ / degrees[i].value_;// log(res[i].value_) / pow(degrees[i].value_,2);
+//             std::cout<<res[i]<<std::endl;
+//             res[i].value_ = res[i].value_ / backgroundProx[i].value_;
+//             res[i].index_ = originalIndex;
+//         }
+//             
+//         std::cout<<"RWR size "<<res.size()<<std::endl;
+//         res.sort(Sort::valueDec);
+//         res.resize(args.at("newNodes").get<int>()+restartVector.size());
+//         
+//         for(auto& e : restartVector)
+//             e.index_ = IV.getOriginalIndex(e.index_);
+//         
+//         res.push_back(restartVector);
+//         std::cout<<"RWRS size "<<res.size()<<std::endl;
+//         auto edges = IV.mapVertexes(res);
+//         std::cout<<"E size "<<edges.size()<<std::endl;
+//         for(auto& e :edges)
+//         {
+//             e.index1_ = (e.index1_);
+//             e.index2_ =  (e.index2_);
+//         }
+//         
+//         densePath.push_back(EdgeElement<GT>(viewer_->getOriginalIndex(e), currentIndex_G, 1, viewer_->getLabels(viewer_->getOriginalIndex(e), currentIndex_G)));
+//         
+//         
+//         viewCache.finishLookup(key);
+//         json ret = json::array();
+//         for(const auto& e : edges)
+//             ret.push_back(e);
+//         return ret;
+//     }
+//     
     
 
 //     template<class GT>

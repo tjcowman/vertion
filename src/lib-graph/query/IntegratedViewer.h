@@ -1,7 +1,7 @@
 #pragma once
 
 #include "vertion.h"
-
+//TODO: THIS NEEDS A CONSISTANT API FOR CONVERTING BETWEEN VIEW AND ORIGINAL INDEXES
 // #include <unordered_map>
 
 template<class GT>

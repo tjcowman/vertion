@@ -259,7 +259,7 @@ class PathQueryComponent extends React.Component{
                 
                 let responseeTrees = new Map(response.data.trees.map((tree,i) => ([mask[i], tree])));
                 this.props.getResponse(responseeTrees);
-
+                
             });
         
     }
@@ -390,16 +390,18 @@ class ResultDisplay extends React.Component{
      }
      
      render(){
+         console.log("RESDISP",this)
         return(
             <>
          
-                 
+            
             <div >
                 <CytoscapeCustom 
                     cstyle={{colors: {...cstyle.colors, integration :cstyle.color_integration}  , labels: cstyle.labels, sizes :cstyle.sizes}}
                     elements={this.props.displayElements} 
-                    denseElements={this.props.displayDenseElements}
+                    cy={(cy) => {this.cy = cy}}
                     handleSubmitDensePath={this.props.handleSubmitDensePath}
+                    handleResetMainView={this.props.handleResetMainView}
                 />
             </div>
            
