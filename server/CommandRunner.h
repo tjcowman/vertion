@@ -72,16 +72,16 @@ json CommandRunner<GT>::run(const json& command)const
             return Commands::lkpi<GT>(*graph_, command);
         else if(command["cmd"] == "rwr2")
             return Commands::rwr2<GT>(*graph_, *viewCache_,command);
-        else if(command["cmd"] == "lsv")
-            return Commands::lsv<GT>(*graph_, *viewCache_, command);
-        else if(command["cmd"] == "mft")
-            return Commands::mft<GT>(*graph_, *viewCache_, command);
+//         else if(command["cmd"] == "lsv")
+//             return Commands::lsv<GT>(*graph_, *viewCache_, command);
+//         else if(command["cmd"] == "mft")
+//             return Commands::mft<GT>(*graph_, *viewCache_, command);
         else if(command["cmd"] == "pths")
             return Commands::pths<GT>(*graph_, *viewCache_, command);
-        else if(command["cmd"] == "validation")
-            return Commands::validation<GT>(*graph_, *viewCache_, command);
-        else if(command["cmd"] == "dpth")
-            return Commands::dpth<GT>(*graph_, *viewCache_, command);
+//         else if(command["cmd"] == "validation")
+//             return Commands::validation<GT>(*graph_, *viewCache_, command);
+//         else if(command["cmd"] == "dpth")
+//             return Commands::dpth<GT>(*graph_, *viewCache_, command);
         else
         {
             std::cerr<<"cmd provided does not exist"<<std::endl;

@@ -140,13 +140,14 @@ class QueryComponentRWR extends React.Component{
                 alpha:Number(this.state.alpha), 
                 epsilon:Number(epsilon), 
                 topk:Number(this.state.topk), 
-                source:selectedNodes2, mode:"el",
+                source:selectedNodes2, mode:"nl",
 
             };
             
             
             Axios.post('http://'+this.props.backAddr, JSON.stringify(command)).then((response)=>{
                 let ids = response.data.nodes.map((e) => e.id);
+                console.log("RWR RES ", response)
 
                 let formatResponse = () =>{
                 let result = response.data.nodes.map((e,i) => ({

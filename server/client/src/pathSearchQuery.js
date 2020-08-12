@@ -243,7 +243,7 @@ class PathQueryComponent extends React.Component{
             Axios.post('http://'+this.props.backAddr, JSON.stringify(command)).then((response)=>{
                 
                 this.setState({staleQuery: false});
-//                 console.log(response);
+                console.log("Paths", response);
             
                 
                 this.setState({lastKinases : this.kinaseArrayFormat()});

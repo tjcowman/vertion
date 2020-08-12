@@ -316,7 +316,7 @@ int main(int argc, char* argv[] )
     );
      
 
-    Graph G(Context::undirected);
+    Graph G(Context::directed);
     GraphIO IO(G);
     IO.read_serial(args.graph);
     G.temp_populate_IACache();

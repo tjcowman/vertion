@@ -26,6 +26,8 @@ class IntegratedViewer
         IntegratedViewer(const VGraph<GT>& graph);
         auto getContext()const;
 
+        GraphList<EdgeElement<GT>> getEdgelist()const;
+        
         //returns size as a pair of numnodes and numedges
         std::pair<size_t, size_t> size()const;
 
@@ -73,6 +75,8 @@ class IntegratedViewer
         const auto& getL()const;
         
      private:
+         
+        std::pair<typename GT::Index, typename GT::Index> size_;
 
         std::vector<typename GT::Index> originalIndexes_; //Looking up an originalIndex returns a viewIndex
         std::vector<typename GT::Index> viewIndexes_; //Looking up a viewIndex returns an originalIndex (smaller that original Index vector)
@@ -90,6 +94,45 @@ template<class GT>
 auto IntegratedViewer<GT>::getContext()const
 {
     return graph_->getContext();
+}
+
+template<class GT>
+GraphList<EdgeElement<GT>> IntegratedViewer<GT>::getEdgelist()const
+{
+    GraphList<EdgeElement<GT>> retVal(getContext());
+    
+    for(Index nodeIndex=0; nodeIndex<size().first; ++nodeIndex)
+    {
+        //outbound nodes
+        typename GT::Index lb = IA_[nodeIndex].s1();
+        typename GT::Index rb = IA_[nodeIndex].s1() + IA_[nodeIndex].s2();
+
+    
+            for(typename GT::Index ob=lb; ob<rb; ++ob)
+            {
+                retVal.push_back(EdgeElement<GT>(nodeIndex, JA_[ob],A_[ob], L_[ob]));
+            }
+    }
+    
+        
+//         //TODO: optimize to not need to do the sorting, etc for A and L seperately
+//         auto [Asegment, JAsegment] = getRowVersion<Row::AJA>(i,version);
+//         auto Lsegment = getRowVersion<Row::L>(i,version);
+//         
+//         if(context_ == Context::directed)
+//         {
+//             for(Index j=0; j<Asegment.size(); ++j)
+//                 retVal.push_back(EdgeElement<T>{ i, JAsegment[j], Asegment[j], Lsegment[j] });
+//         }
+//         else
+//         {
+//             for(Index j=0; j<Asegment.size(); ++j)
+//                  if(i <  JAsegment[j])
+//                     retVal.push_back(EdgeElement<T>{ i, JAsegment[j], Asegment[j], Lsegment[j] });
+//         }
+    
+    
+    return retVal;
 }
 
 template<class GT>
@@ -195,11 +238,8 @@ std::vector<typename GT::Index> IntegratedViewer<GT>::getSharedConnections(typen
 template<class GT>
 std::pair<size_t, size_t> IntegratedViewer<GT>::size()const
 {
-  //Acount for undirected where edges are actually /2
-  if(graph_->getContext() == Context::undirected)
-    return std::make_pair(IA_.size(), A_.size()/2);
-  else
-    return std::make_pair(IA_.size(), A_.size());
+
+    return size_;
 }
 
 template<class GT>
@@ -354,83 +394,133 @@ void IntegratedViewer<GT>::buildView(std::vector<typename GT::VersionIndex> vers
     clear();
 
     std::vector<ViewRow<GT>> rows;
+    
+    std::cout<<"full graph nodes #"<<graph_->size(0).nodes_<<std::endl;
 
-    //Gets rows from first version, satisfying the nodeLabel constraint
-    if(nodeLabels.getBits().any())
-    {
-        for(typename GT::Index i=0; i<graph_->size(0).nodes_; ++i)
-        {
-            if((graph_->getVertexData().lookupLabels(i).getBits() & nodeLabels.getBits()).any())
-                rows.push_back(std::make_pair(i, graph_->getRowDataZipped(i, versions[0])));
-        }
-    }
-    else
-    {
-         for(typename GT::Index i=0; i<graph_->size(0).nodes_; ++i)
-             rows.push_back(std::make_pair(i, graph_->getRowDataZipped(i, versions[0])));
-    }
+    for(typename GT::Index i=0; i<graph_->size(0).nodes_; ++i)
+        rows.push_back(std::make_pair(i, graph_->getRowDataZipped(i, versions[0])));
 
     //Integrate the rows between versions
-    for(auto& row : rows)
+    for(typename GT::Index i=0; i<graph_->size(0).nodes_; ++i)
     {
         for(size_t v=1; v<versions.size(); ++v)
         {
-            auto next = graph_->getRowDataZipped(row.first, versions[v]);
+            auto next = graph_->getRowDataZipped(i, versions[v]);
             ZippedRow<GT> tmp;
-            setUnionReduced<GT>(row.second.begin(), row.second.end(), next.begin(), next.end(), std::back_inserter(tmp));
-            row.second=tmp;
+            setUnionReduced<GT>(rows[i].second.begin(), rows[i].second.end(), next.begin(), next.end(), std::back_inserter(tmp));
+            rows[i].second=tmp;
         }
     }
-
-    //Filter out the edges and outgoing nodes that are unrequested
+    
+    
+    std::vector<ViewRow<GT>> rows2;
     for(auto& row : rows)
     {
-        auto ne = std::remove_if(row.second.begin(), row.second.end(), [edgeLabels, nodeLabels,this, row](const auto& e){
-            return (
-
-                      //  (!(std::get<2>(e).getBits() & edgeLabels.getBits()).any()) ||
-                        (!(graph_->getVertexData().lookupLabels(row.first).getBits() & nodeLabels.getBits()).any()  )
-
-            );
-
-        });
-        row.second.resize(std::distance(row.second.begin(), ne));
+        auto srcLab = graph_->getVertexData().lookupLabels(row.first).getBits();
+        
+        auto tgtLab = VertexLabel<GT>(); //graph_->getVertexData().lookupLabels(row.second[0]).getBits();
+        for(const auto& e : row.second)
+            tgtLab = tgtLab.getBits() | graph_->getVertexData().lookupLabels(std::get<0>(e)).getBits();
+        
+        
+        if( (((srcLab | tgtLab.getBits()) &  nodeLabels.getBits()).any()) )
+        {
+            rows2.push_back(row);
+        }
     }
+    rows= rows2;
+// std::cout<<"rows integ"<<std::endl;
+    
+    
+    //Filter out the edges and outgoing nodes that are unrequested
+//     for(auto& row : rows)
+//     {
+//         auto ne = std::remove_if(row.second.begin(), row.second.end(), [edgeLabels, nodeLabels,this, row](const auto& e){
+//             return (
+// 
+//                 //NEED TO INCLUDE IF GOING TO A REQUESTED NODE
+//                 (!(graph_->getVertexData().lookupLabels(row.first).getBits() & nodeLabels.getBits()).any()  )
+// 
+//             );
+// 
+//         });
+//         row.second.resize(std::distance(row.second.begin(), ne));
+//     }
 
     //remove rows with no outgoing edges
-    auto ne = std::remove_if(rows.begin(), rows.end(), [](const auto& row){return row.second.size() == 0;});
-    rows.resize(std::distance(rows.begin(), ne));
-
+//     auto ne = std::remove_if(rows.begin(), rows.end(), [](const auto& row){return row.second.size() == 0;});
+//     rows.resize(std::distance(rows.begin(), ne));
+    
+    
+    
     //Determine the node old->new index mapping
+//     viewIndexes_ = std::vector<typename GT::Index>(rows.size());
+//     originalIndexes_ = std::vector<typename GT::Index>(graph_->size(0).nodes_, GT::invalidIndex);
+// 
+//     for(typename GT::Index i=0; i< viewIndexes_.size(); ++i)
+//     {
+//         viewIndexes_[i] = rows[i].first;
+//         originalIndexes_[rows[i].first] = i;
+//     }
 
-    viewIndexes_ = std::vector<typename GT::Index>(rows.size());
+
+    //Convert to view Indexes
+    //Row is an index and a zipped row
+    std::set<typename GT::Index> nodesUsed;
+    
+    
+    for(const auto& row : rows)
+    {
+        nodesUsed.insert(row.first);
+        for(const auto& e : row.second)
+        {
+            nodesUsed.insert(std::get<0>(e));
+            //convert to the viewIndex
+//             JA_.push_back(getViewIndex(std::get<0>(e))); //originalIndexes_[std::get<0>(e)]);
+//             if(getViewIndex(std::get<0>(e)) == GT::invalidIndex){
+//                 std::cout<<"IVI: "<<std::get<0>(e)<<std::endl;
+//                 exit(0);
+//             }
+
+            JA_.push_back(std::get<0>(e));
+            A_.push_back(std::get<1>(e));
+            L_.push_back(std::get<2>(e));
+
+        }
+
+        //Row indices computed based on the length of the current nodes edge segment as standard
+        IA_.push_back( AugIA<GT>(JA_.size()-row.second.size(), row.second.size() ));
+    }
+    
+    
+    //Determine the node old->new index mapping
+    viewIndexes_ = std::vector<typename GT::Index>(nodesUsed.size());
     originalIndexes_ = std::vector<typename GT::Index>(graph_->size(0).nodes_, GT::invalidIndex);
 
-    for(typename GT::Index i=0; i< viewIndexes_.size(); ++i)
+    //Set is ordered, counter is used to get the "index"
+    typename GT::Index counter=0;
+    for(const auto& e : nodesUsed)
     {
-        viewIndexes_[i] = rows[i].first;
-        originalIndexes_[rows[i].first] = i;
+//         std::cout<<"CNT "<<counter<<":"<<e<<std::endl;
+        viewIndexes_[counter] = e;
+        originalIndexes_[e] = counter;
+        ++counter;
     }
-
-
-        //Convert to view Indexes
-//         std::for_each(row.begin(), row.end(), [this]( auto& e){std::get<0>(e) = originalIndexes_[std::get<0>(e)];});
-
-        for(const auto& row : rows)
-        {
-            for(const auto& e : row.second)
-            {
-                //convert to the viewIndex
-                JA_.push_back(originalIndexes_[std::get<0>(e)]);
-
-                A_.push_back(std::get<1>(e));
-                L_.push_back(std::get<2>(e));
-
-            }
-
-            //Row indices computed based on the length of the current nodes edge segment as standard
-            IA_.push_back( AugIA<GT>(JA_.size()-row.second.size(), row.second.size() ));
-        }
+    
+    for(auto& e : JA_)
+        e = getViewIndex(e);
+    
+    
+    //Acount for undirected where edges are actually /2
+    if(graph_->getContext() == Context::undirected)
+        size_ = std::make_pair(nodesUsed.size(), A_.size()/2);
+    else
+        size_ = std::make_pair(nodesUsed.size(), A_.size());
+    
+    std::cout<<"view created"<<std::endl;
+    
+//     describe(std::cout);
+//     std::cout<<"done"<<std::endl;
 }
 
 
@@ -484,7 +574,8 @@ GraphList<EdgeElement<GT>> IntegratedViewer<GT>::mapVertexes(const GraphList<Ver
     bool restrictive=true;
 
     std::vector<typename GT::Index> viewIndexes;
-    std::transform(nodes.begin(), nodes.end(), std::back_inserter(viewIndexes), [this](const auto& e){return getViewIndex(e.index_);});
+    //std::transform(nodes.begin(), nodes.end(), std::back_inserter(viewIndexes), [this](const auto& e){return getViewIndex(e.index_);});
+    std::transform(nodes.begin(), nodes.end(), std::back_inserter(viewIndexes), [this](const auto& e){return e.index_;});
     
     std::set<typename GT::Index> nodesUsed;
     for(const auto& e : viewIndexes)

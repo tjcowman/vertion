@@ -154,13 +154,15 @@ namespace Commands
 
 
         ViewKey<GT> key = viewKeyFromArgs<GT>(args);
-
+        
+        
         auto start = std::chrono::high_resolution_clock::now();
 
         IntegratedViewer<GT> IV = viewCache.lookup(key);
+//         std::cout<<IV.getEdgelist()<<std::endl;
+        
 
-
-       auto source  = GraphList<VertexS<GT>>(  std::vector<VertexS<GT>>(args["source"]) );
+       auto source  = GraphList<VertexS<GT>>(  std::vector<VertexS<GT>>(args.at("source")) );
         //Convert the globalIndex to the viewIndexes
         for(auto& e : source.getElements())
             e.index_ = IV.getViewIndex(e.index_);
@@ -173,34 +175,38 @@ namespace Commands
         auto duration = std::chrono::high_resolution_clock::now() - start;
         long long tIntegrateUs = std::chrono::duration_cast<std::chrono::microseconds>(duration).count();
 
-//         std::cout<<"finished lookup"<<std::endl;
+        std::cout<<"finished lookup"<<std::endl;
 //         retVal["viewHash"] = viewCache.generate_uid(versions, VertexLab(vertexLabels), EdgeLab(edgeLabels));
 
         RandomWalker<GT> RW(IV);
 
-        typename RandomWalker<GT>::Args_Walk args_walk{args["alpha"], args["epsilon"], GraphList<VertexS<GT>>()};
+        typename RandomWalker<GT>::Args_Walk args_walk{args.at("alpha"), args.at("epsilon"), GraphList<VertexS<GT>>()};
 
         start = std::chrono::high_resolution_clock::now();
 //         auto res = Walk<GT>().setHeader("{}");//RW.walk(GraphList<VertexS<GT>>(source), args_walk); //TODO reen
         auto res = RW.walk(source, args_walk);
+        std::cout<<"Walked"<<std::endl;
         duration = std::chrono::high_resolution_clock::now() - start;
         long long tcomputeUs = std::chrono::duration_cast<std::chrono::microseconds>(duration).count();
 
         viewCache.finishLookup(key);
 
         res.sort(Sort::valueDec);
-        res.resize(std::min(size_t(args["topk"]), res.size()));
+        res.resize(std::min(size_t(args.at("topk")), res.size()));
 
-        if(args["mode"] == "nl")
+// std::cout<<"res size "<<res.size()<<std::endl;
+// std::cout<<res<<std::endl;
+        
+        if(args.at("mode") == "nl")
         {
-             retVal["weights"] = json::array();
+             retVal["nodes"] = json::array();
 
-            for(size_t i=0; i<std::min(size_t(args["topk"]), res.size()); ++i)
+            for(size_t i=0; i<std::min(size_t(args.at("topk")), res.size()); ++i)
             {
-                retVal["weights"] +=  {{"id",  IV.getOriginalIndex(res[i].index_)}, {"value", res[i].value_}};
+                retVal["nodes"] +=  {{"id",  IV.getOriginalIndex(res[i].index_)}, {"value", res[i].value_}};
             }
         }
-        else if(args["mode"] == "el")
+        else if(args.at("mode") == "el")
         {
             retVal["nodes"] = json::array();
             retVal["edges"] = json::array();
@@ -234,19 +240,32 @@ namespace Commands
     template<class GT>
     json lsv(const VGraph<GT>& graph, ViewCache<GT>& viewCache, const json& args)
     {
+        json retVal;
+
+        
         ViewKey<GT> key = viewKeyFromArgs<GT>(args);
-        if(key.valid())
-        {
-          //Need to make sure the integration has been generated
-          IntegratedViewer<GT> IV = viewCache.lookup(key);
-          json ret = viewCache.getViewSummary(key.key_);
-          viewCache.finishLookup(key);
-          return ret;
-        }
+        if(!key.valid())
+            retVal =   json{{"error", "invalid view"}};
+            
         else
         {
-          return  json{{"error", "invalid view"}};
+            IntegratedViewer<GT> IV = viewCache.lookup(key);
+            retVal = viewCache.getViewSummary(key.key_);
+            viewCache.finishLookup(key);
+            
         }
+        
+        return retVal;
+//           //Need to make sure the integration has been generated
+//           IntegratedViewer<GT> IV = viewCache.lookup(key);
+//           json ret = viewCache.getViewSummary(key.key_);
+//           viewCache.finishLookup(key);
+//           return ret;
+//         }
+//         else
+//         {
+//         
+//         }
     }
 
     template<class GT>
@@ -437,7 +456,7 @@ namespace Commands
         
         sinkList.sort(Sort::indexInc);
         
-        KP.compute(kinaseList, sinkList, args["mechRatio"], viewCache.lookupProximities(key), args["localProximity"]);
+        KP.compute(kinaseList, sinkList, args["mechRatio"], /*viewCache.lookupProximities(key),*/ args["localProximity"]);
         viewCache.finishLookup(key);
    // std::cout<<"CMPTED"<<std::endl;    
         
@@ -516,7 +535,7 @@ namespace Commands
         json ret = json();
           
         
-        KP.computeCrossPaths2(kinSet1, kinSet2, 1, viewCache.lookupProximities(key), false);
+        KP.computeCrossPaths2(kinSet1, kinSet2, 1, /*viewCache.lookupProximities(key),*/ false);
         for(const auto& tree : KP.getPaths())
         {
             int pNum=0;
@@ -546,7 +565,7 @@ namespace Commands
         }
         
         
-        KP.computeCrossPaths2(kinSet2, kinSet1, 1, viewCache.lookupProximities(key), false);
+        KP.computeCrossPaths2(kinSet2, kinSet1, 1/*, viewCache.lookupProximities(key)*/, false);
         for(const auto& tree : KP.getPaths())
         {
             int pNum=0;

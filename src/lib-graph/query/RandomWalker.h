@@ -46,37 +46,42 @@ std::pair<long, std::vector<typename GT::Calc> > LinearAlgebraSolver(
     typename GT::Calc totaldiff = 1.0;
     while(totaldiff > epsilon)
     {
-        std::vector<typename GT::Calc> ranksNext(nodes, 0 );
+        std::cout<<"before new next ranks update "<<ranks.size()<<std::endl;
+        std::vector<typename GT::Calc> ranksNext(nodes, 0.0 );
 
         for(typename GT::Index n=0; n<nodes; ++n)
         {
             //outbound nodes
             typename GT::Index lb = IA[n].s1();
             typename GT::Index rb = IA[n].s1() + IA[n].s2();
-            
-//std::cout<<"rb "<<rb<<" lb "<<lb<<std::endl;
-            
+//         if(rb == lb)        
+//             std::cout<<n<<" / "<<nodes<<" : rb "<<rb<<" lb "<<lb <<"("<<A.size()<<")"<<std::endl;
+//             std::cout<<"n = "<<n<<std::endl;
             if(lb==rb)
                 ranksNext[n] += ranks[n];
             else
             {
                 for(typename GT::Index ob=lb; ob<rb; ++ob)
                 {
+//                     std::cout<<"ob "<<ob<<" JA[ob]"<<JA[ob]<<" : "<<rowTotalWeight[n]<<std::endl;
                     typename GT::Calc normalized = (A[ob]/rowTotalWeight[n]);
                     ranksNext[JA[ob]] +=  normalized*ranks[n]; 
                 }
             }
         }
 
+std::cout<<"before ranksNext update "<<ranks.size()<<" : "<<ranksNext.size()<<" : "<<nodes<<std::endl;
         for(typename GT::Index i=0; i<nodes; ++i) 
         {
             ranksNext[i] = ((1.0-alpha)*ranksNext[i]) + (alpha*restartWeights[i]);
         }
-
+std::cout<<"before new normL1"<<std::endl;
         
         totaldiff = computeNormL1<typename GT::Index,typename GT::Calc>(ranksNext.begin(), ranksNext.end(), ranks.begin());
+        std::cout<<"RWR iter : "<<iterationsToConvergence<<" : "<<totaldiff<<std::endl;
         ranks = ranksNext;
-        iterationsToConvergence++;
+        ++iterationsToConvergence;
+//         return std::make_pair(iterationsToConvergence, ranks);
 // std::cout<<iterationsToConvergence<<" "<<totaldiff<<std::endl;
     }
     return std::make_pair(iterationsToConvergence, ranks);
@@ -248,6 +253,7 @@ Walk<GT> RandomWalker<GT>::walk(const GraphList<VertexS<GT>>&  restartWeights, A
         case Context::undirected :
             return walk(args.alpha, args.epsilon, restartWeights, args.initialRanks, ChebySolver<GT>);
         default :
+//             std::cout<<"defult rwr solver"<<std::endl;
             return walk(args.alpha, args.epsilon, restartWeights, args.initialRanks, LinearAlgebraSolver<GT>);
     }
 }
@@ -261,6 +267,9 @@ Walk<GT> RandomWalker<GT>::walk(typename  GT::Calc alpha, typename  GT::Calc eps
     const std::vector<AugIA<GT>>& IAU = viewer_->getIA();
     const std::vector<typename GT::Value>& A = viewer_->getA();
     const std::vector<typename GT::Index>& JA = viewer_->getJA();
+    
+//     for(const auto& e : JA)
+//         std::cout<< e<<",";
 
     //Calculate the row totals for use in row normalization during the dot product loop
     std::vector<typename GT::Value> rowTotalWeight(nodes,0);
@@ -288,7 +297,7 @@ Walk<GT> RandomWalker<GT>::walk(typename  GT::Calc alpha, typename  GT::Calc eps
     else
         ranks = initialRanks.getValues();
     
-
+std::cout<<"starting solver"<<std::endl;
     std::pair<long,  std::vector<typename GT::Calc> > result =  solver(nodes, rowTotalWeight, IAU, JA, A, restartVector, ranks, alpha, epsilon);
     
     Walk<GT> retVal;
@@ -302,6 +311,6 @@ Walk<GT> RandomWalker<GT>::walk(typename  GT::Calc alpha, typename  GT::Calc eps
     <<"\"epsilon\": " <<epsilon<<", "
     <<"\"iter\": " <<result.first<<""
     <<"}";
-
+// std::cout<<ss.str()<<std::endl;
      return retVal.setHeader(ss.str());
 }

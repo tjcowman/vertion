@@ -20,8 +20,8 @@ class KinasePaths
         KinasePaths(const IntegratedViewer<GT>& viewer);
         
         
-        void compute(const std::vector<VertexI<GT>>& source, const GraphList<VertexS<GT>>& sinks, float mechRatio,  const GraphList<VertexS<GT>>& globalProximity, bool localProximityOverride);
-        void computeCrossPaths2(const  GraphList<VertexI<GT>>& source, const GraphList<VertexS<GT>>& sinks, float mechRatio,  const GraphList<VertexS<GT>>& globalProximity, bool localProximityOverride);
+        void compute(const std::vector<VertexI<GT>>& source, const GraphList<VertexS<GT>>& sinks, float mechRatio,  /*const GraphList<VertexS<GT>>& globalProximity,*/ bool localProximityOverride);
+        void computeCrossPaths2(const  GraphList<VertexI<GT>>& source, const GraphList<VertexS<GT>>& sinks, float mechRatio/*,  const GraphList<VertexS<GT>>& globalProximity*/, bool localProximityOverride);
         void computeCrossPaths(const VertexS<GT>& source , const GraphList<VertexS<GT>>& sinks);
         
         GraphList<EdgeElement<GT>> computeDense(const std::vector<typename GT::Index> & pathNodes)const;
@@ -152,9 +152,9 @@ typename GT::Value KinasePaths<GT>::weightFunction(typename GT::Index row, typen
 //     std::cout<<original<<std::endl;
      const auto & L = viewer_->getL();
     //disallow site->protein 
-    if( (L[edge].getBits() == 4  && viewer_->getLabels(row).getBits() == 2)) 
-        return std::numeric_limits<typename GT::Value>::infinity();
-    
+//     if( (L[edge].getBits() == 4  && viewer_->getLabels(row).getBits() == 2)) 
+//         return std::numeric_limits<typename GT::Value>::infinity();
+//     
     
     //Prioritize proten->site KSA
     if(!(L[edge].getBits() & std::bitset< GT::LabelSize>(6)).any())
@@ -202,7 +202,7 @@ auto KinasePaths<GT>::runSP(typename GT::Index sourceIndex, const typename Integ
     {
         CurrentShortestDistance cur = exploreQueue.top();
 //         std::cout<<cur.index_<<std::endl;
-       // std::cout<<"i "<<cur.index_<<std::endl;
+        std::cout<<"i "<<cur.index_<<std::endl;
         typename GT::Index lb = IA[cur.index_].s1();
         typename GT::Index rb = IA[cur.index_].s1() + IA[cur.index_].s2() ;
         
@@ -288,7 +288,7 @@ auto KinasePaths<GT>::formatPaths(typename GT::Index sourceIndex,  const std::ve
 }
 
 template<class GT>
-void KinasePaths<GT>::computeCrossPaths2(const  GraphList<VertexI<GT>>& source, const GraphList<VertexS<GT>>& sinks, float mechRatio,  const GraphList<VertexS<GT>>& globalProximity, bool localProximityOverride)
+void KinasePaths<GT>::computeCrossPaths2(const  GraphList<VertexI<GT>>& source, const GraphList<VertexS<GT>>& sinks, float mechRatio,  /*const GraphList<VertexS<GT>>& globalProximity,*/ bool localProximityOverride)
 {
     computeNodeScores(sinks);
     
@@ -403,7 +403,7 @@ std::cout<<"reweighted"<<std::endl;
 
 //NOTE: the paths are returned using global indexes
 template<class GT>
-void KinasePaths<GT>::compute(const std::vector<VertexI<GT>>& source, const GraphList<VertexS<GT>>& sinks, float mechRatio, const GraphList<VertexS<GT>>& globalProximity, bool localProximityOverride)
+void KinasePaths<GT>::compute(const std::vector<VertexI<GT>>& source, const GraphList<VertexS<GT>>& sinks, float mechRatio, /*const GraphList<VertexS<GT>>& globalProximity,*/ bool localProximityOverride)
 {
     computeNodeScores(sinks);
     
@@ -421,7 +421,7 @@ void KinasePaths<GT>::compute(const std::vector<VertexI<GT>>& source, const Grap
         {
 //             std::cout<<-log(globalProximity[JA[edge]].value_)<< " : "<<Arw[edge]* -log(globalProximity[JA[edge]].value_)<<std::endl;
             //Arw[edge] = weightFunction( row, edge, Arw[edge]* -log((*proxUsed)[JA[edge]].value_) , mechRatio );  //Use the rwr score to weight, global so will be no 0s
-            Arw[edge] = weightFunction( row, edge, Arw[edge]* (1/globalProximity[JA[edge]].value_) , mechRatio );  //Use the rwr score to weight, global so will be no 0s
+            Arw[edge] = weightFunction( row, edge, Arw[edge]/** (1/globalProximity[JA[edge]].value_)*/ , mechRatio );  //Use the rwr score to weight, global so will be no 0s
         }
     }
 

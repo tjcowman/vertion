@@ -62,6 +62,9 @@ struct ViewKey{
     
     ViewKey()
     {
+        versions_ = std::vector<typename GT::VersionIndex>();
+        nodeLabels_ = VertexLabel<GT>();
+        edgeLabels_ = EdgeLabel<GT>();
         key_= "";
     }
 
@@ -102,13 +105,13 @@ class ViewSummary{
             std::tie(numNodes_, numEdges_) = view.size();
             numVertexLabels_ = view.countVertexLabels();
             numEdgeLabels_ = view.countEdgeLabels();
-
+/*
             Components<GT> connectedComponents(view);
             connectedComponents.compute();
             componentMean_ = connectedComponents.meanSize();
             componentMax_= connectedComponents.maxSize();
             componentNum_ = connectedComponents.size();
-            componentMin_ = connectedComponents.minSize();
+            componentMin_ = connectedComponents.minSize();*/
         }
 
 
@@ -345,8 +348,10 @@ IntegratedViewer<GT>& ViewCache<GT>::lookup(const ViewKey<GT>& key)
     //If summary stats don't exist, compute them as well
     ViewSummary<GT> newSummary;
     if(!summaryExists)
+    {
        newSummary.compute(newView);
-
+    }
+    
     //lookup again
     lock.lock();
     v = viewMap_.find(key.key_);
@@ -371,9 +376,11 @@ IntegratedViewer<GT>& ViewCache<GT>::lookup(const ViewKey<GT>& key)
         viewData_[viewIndex] = std::move(newView);
     }
 
+
     if (viewSummaries_.count(key.key_) == 0)
         viewSummaries_.insert(std::make_pair(key.key_, std::move(newSummary)));
 
+    
     lock.unlock();
     return viewData_[v->second.entryIndex_];
 }
