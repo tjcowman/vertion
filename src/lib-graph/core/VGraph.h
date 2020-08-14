@@ -27,6 +27,74 @@ template<class T> class VGraphIO;
 template<class T> class Extractor;
 template<class T> class Merger;
 
+
+// enum class IndexType
+// {
+//     global,
+//     view
+// };
+// 
+// template <typename T, IndexType ID>
+// class StrongType
+// {
+//     public:
+//         StrongType(const StrongType&) = default;
+//         
+//         StrongType(StrongType&& value)
+//         {
+//             value_ = value.value_;
+//         }
+//         
+//         
+//         
+//         StrongType& operator=(const StrongType&) = default;
+//         StrongType& operator=(StrongType&& other)
+//         {
+//             if (this != &other)
+//             {
+//                 value_ = other.value_;
+//             }
+//             return *this;
+//         }
+//         StrongType(const T& value) : value_(value) {}
+//         
+//         
+//         T get()const{return value_;}
+//         
+//         bool operator <( const StrongType<T,ID>& rhs )const
+//         {
+//             return value_ < rhs.value_;
+//             
+//         }
+//         
+//         StrongType<T,ID> operator+(const StrongType<T,ID>& rhs)const
+//         {
+//             return StrongType<T,ID>(value_ + rhs.value_);
+//         }
+//         StrongType<T,ID> operator+(const T& rhs)const
+//         {
+//             return StrongType<T,ID>(value_ + rhs);
+//         }
+//         StrongType<T,ID> operator/(const T& rhs)const
+//         {
+//             return StrongType<T,ID>(value_ / rhs);
+//         }
+//         
+//         operator T()const{
+//             return value_;
+//         }
+// 
+//     private:
+//         T value_; 
+// };
+// 
+// template<class T>
+// using ViewIndex = StrongType<typename T::Index, IndexType::view>;
+// template<class T>
+// using GlobalIndex = StrongType<typename T::Index, IndexType::global>;
+
+// T (const ViewIndex<GT>& st): T(st.value_){};
+
 //Used for compile time switching of the requested row data in template functions
 //TODO: Organize this better
 enum class Row
@@ -74,6 +142,7 @@ class VGraph
         
         using template_type = T;
         using Index = typename T::Index;
+//         using Index = GlobalIndex<T>;
         using Value = typename T::Value;
         using VersionIndex = typename T::VersionIndex;
         
@@ -555,7 +624,7 @@ GraphList<VertexU<T>> VGraph<T>::getVertexList()const
 }
 
 template<class T>
-typename  T::Index VGraph<T>::getDegree(Index node, typename T::VersionIndex version)const
+typename VGraph<T>::Index VGraph<T>::getDegree(Index node, typename T::VersionIndex version)const
 {
     auto row = getIA(version)[node];
 
@@ -919,7 +988,7 @@ void VGraph<T>::addVersion(const VersionChanges<T> & versionChanges, typename T:
 }
 
 template<class T>
-std::vector<std::pair<typename T::Index, typename T::Index> > VGraph<T>::getSortedRowOrder(Index index, typename T::VersionIndex version)const
+std::vector<std::pair<typename VGraph<T>::Index, typename VGraph<T>::Index> > VGraph<T>::getSortedRowOrder(Index index, typename T::VersionIndex version)const
 {
     auto range = IA_.getIA(version)[index];
     
@@ -942,7 +1011,7 @@ std::vector<std::pair<typename T::Index, typename T::Index> > VGraph<T>::getSort
 }
 
 template<class T>
-std::tuple<std::vector<typename T::Index>, std::vector<typename T::Value>, std::vector<EdgeLabel<T>>>  VGraph<T>::getRowData(Index index, typename T::VersionIndex version)const
+std::tuple<std::vector<typename VGraph<T>::Index>, std::vector<typename T::Value>, std::vector<EdgeLabel<T>>>  VGraph<T>::getRowData(Index index, typename T::VersionIndex version)const
 {
     auto JA_o = getSortedRowOrder(index, version);
     std::vector<typename T::Index> JA;
@@ -970,7 +1039,7 @@ std::vector<std::tuple<typename T::Index, typename T::Value, EdgeLabel<T>>> VGra
 //Gets the sorted IA and JA vectors for a row based on whether they come from a split or regular row
 template<class T>
 template<RangeFlags F>
-constexpr std::vector<std::pair<typename T::Index, typename T::Value> > VGraph<T>::getSortedSegments(const AugIA<T>& range)const
+constexpr std::vector<std::pair<typename VGraph<T>::Index, typename T::Value> > VGraph<T>::getSortedSegments(const AugIA<T>& range)const
 {
         std::vector<std::pair<Index, Value> > ext;
         
@@ -995,7 +1064,7 @@ constexpr std::vector<std::pair<typename T::Index, typename T::Value> > VGraph<T
 
 template<class T>
 template<RangeFlags F>
-constexpr std::vector<std::pair<typename T::Index, EdgeLabel<T>> > VGraph<T>::getSortedSegmentsLabels(const AugIA<T>& range)const
+constexpr std::vector<std::pair<typename VGraph<T>::Index, EdgeLabel<T>> > VGraph<T>::getSortedSegmentsLabels(const AugIA<T>& range)const
 {
         std::vector<std::pair<Index, EdgeLabel<T>> > ext;
         
@@ -1227,7 +1296,7 @@ const std::vector<typename T::Value> & VGraph<T>::getA()const
 }
 
 template<class T>
-const std::vector<typename T::Index> & VGraph<T>::getJA()const
+const std::vector<typename VGraph<T>::Index> & VGraph<T>::getJA()const
 {
     return JA_;
 }
@@ -1253,7 +1322,7 @@ const std::vector<AugIA<T>> & VGraph<T>::getIA(typename T::VersionIndex version)
 //TODO: IMPORVE EFFICIENY 
 //Expects v2_indices to be ordered, all from one row so v1_ will be eqqual i nrange
 template<class T>
-typename  T::Index VGraph<T>::aggregate(std::vector<std::tuple<Index,Value, EdgeLabel<T>>>& tmpJAAL, Index row, typename T::VersionIndex fromVersion /*FUNCTION*/)
+typename VGraph<T>::Index VGraph<T>::aggregate(std::vector<std::tuple<Index,Value, EdgeLabel<T>>>& tmpJAAL, Index row, typename T::VersionIndex fromVersion /*FUNCTION*/)
 {
    std::vector<std::tuple<Index,Value, EdgeLabel<T>>> aggJAAL;
 

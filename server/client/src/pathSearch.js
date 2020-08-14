@@ -420,6 +420,21 @@ class PathSearchComponent extends React.Component{
             
         let versionDef = this.props.versionCardsO.getVersionDefinition(this.state.selectedVersionIndex);
     
+        
+//         let allLabels = this.props.labelsUsed.getUsedLabelSum([...this.props.versionCardsO.getSelectedVersions[this.state.selectedVersionIndex]);
+//         versionDef.versions = [...versionDef.versions,
+//             this.props.versionsData.nameLookup.get("Protein-Harboring-Sites"),
+//             this.props.versionsData.nameLookup.get("Kinase-Substrate")
+//         ]
+        versionDef = {...versionDef, 
+            versions : [...versionDef.versions,
+                this.props.versionsData.nameLookup.get("Protein-Harboring-Sites"),
+                this.props.versionsData.nameLookup.get("Kinase-Substrate")
+        ]}
+        let aLab = this.props.labelsUsed.getUsedLabelSum(versionDef.versions);
+        
+        versionDef = {versions: versionDef.versions, vertexLabels: [...aLab.nodes], edgeLabels : [...aLab.edges]}
+        console.log("VD",versionDef)
             //gets the nodes corresponding to the paths
             let pathNodes = [...this.state.trees.entries()].map((tree)=>tree[1][this.state.siteData.get(nodeId).pathIndex[tree[0]]].nodes );
 //             console.log("pathNodes:", this.state.trees,pathNodes)
@@ -430,8 +445,8 @@ class PathSearchComponent extends React.Component{
             let command = {cmd:"dpth",
                 ...versionDef, 
     //             newNodes: 50,
-                pathNodes: pathNodes
-                
+                pathNodes: pathNodes,
+                mechRatio : 10
             };
             
 
@@ -630,8 +645,9 @@ class PathSearchComponent extends React.Component{
                     versionCards={this.props.versionCardsO}
                     versionCardPlainText={this.props.versionCardPlainText}
                     getVersionDefinition={this.props.getVersionDefinition}
-                    
+                    versionsData={this.props.versionsData}
                     getResponse={this.getResponse}
+                    labelsUsed={this.props.labelsUsed}
                     
                     selectedVersionIndex ={this.state.selectedVersionIndex}
                     handleSelectVersion={this.handleSelectVersion}

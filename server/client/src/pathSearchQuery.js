@@ -221,9 +221,21 @@ class PathQueryComponent extends React.Component{
     }
     
     handleSubmit=()=>{
-//         console.log(this.state);
+        console.log("THIS", this.props);
         
+        //Get the user specified version definition information and the other relevant for the query
         let versionDef = this.props.versionCards.getVersionDefinition(this.props.selectedVersionIndex);
+        versionDef = {...versionDef, 
+            versions : [...versionDef.versions,
+                this.props.versionsData.nameLookup.get("Kinase-Substrate-NS")
+//                             this.props.versionsData.nameLookup.get("Protein-Harboring-Sites"),
+//                 this.props.versionsData.nameLookup.get("Kinase-Substrate")
+        ]}
+        
+        let aLab = this.props.labelsUsed.getUsedLabelSum(versionDef.versions);
+        
+        versionDef = {versions: versionDef.versions, vertexLabels: [...aLab.nodes], edgeLabels : [...aLab.edges]}
+        
         let command = {cmd:"pths",
              ...versionDef, 
             lookupType: this.state.lookupType, //pname
@@ -243,7 +255,7 @@ class PathQueryComponent extends React.Component{
             Axios.post('http://'+this.props.backAddr, JSON.stringify(command)).then((response)=>{
                 
                 this.setState({staleQuery: false});
-                console.log("Paths", response);
+//                 console.log("Paths", response);
             
                 
                 this.setState({lastKinases : this.kinaseArrayFormat()});

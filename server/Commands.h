@@ -456,7 +456,7 @@ namespace Commands
         
         sinkList.sort(Sort::indexInc);
         
-        KP.compute(kinaseList, sinkList, args["mechRatio"], /*viewCache.lookupProximities(key),*/ args["localProximity"]);
+        KP.compute(kinaseList, sinkList, args["mechRatio"]/*,*/ /*viewCache.lookupProximities(key),*//* args["localProximity"]*/);
         viewCache.finishLookup(key);
    // std::cout<<"CMPTED"<<std::endl;    
         
@@ -517,7 +517,7 @@ namespace Commands
         KP.arg_weightFraction_ = 1;
         //Assume 2 paths 
         auto nodes = args["pathNodes"].get<std::vector<std::vector<typename GT::Index>>>();
-        
+       /* 
         GraphList<VertexS<GT>>  kinSet1;
         GraphList<VertexS<GT>>  kinSet2;
         
@@ -527,15 +527,48 @@ namespace Commands
                 
         for(const auto& e : nodes[1])
             if(IV.getLabels(IV.getViewIndex(e)) == 2)
-                kinSet2.push_back(VertexS<GT>(e,1));
+                kinSet2.push_back(VertexS<GT>(e,1));*/
         
+          json ret = json();
             
-        std::cout<<kinSet1.size()<<" ::: "<<kinSet2.size()<<std::endl;
+         KP.compute( GraphList<VertexI<GT>>( VertexI<GT>(nodes[0][nodes[0].size()-1]) ).getElements(),  GraphList<VertexS<GT>>(VertexS<GT>(nodes[0][0])), args["mechRatio"]/*, false*/);
+        std::cout<<"paths computed"<<std::endl;
+        for(const auto& tree : KP.getPaths())
+        {
+            int pNum=0;
+            auto mainTree = json::array();
+            for(const auto& path : tree)
+            {
+                 //Make sure there was a path
+                if(path.visitOrder_.size()>0)
+                {
+//                     mainTree[pNum]["nodeScore"] = path.nodeScore_;
+//                     mainTree[pNum]["direction"] = path.nodeDirection_;
+                    mainTree[pNum]["nodes"] = std::vector<int>(); 
+                    mainTree[pNum]["edgeLabels"] = std::vector<int>();
+                    
+//                     mainTree[pNum]["totalWeight"] = path.totalWeight_;
+                    
+                    for(const auto & e : path.visitOrder_)
+                        mainTree[pNum]["nodes"].push_back(e);
+                    
+                    for(const auto& e : path.edgeLabels_)
+                        mainTree[pNum]["edgeLabels"].push_back(e.getBits().to_ulong());
+                    
+                    ++pNum;
+                }
+            }
+            ret["branches"].push_back( mainTree);
+        }
+           
+         
             
-        json ret = json();
-          
+//         std::cout<<kinSet1.size()<<" ::: "<<kinSet2.size()<<std::endl;
+            
+      
+        /*  
         
-        KP.computeCrossPaths2(kinSet1, kinSet2, 1, /*viewCache.lookupProximities(key),*/ false);
+        KP.computeCrossPaths3(kinSet1, kinSet2, 1, false);
         for(const auto& tree : KP.getPaths())
         {
             int pNum=0;
@@ -565,7 +598,7 @@ namespace Commands
         }
         
         
-        KP.computeCrossPaths2(kinSet2, kinSet1, 1/*, viewCache.lookupProximities(key)*/, false);
+        KP.computeCrossPaths3(kinSet2, kinSet1, 1, false);
         for(const auto& tree : KP.getPaths())
         {
             int pNum=0;
@@ -596,7 +629,7 @@ namespace Commands
         
 
        std::cout<<ret<<std::endl;
-        
+        */
         viewCache.finishLookup(key);
 //         json ret = json::array();
 //         for(const auto& e : edges)

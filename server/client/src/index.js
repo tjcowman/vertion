@@ -62,6 +62,7 @@ class VersionsData{
   constructor(serverResponse){
     this.versions = [];
     this.tags = new Map();
+    this.nameLookup = new Map();
 
     if(typeof serverResponse !== 'undefined'){
       this.versions = serverResponse.versions.map((e) => ({name:e.name, tags:e.tags}));
@@ -73,6 +74,7 @@ class VersionsData{
                   this.tags.set(t,  [])
               }
              this.tags.get(t).push({index: e.index, name: e.name})
+             this.nameLookup.set(e.name, e.index);
           })
       });
     }
@@ -464,6 +466,7 @@ class App extends React.Component {
 
 
                                     versionCardsO={this.state.versionCardsO}
+                                    versionsData={this.state.versionsData}
                                     versionCardPlainText={this.state.versionCardPlainText}
                                     handleLog={this.handleLog}
                                     labelsUsed = {this.state.labelsUsed}
