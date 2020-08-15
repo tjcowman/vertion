@@ -112,18 +112,6 @@ class CytoscapeCustom extends React.Component{
     constructor(props){
         super(props);
         
-        const options = {
-            isDebug: false, // Debug mode for console messages
-            actions: {},// actions to be added
-            undoableDrag: false, // Whether dragging nodes are undoable can be a function as well
-            stackSizeLimit: undefined, // Size limit of undo stack, note that the size of redo stack cannot exceed size of undo stack
-            ready: function () { // callback when undo-redo is ready
-
-            }
-        }
-        
-        this.ur = ()=> { return this.cy.undoRedo(options)}
-
 //          cy={(cy) => {this.cy = cy}}
          
         this.colorRef = React.createRef();
@@ -146,6 +134,8 @@ class CytoscapeCustom extends React.Component{
             colorMapBoth : new Map(),
             
             test: undefined,
+            
+            currentHighlight: undefined
 //             elementsLocal : [],
 //             lastDenseElements : undefined,  
         }
@@ -205,15 +195,7 @@ class CytoscapeCustom extends React.Component{
     
     
     componentDidUpdate(prevProps, prevState){
-        
-//         console.log(prevProps.densePath, this.props.densePath)
-//         if(prevProps.densePath !== this.props.densePath){
-// //             console.log('reseting ele')
-// //             this.ur().undoAll();
-//             
-//         }
-        
-        
+
         if(this.props.elements.length > 0){//make sure elements actually exist
 //             this.cy.startBatch();
             if(this.props.elements !== prevProps.elements /*||this.props.denseElements !== prevProps.denseElements*/){ 
@@ -244,8 +226,7 @@ class CytoscapeCustom extends React.Component{
     
     
     colorElements=()=>{
-//         this.cy.edges().forEach((n) => n.json({data :{color_auto : this.state.colorMapEdges.get(n._private.data.edgeType)}}) );
-//         this.cy.nodes().forEach((n) => n.json({data :{color_auto : this.state.colorMapNodes.get(n._private.data.nodeType)}}) );
+
          this.cy.edges().forEach((n) => n.json({data :{color_auto : this.state.colorMapBoth.get(n._private.data.edgeType)}}) );
         this.cy.nodes().forEach((n) => n.json({data :{color_auto : this.state.colorMapBoth.get(n._private.data.nodeType)}}) );
                 
@@ -260,43 +241,62 @@ class CytoscapeCustom extends React.Component{
 //         ur.action("displayDensePath");
 //         this.cy.on('click', 'node', (e)=>{console.log(e.target._private.data)} );
         this.cy.on('click', this.handleElementClick);
+//         this.cy.on('select', this.handleElementSelect);
 //         this.setState({ lastDenseElements :this.cy.collection()});
         
     }
     
     handleElementClick=(event)=>{
-        console.log(event.target._private.data);
+        const highlightMap =new Map([
+            ["l" , "#CD853F"],
+            ["r" , "#DC143C"],
+            ["b" , "#008B8B"]
+        ])
         
-//         this.setState({ });
+        const kc1= "#CD853F";
+        const kc2= "#DC143C" ;
+        const bc = "#008B8B";
         
-//         console.log("ur", this.ur)
-        console.log('click')
+        console.log("element clicked", event.target._private.data);
+        console.log(this.state)
         
-//         this.cy.remove(this.cy.elements('[dense]'));
-        //.do("remove", (this.cy.elements('[dense]')));
-        
+//         if(typeof this.state.currentHighlight !== 'undefined'){
+//             this.state.currentHighlight.removeData("highlight");
+//             this.setState(()=>({currentHighlight : undefined}))
+            this.cy.elements().removeData("highlight");
+//         }
+            
+            
+        //Is a path terminal node
         if(event.target._private.data.hasOwnProperty('score')){
+//             this.props.handleSubmitDensePath(event.target._private.data.id, ()=>{
+//                 this.layout_fcose()
+//             });
+            //Note that the path indexes are returned as a list but they should always be the same so just get one of them (NOT TRUE)
+           console.log("GGG",[event.target._private.data.pathIndex[0]])
+            let ids = 
+            (event.target._private.data.origin === 'l')?
+                this.props.getElementsFromPath([event.target._private.data.pathIndex[0], 'undefined']) : 
+            (event.target._private.data.origin === 'r')?
+                 this.props.getElementsFromPath(['undefined',event.target._private.data.pathIndex[1]]):
+            (event.target._private.data.origin === 'b')?
+                this.props.getElementsFromPath(event.target._private.data.pathIndex):
+                [];
+                
+//             let ids = this.props.getElementsFromPath(event.target._private.data.pathIndex[0]); //has index of path for both trees
+//             var collection = this.cy.collection();
+        console.log("ID",ids)
+            
+            
+            ids.forEach(id=>{
+//                 console.log(highlightMap.get(this.cy.getElementById(id)._private.data.origin))
+                this.cy.getElementById(id).data("highlight",/*highlightMap.get(this.cy.getElementById(id)._private.data.origin)*/ "gray");
+//                 collection = collection.union(this.cy.getElementById(id))
+            });
 
             
-            this.props.handleSubmitDensePath(event.target._private.data.id, ()=>{
-//                 console.log(this.props.denseElements)
-//                              this.ur().undoAll()
-//             this.ur().do("remove", this.cy.elements())
-            
-//             console.log('removed')
-                
-//                 this.ur().do("add", this.props.denseElements);
-//                 console.log('added')
-                this.layout_fcose()
-            });
-           
         }
-        
-//         if(this.cy.elements(':selected').length<=1)
         this.setState({elementDescription : event.target._private.data });
-     
-//         console.log("G",this.props.denseElements)
-//         this.cy.add(this.props.denseElements);
     }
     
 
@@ -463,19 +463,7 @@ class CytoscapeCustom extends React.Component{
             </div>
         );
     }
-    
-    
-    renderMainPaths=()=>{
-//         this.props.elements= []
-//         console.log("G", this.state.elementsLocal)
-//         this.cy.remove(this.cy.elements());
-//         console.log("FF", this.props.elements)
-//         this.cy.add(this.props.elements)
-//         this.cy.data(this.props.elements); 
-    }
-    
 
-    
     renderLayout(){
     
         
@@ -488,6 +476,16 @@ class CytoscapeCustom extends React.Component{
                 <Button className="btn-secondary" style={{display: 'inline-block'}}
                     onClick={this.props.handleResetMainView}
                 >Back</Button>
+                
+                <Button className="btn-secondary" style={{display: 'inline-block'}}
+                    
+                >Site Estimation</Button>
+                
+                
+                <Button className="btn-secondary" style={{display: 'inline-block'}}
+
+                >Cross Paths</Button>
+                
                 
                 
                 <div className="" style={{marginLeft:'5px', display: 'inline-block', padding: '2px', verticalAlign: 'middle'}}>
@@ -506,9 +504,6 @@ class CytoscapeCustom extends React.Component{
     
     
     render(){
-            {console.log("THICYCUS", this)}
-//         {this.generateLegendNodes()}
-       
         return(
             
             <Card className="rounded-0">

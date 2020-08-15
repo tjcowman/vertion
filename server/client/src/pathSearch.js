@@ -33,19 +33,19 @@ class PathSearchComponent extends React.Component{
             kDisplayed: 0,
             minPathScore: 0,
              
-//             showPopout: false,
             trees: new Map(), 
             sourceIds : [],
-//             pathLengthByCutoff : [[]],
             
             selectedVersionIndex: "T",
-//             selectedVersionDefinition: this.props.versionCardsO.getVersionDefinition("T"), //Temp value fo testing normally []
             siteData: new Map(),
             integrationData: new Map(),
             
             
             nodeIds: new Set(),
             edgeIds: new Set(),
+            
+            
+            pathFocused: undefined,
             
             displayElements: [],
             densePath : -1,
@@ -56,22 +56,18 @@ class PathSearchComponent extends React.Component{
     
     //gets the ids of the input kinases
     getPathSourceIds(){
-        
         return(this.state.sourceIds);
-        
-        //return(trees)
+
     }
     
     componentDidUpdate(prevProps, prevState){
-        
-
         if(
             prevState.minPathScore !== this.state.minPathScore || 
             prevState.trees !== this.state.trees || 
             prevState.kDisplayed !== this.state.kDisplayed
            // (prevState.topk !== this.state.topk && this.state.topk <= this.state.kAvailable)
         ){
-            console.log("in pathSearch")
+            console.log("pathSearchState", this.state)
             this.setState({
                 displayElements: this.updateElements(),
 //                 densePath : -1
@@ -126,6 +122,30 @@ class PathSearchComponent extends React.Component{
             return [];
     }
     
+    //Gets the 
+    getElementsFromPath=(pathIndexes)=>{
+        
+        let pathElements= [...this.state.trees.values()].map((tree,i) => tree[pathIndexes[i]]).filter(e=>typeof e !== 'undefined');
+        let ids = [];
+        console.log("PE",pathElements)
+        
+        pathElements.forEach(path=>{
+            path.nodes.forEach(node => {
+                ids.push(String(node))
+            })
+        })
+
+        let edges = [];
+        pathElements.forEach((path)=>{
+            for(let i=0; i<path.nodes.length-1; ++i ){
+                let id = this.edgeIdFromNodeIds(path.nodes[i+1] , path.nodes[i]); 
+                ids.push(id);
+            }
+        });
+        
+        return(ids);
+    }
+
     //Computes the overlapping node and edge elements then formats the elements for display
     updateElements=()=>{
         let idK1 = this.computeElementIds(0);
@@ -310,19 +330,9 @@ class PathSearchComponent extends React.Component{
 //             console.log(treeIndex, tree)
             tree[1].forEach((path,i) =>{
                 siteData.get(String(path.nodes[0])).pathIndex[tree[0]] = i;
-//                 siteData.get(String(path.nodes[0])).pathIndex.push(i)
-//                 siteData.get(String(path.nodes[0])).pathIndex.push(i+1)
-                 
             });
         });
-        
-        
-//         console.log("HERE", siteData)
-        
-        
-//         let pathLengthByCutoff = [...responseTrees.values()].map(tree => tree.map(path => ({score : path.nodeScore, length : path.totalWeight})).sort((l,r)=>{return l.score-r.score})) 
-//         console.log("Wut",...[...responseTrees.values()].map(tree=> tree.map(path => path.nodeScore).filter(score=>score > this.state.minPathScore).length));
-        
+
         let kAvailable = Math.max(...[...responseTrees.values()].map(tree=> tree.map(path => path.nodeScore).filter(score=>score > this.state.minPathScore).length));
         let kDisplayed = Math.min(kAvailable,this.state.topk);
         
@@ -354,17 +364,11 @@ class PathSearchComponent extends React.Component{
     //returns the elements for both paths
     pathIndexToElementList=(index)=>{
          let sourceIds = new Set(this.getPathSourceIds())
-//          console.log([...this.state.trees.entries()].map((tree)=>(tree[1][1])))
-//         console.log("INDEX", index)
         let arrs = [...this.state.trees.entries()].map((tree, treeI)=>([tree[1][index[treeI]].nodes, tree[1][index[treeI]].edgeLabels]))
         let paths = [...this.state.trees.entries()].map((tree,treeI)=>(tree[1][index[treeI]])).flat()
-//         console.log("PATHS", paths)
         let nodes = [];
         
-//         console.log("ID", this.state.integrationData);
-        
         [...new Set(arrs.map(p=> p[0]).flat())].forEach((id) => {
-            console.log( "IDG", id,this.state.integrationData.get(String(id)))
             nodes.push({
                 data: {
                     id: String(id),
@@ -379,10 +383,7 @@ class PathSearchComponent extends React.Component{
                 }
             );
         
-//         if(sourceIds.has(String(n.data.id))){
-//             n.data.queryClass = "sourceKinase";
-//         }
-        
+
         let edges = [];
          paths.forEach((path)=>{
             for(let i=0; i<path.nodes.length-1; ++i ){
@@ -405,27 +406,10 @@ class PathSearchComponent extends React.Component{
         return [...nodes, ...edges];
     }
     
-    
-//     updateDenseElements=()=>{
-//         elements = []
-//         
-//         console.log("hi")
-//         
-//         this.setState({displayDenseElements: elements})
-//     }
-    
     handleSubmitDensePath=(nodeId, fn)=>{
-            
-//             console.log("COMPWRF",this.state.displayElements, this.state.displayDenseElements)
-            
+
         let versionDef = this.props.versionCardsO.getVersionDefinition(this.state.selectedVersionIndex);
     
-        
-//         let allLabels = this.props.labelsUsed.getUsedLabelSum([...this.props.versionCardsO.getSelectedVersions[this.state.selectedVersionIndex]);
-//         versionDef.versions = [...versionDef.versions,
-//             this.props.versionsData.nameLookup.get("Protein-Harboring-Sites"),
-//             this.props.versionsData.nameLookup.get("Kinase-Substrate")
-//         ]
         versionDef = {...versionDef, 
             versions : [...versionDef.versions,
                 this.props.versionsData.nameLookup.get("Protein-Harboring-Sites"),
@@ -437,14 +421,9 @@ class PathSearchComponent extends React.Component{
         console.log("VD",versionDef)
             //gets the nodes corresponding to the paths
             let pathNodes = [...this.state.trees.entries()].map((tree)=>tree[1][this.state.siteData.get(nodeId).pathIndex[tree[0]]].nodes );
-//             console.log("pathNodes:", this.state.trees,pathNodes)
-//             console.log(this.pathIndexToElementList(this.state.siteData.get(nodeId).pathIndex))
-//             let paths = [...this.state.trees.entries()].map((tree)=>tree[1][this.state.siteData.get(nodeId).pathIndex[tree[0]]].nodes );
-            
-//             console.log(versionDef)
+
             let command = {cmd:"dpth",
                 ...versionDef, 
-    //             newNodes: 50,
                 pathNodes: pathNodes,
                 mechRatio : 10
             };
@@ -453,21 +432,15 @@ class PathSearchComponent extends React.Component{
         
             
             Axios.post('http://'+this.props.backAddr, JSON.stringify(command)).then((response)=>{
-            
+                console.log("densePathSearch response",response)
                 const updateDenseElements=()=>{
-                   
-//                     console.log("DDDD", this.state.displayDenseElements)
-//                     console.log("SI",sourceIds)
-    //                 let newNodeIds =  new Set(nodeIndexes.map(e=>String(e))); //response.data.map(edge)
-    //                 let newEdgeIds = new Set(response.data.map(edge => this.edgeIdFromNodeIds(edge.i1, edge.i2)));
+
                     let rootElements = this.pathIndexToElementList(this.state.siteData.get(nodeId).pathIndex)
                     
                     let nodes = [];
                     let edges = [];
                     
                     let paths = response.data.branches.flat();
-                        
-
                     
                         [...nodeIndexes].forEach((id) => {
                             nodes.push({
@@ -503,125 +476,18 @@ class PathSearchComponent extends React.Component{
                         let elements = new Map([...nodes, ...edges].map(e=> [e.data.id, e]));
                         rootElements.forEach(e=> elements.set(e.data.id,e));
                         
-                        
-                        console.log("E", rootElements)
-//                         console.log("test", [...elements].map(e=>e))
-                        
                         this.setState({displayDenseElements: [...elements.values()],
                             densePath: nodeId
                         }, fn)
-                        
-                        
-//                     this.setState({displayDenseElements: [...rootElements, ...elements],
-//                         densePath: nodeId
-//                     }, fn)
-                
                 }
-            
-            
-//             console.log(response)
-//             console.log(new Set(response.data.branches.flat().map(p => p.nodes).flat()))
             let nodeIndexes = new Set(response.data.branches.flat().map(p => p.nodes).flat())
 //             let nodeIndexes = response.data.map(edge => [edge.i1, edge.i2]).flat()
             this.props.handleNodeLookupIndex(nodeIndexes, updateDenseElements)
-//         
-    
         });
-//         this.setState({densePath: nodeId});
-//         console.log([...this.state.trees].map((tree, treeId)=>tree[this.state.siteData.get(nodeId)[treeId] ].nodes ))
+
     }
     
     
-//     handleSubmitDensePath=(nodeId, fn)=>{
-//         let versionDef = this.props.versionCardsO.getVersionDefinition(this.state.selectedVersionIndex);
-//   
-//         //gets the nodes corresponding to the paths
-//         let paths = [...this.state.trees.entries()].map((tree)=>tree[1][this.state.siteData.get(nodeId).pathIndex[tree[0]]].nodes );
-//         
-//         console.log(versionDef)
-//         let command = {cmd:"dpth",
-//              ...versionDef, 
-//             newNodes: 50,
-//             pathNodes: paths
-//             
-//         };
-//         
-// 
-//       
-//         
-//         Axios.post('http://'+this.props.backAddr, JSON.stringify(command)).then((response)=>{
-//         
-//             const updateDenseElements=()=>{
-//                 
-//                 let elements = []//this.state.displayElements
-//                 
-//                 let newNodeIds =  new Set(nodeIndexes.map(e=>String(e))); //response.data.map(edge)
-//                 let newEdgeIds = new Set(response.data.map(edge => this.edgeIdFromNodeIds(edge.i1, edge.i2)));
-//         
-//         
-//                 //takes the ids added by the dense path and addes them to the elements
-// //                 setLib.difference(new Set(newNodeIds),this.state.nodeIds )
-// //                 console.log("NI", this.state.nodeIds)
-//                 newNodeIds.forEach(id =>{
-//                     if(!this.state.nodeIds.has(id)){
-//                         elements.push(
-//                             {data: {
-//                                 id: id,
-//                                 dense: nodeId,
-//                                 nodeType: this.props.labelsUsed.nameLookupNode(this.props.nodeData.getEntry(id).labels).toString(), 
-//                                 label:  this.props.nodeData.getEntry(id).name, 
-//                                 pLabel: this.props.nodeData.getEntry(id).pname === "" ? undefined : this.props.nodeData.getEntry(id).pname,
-//                                       
-//     //                             origin: integrationData.get(String(id)),
-//                         }});
-//                     }
-//                 })
-//                         //Strip the protein uniprot from the sites
-//                 elements.forEach(n =>{
-//                     if(n.data.nodeType === "Site"){
-//                         n.data.label = n.data.label.substring(n.data.label.search(':')+1 );
-//                     }
-//                 }) 
-//                 
-// //              //Now add the new edges
-//                 response.data.forEach(edge=>{
-//                     let id =  this.edgeIdFromNodeIds(edge.i1, edge.i2);//edge.i1 + '-'+edge.i2;
-//                      if(!this.state.edgeIds.has(id)){
-//                         elements.push(
-//                             {data:{
-//                                 id: id,
-//                                 dense: nodeId,
-//                                 source: edge.i1, //Reversed because kinase have a higher index TODO: make this actually depend on the labels
-//                                 target: edge.i2,
-//                                 edgeType: this.props.labelsUsed.nameLookupEdge(edge.l).toString(), 
-//                             
-//                         }});
-//                     }
-//                 })
-//                 
-//          
-//                 this.state.displayElements.forEach(e =>{
-//                     if(newNodeIds.has((e.data.id)) || newEdgeIds.has((e.data.id)))
-//                         elements.push(e);
-//                 })
-//            
-// //                 console.log(elements)
-//                 this.setState({displayDenseElements: elements,
-//                     densePath: nodeId
-//                 }, fn)
-//             }
-//             
-//             
-// //             console.log(response)
-//             
-//             let nodeIndexes = response.data.map(edge => [edge.i1, edge.i2]).flat()
-//             this.props.handleNodeLookupIndex(nodeIndexes, updateDenseElements)
-//         
-//     
-//         });
-// //         this.setState({densePath: nodeId});
-// //         console.log([...this.state.trees].map((tree, treeId)=>tree[this.state.siteData.get(nodeId)[treeId] ].nodes ))
-//     }
 
     handleResetMainView=()=>{
         console.log("Cy",this.cy)
@@ -635,7 +501,6 @@ class PathSearchComponent extends React.Component{
     
     render(){
         {/*console.log("PS QUERYST", this.state)*/}
-        console.log("PSTHIS", this)
         return(
             //TODO: Remove the unecessary version card and such passing
             <Card.Body style={{whiteSpace:'nowrap'}}>
@@ -665,11 +530,7 @@ class PathSearchComponent extends React.Component{
                         minPathScore={this.minPathScore}
                     />
      
-                    {/*this.getPopout()*/}
-                    {/*<button onClick={() => this.setPopoutOpen(!this.state.showPopout)}>
-                        toggle popout
-                    </button>*/}
-     
+
                  </div>
                 
                  <div style={{display:'inline-block', verticalAlign:'top', margin:'10px'}}>
@@ -680,21 +541,10 @@ class PathSearchComponent extends React.Component{
 //                         displayDenseElements={this.state.displayDenseElements}
                         handleSubmitDensePath={this.handleSubmitDensePath}
                         handleResetMainView={this.handleResetMainView}
+                        
+                        getElementsFromPath={this.getElementsFromPath}
                     />
                 </div>
-                
-                {/*
-                <CytoscapeComponent className="border cyClass"  cy={(cy) => {this.cy = cy}} 
-                    elements={this.state.displayDenseElements}  
-                    style={ { width: '600px', height: '400px', marginBottom:'10px' } }
-                />*/}
-                
-                {/*<div >
-                    <CytoscapeCustom 
-                        cstyle={{colors: {...cstyle.colors, integration :cstyle.color_integration}  , labels: cstyle.labels, sizes :cstyle.sizes}}
-                        elements={this.state.displayDenseElements} 
-                    />
-                </div>*/}
                 
             </Card.Body>
         );

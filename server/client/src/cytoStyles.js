@@ -193,6 +193,8 @@
         }
     ]
     
+
+    
     export let themes = { None: color_monochrome, auto: color_auto, direction: color_direction
         
     }
@@ -208,6 +210,16 @@
     export let sizes = { Constant: [], 'Node Score' : size_score
         
     }
+    
+    
+/*    
+    export let addHighlight=[{
+        css: {
+            'overlay-color': 'blue',
+            'overlay-opacity': 0.5,
+            'overlay-padding': 5,
+        }
+    }]*/
     
     export let base = [
         {
@@ -228,10 +240,19 @@
             }
         
         },
+//         {
+//             selector: ':selected',
+//             css: {
+//                 'overlay-color': 'blue',
+//                 'overlay-opacity': 0.5,
+//                 'overlay-padding': 5,
+//             }
+// 
+//         },
         {
-            selector: ':selected',
+            selector: '[highlight]',
             css: {
-                'overlay-color': 'blue',
+                'overlay-color': 'data(highlight)',
                 'overlay-opacity': 0.5,
                 'overlay-padding': 5,
             }

@@ -221,7 +221,7 @@ class PathQueryComponent extends React.Component{
     }
     
     handleSubmit=()=>{
-        console.log("THIS", this.props);
+//         console.log("THIS", this.props);
         
         //Get the user specified version definition information and the other relevant for the query
         let versionDef = this.props.versionCards.getVersionDefinition(this.props.selectedVersionIndex);
@@ -255,8 +255,9 @@ class PathQueryComponent extends React.Component{
             Axios.post('http://'+this.props.backAddr, JSON.stringify(command)).then((response)=>{
                 
                 this.setState({staleQuery: false});
-//                 console.log("Paths", response);
-            
+                console.log("pathSearchResponse", response);
+                console.log("pathSearchComponenetProps", this.props);
+                
                 
                 this.setState({lastKinases : this.kinaseArrayFormat()});
             
@@ -402,7 +403,7 @@ class ResultDisplay extends React.Component{
      }
      
      render(){
-         console.log("RESDISP",this)
+//          console.log("RESDISP",this)
         return(
             <>
          
@@ -414,6 +415,7 @@ class ResultDisplay extends React.Component{
                     cy={(cy) => {this.cy = cy}}
                     handleSubmitDensePath={this.props.handleSubmitDensePath}
                     handleResetMainView={this.props.handleResetMainView}
+                    getElementsFromPath={this.props.getElementsFromPath}
                 />
             </div>
            
