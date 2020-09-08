@@ -80,9 +80,11 @@ class VersionsData{
     }
   }
 
-  //Filters out the empty tagged versions when obtaining an array of all tags w/ their versions
+  //!!!Filters out the empty tagged versions when obtaining an array of all tags w/ their versions 
+  //Now filters out all but the PPI tagged for display as the others are used implicitly by the queries
   getDisplayedTags(){
-    return [...this.tags].filter(e => e[0] !== "Empty");
+   // return [...this.tags].filter(e => e[0] !== "Empty");
+       return [...this.tags].filter(e => e[0] == "PPI");
   }
 
 
@@ -343,15 +345,15 @@ class App extends React.Component {
                    
                         <div className=" text-dark sideElementHeading border-bottom">GraphView</div>
 
-                            <Nav.Link eventKey="versions" className=" sideElement">Versions</Nav.Link>
-                            <Nav.Link eventKey="labels" className=" sideElement">Labels</Nav.Link>
-                            <Nav.Link eventKey="summary" className="sideElement" onClick={  this.handleUpdateCardSummaryt} >Summary</Nav.Link>
+                            <Nav.Link eventKey="versions" className=" sideElement">Tissues</Nav.Link>
+                            {/*<Nav.Link eventKey="labels" className=" sideElement">Labels</Nav.Link>*/}
+                            {/*<Nav.Link eventKey="summary" className="sideElement" onClick={  this.handleUpdateCardSummaryt} >Summary</Nav.Link>*/}
 
-                        <div className=" text-dark sideElementHeading border-bottom">Queries</div>
+                        <div className=" text-dark sideElementHeading border-bottom">Tools</div>
                             {/*<Nav.Link eventKey="nodes" className="sideElement">Nodes</Nav.Link>*/}
-                            <Nav.Link eventKey="query_rwr" className=" sideElement">RWR</Nav.Link>
+                            {/*<Nav.Link eventKey="query_rwr" className=" sideElement">RWR</Nav.Link>*/}
                             {/*<Nav.Link eventKey="query_motif" className=" sideElement">Motifs</Nav.Link>*/}
-                            <Nav.Link eventKey="path_search" className=" sideElement">Paths</Nav.Link>
+                            <Nav.Link eventKey="path_search" className=" sideElement">Path Explorer</Nav.Link>
 
                     </div>
 
@@ -359,7 +361,7 @@ class App extends React.Component {
 
                     <div className= "displayPanel"  style={{left: this.state.navCollapsed ? 20 : 200, width: this.state.navCollapsed ? 'calc(100% - 20px)' : 'calc(100% - 200px)'}}>
                         <Tab.Content>
-                            <Tab.Pane eventKey="summary">
+                            {/*<Tab.Pane eventKey="summary">
                                 <InfoPanel
                                     backAddr={this.state.backAddr}
 
@@ -370,7 +372,7 @@ class App extends React.Component {
                                     versionCardsO={this.state.versionCardsO}
                                     labelsUsed = {this.state.labelsUsed}
                             />
-                            </Tab.Pane>
+                            </Tab.Pane>*/}
 
                             <Tab.Pane eventKey="versions">
                                 <SelectVersionsComponent
@@ -385,7 +387,7 @@ class App extends React.Component {
                                 />
                             </Tab.Pane>
 
-                            <Tab.Pane eventKey="labels">
+                            {/*<Tab.Pane eventKey="labels">
                                 <SelectLabelsComponent
                                     handleCheckToggle={this.handleCheckToggle}
                                     handleToggle={this.handleToggle}
@@ -396,9 +398,9 @@ class App extends React.Component {
 
                                     labelsUsed = {this.state.labelsUsed}
                                 />
-                            </Tab.Pane>
+                            </Tab.Pane>*/}
 
-                            <Tab.Pane eventKey="query_rwr" className="pageContentArgsRight">
+                            {/*<Tab.Pane eventKey="query_rwr" className="pageContentArgsRight">
                                 <QueryComponentRWR
                                     backAddr={this.state.backAddr}
                                     selectedVersions={this.state.versions_s}
@@ -414,7 +416,7 @@ class App extends React.Component {
                                     handleLog={this.handleLog}
                                     labelsUsed = {this.state.labelsUsed}
                                 />
-                            </Tab.Pane>
+                            </Tab.Pane>*/}
                             
                             <Tab.Pane eventKey="path_search" className="pageContentArgsRight">
                                 <PathSearchComponent

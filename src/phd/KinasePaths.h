@@ -171,6 +171,15 @@ typename GT::Value KinasePaths<GT>::weightFunction(typename GT::Index row, typen
 //         original = original * (.5/ it->second.first);
 //     }
     
+    
+    
+    auto it = nodeScoreLookup_.find(edge);
+    if(it != nodeScoreLookup_.end())
+    {
+
+        original *= 1/std::abs((it->second.first));
+    }
+    
 //     auto it = nodeScoreLookup_.find(edge);
 //     if(it != nodeScoreLookup_.end())
 //     {

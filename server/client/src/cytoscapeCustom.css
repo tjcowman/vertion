@@ -34,3 +34,11 @@
 .mySelect__control{
  height: 38px;
 }
+
+.contextQueryButton{
+    display: block;
+    width: 100%;
+    margin: 5px;
+    padding: 0px 10px;
+    
+}

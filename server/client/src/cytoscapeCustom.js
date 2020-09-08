@@ -283,6 +283,7 @@ class CytoscapeCustom extends React.Component{
                 this.props.getElementsFromPath(event.target._private.data.pathIndex):
                 [];
                 
+                this.setState({currentHighlight: event.target._private.data.pathIndex});
 //             let ids = this.props.getElementsFromPath(event.target._private.data.pathIndex[0]); //has index of path for both trees
 //             var collection = this.cy.collection();
         console.log("ID",ids)
@@ -295,7 +296,13 @@ class CytoscapeCustom extends React.Component{
             });
 
             
+        }else{
+            this.setState({currentHighlight: undefined});
+            
         }
+        
+        
+        
         this.setState({elementDescription : event.target._private.data });
     }
     
@@ -469,7 +476,7 @@ class CytoscapeCustom extends React.Component{
         
         return(
             <div className="border" style={{padding: '5px', marginBottom:'5px'}}>
-                <Button className="btn-secondary" style={{display: 'inline-block'}}
+                <Button className="btn-secondary" style={{display: 'inline-block', marginRight:'5px'}}
                     onClick={this.layout_fcose}
                 >Layout</Button>
                 
@@ -477,14 +484,7 @@ class CytoscapeCustom extends React.Component{
                     onClick={this.props.handleResetMainView}
                 >Back</Button>
                 
-                <Button className="btn-secondary" style={{display: 'inline-block'}}
-                    
-                >Site Estimation</Button>
-                
-                
-                <Button className="btn-secondary" style={{display: 'inline-block'}}
 
-                >Cross Paths</Button>
                 
                 
                 
@@ -516,31 +516,58 @@ class CytoscapeCustom extends React.Component{
                 <CytoscapeComponent className="border cyClass"  cy={(cy) => {this.cy = cy}} elements={[]}/*elements={this.props.elements}*/ stylesheet={ this.computeStyle() } style={ { width: '600px', height: '400px', marginBottom:'10px' } }/>
            
                 <div style={{display: 'inline-block', verticalAlign: 'top', marginLeft:'5px'}}>
-                <Card className="styleSelectorContainer rounded-0">
-                    <Card.Body>
-                    
-                        {/*<label>Color</label>
-                        <Select
-                            options={Object.keys(this.props.cstyle.colors).map((e,i) => ({value: i, label: e }))}
-                            onChange={this.handleSetColorStyle}
-                            defaultValue={{label:this.state.colorStyle}}
-                        />*/}
-                    
-                        <label style={{margin:'8px 0px'}}>Labels</label>
-                        <Select
-                            options={Object.keys(this.props.cstyle.labels).map((e,i) => ({value: i, label: e }))}
-                            onChange={this.handleSetLabelStyle}
-                            defaultValue={{label:this.state.labelStyle}}
-                        />
+                    <Card className="styleSelectorContainer rounded-0">
+                        <Card.Body>
                         
-                        <label style={{margin:'8px 0px'}}>Terminal Sizes</label>
-                        <Select
-                            options={Object.keys(this.props.cstyle.sizes).map((e,i) => ({value: i, label: e }))}
-                            onChange={this.handleSetSizeStyle}
-                            defaultValue={{label:this.state.sizeStyle}}
-                        />
-                    </Card.Body>
-                </Card>
+                            {/*<label>Color</label>
+                            <Select
+                                options={Object.keys(this.props.cstyle.colors).map((e,i) => ({value: i, label: e }))}
+                                onChange={this.handleSetColorStyle}
+                                defaultValue={{label:this.state.colorStyle}}
+                            />*/}
+                        
+                            <label style={{margin:'8px 0px'}}>Labels</label>
+                            <Select
+                                options={Object.keys(this.props.cstyle.labels).map((e,i) => ({value: i, label: e }))}
+                                onChange={this.handleSetLabelStyle}
+                                defaultValue={{label:this.state.labelStyle}}
+                            />
+                            
+                            <label style={{margin:'8px 0px'}}>Terminal Sizes</label>
+                            <Select
+                                options={Object.keys(this.props.cstyle.sizes).map((e,i) => ({value: i, label: e }))}
+                                onChange={this.handleSetSizeStyle}
+                                defaultValue={{label:this.state.sizeStyle}}
+                            />
+                        </Card.Body>
+                    </Card>
+                    
+               
+                
+                   
+                    
+                    {this.state.currentHighlight !== undefined ?
+                        <Card className=" rounded-0" style={{marginTop:'5px'}}>
+                            <Card.Body>
+                        
+                        
+                            <Button className=" contextQueryButton btn-secondary" 
+                        
+                            >Site Estimation</Button>
+                            
+                    
+                        
+                            <Button className=" contextQueryButton btn-secondary"
+
+                            >Cross Paths</Button>
+                        
+                            
+                        
+                            </Card.Body>
+                        </Card>
+                    : ""}
+                    
+                   
            
                 {/*this.renderExport()*/}
                 </div>

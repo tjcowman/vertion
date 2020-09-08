@@ -52,15 +52,15 @@ class Settings extends React.Component{
                     <Card >
                         <Card.Header>Settings</Card.Header>
                         <Card.Body>
-                            Mechanistic Ratio
+                            PPI Weight Modifier
                             <input autoComplete="off"  className="form-control" type="number" value={this.props.mechRatio} name="mechRatio" onChange={(event)=>this.props.handleChangeRange(event,0,10000)}></input>
-                            Top Weight Fraction
+                            Top Log Fold Cutoff Fraction
                             <input autoComplete="off" className="form-control" type="number" step=".1" value={this.props.minWeight} name="minWeight" onChange={(event)=>this.props.handleChangeRange(event,0,1)}></input>
 
                         </Card.Body>
                     </Card>
                 
-                    <Card style={{marginTop: '10px'}}>
+                    {/*<Card style={{marginTop: '10px'}}>
                         <Card.Header>Node Lookup</Card.Header>
                         <Card.Body>
                             
@@ -71,7 +71,7 @@ class Settings extends React.Component{
                         
                     
                         </Card.Body>
-                    </Card>
+                    </Card>*/}
                 
                 
                 </div>
