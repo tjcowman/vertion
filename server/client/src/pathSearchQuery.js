@@ -414,6 +414,7 @@ class ResultDisplay extends React.Component{
                     elements={this.props.displayElements} 
                     cy={(cy) => {this.cy = cy}}
                     handleSubmitDensePath={this.props.handleSubmitDensePath}
+                    handleSubmit_siteEstimation={this.props.handleSubmit_siteEstimation}
                     handleResetMainView={this.props.handleResetMainView}
                     getElementsFromPath={this.props.getElementsFromPath}
                 />

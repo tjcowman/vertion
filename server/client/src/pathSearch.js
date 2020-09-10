@@ -188,6 +188,7 @@ class PathSearchComponent extends React.Component{
                 label:  this.props.nodeData.getEntry(id).name, 
                 pLabel: this.props.nodeData.getEntry(id).pname === "" ? undefined : this.props.nodeData.getEntry(id).pname,
                 origin: integrationData.get(String(id)),
+                                            
               }
             })
         );
@@ -208,8 +209,9 @@ class PathSearchComponent extends React.Component{
 //             console.log(n.data.id)
             if(sourceIds.has(String(n.data.id))){
                 n.data.queryClass = "sourceKinase";
+            }else if(n.data.score > 0){
+                n.data.queryClass = "sinkProtein";
             }
-            
             //Strip the protein uniprot from the sites
             if(n.data.nodeType === "Site"){
                 n.data.label = n.data.label.substring(n.data.label.search(':')+1 );
@@ -360,103 +362,73 @@ class PathSearchComponent extends React.Component{
         }
         return terminalScores;
     }
-    
-    //returns the elements for both paths
-    pathIndexToElementList=(index)=>{
-         let sourceIds = new Set(this.getPathSourceIds())
-        let arrs = [...this.state.trees.entries()].map((tree, treeI)=>([tree[1][index[treeI]].nodes, tree[1][index[treeI]].edgeLabels]))
-        let paths = [...this.state.trees.entries()].map((tree,treeI)=>(tree[1][index[treeI]])).flat()
-        let nodes = [];
-        
-        [...new Set(arrs.map(p=> p[0]).flat())].forEach((id) => {
-            nodes.push({
-                data: {
-                    id: String(id),
-                    nodeType: this.props.labelsUsed.nameLookupNode(this.props.nodeData.getEntry(id).labels).toString(), 
-                    label:  this.props.nodeData.getEntry(id).name, 
-                    pLabel: this.props.nodeData.getEntry(id).pname === "" ? undefined : this.props.nodeData.getEntry(id).pname,
-                    origin: this.state.integrationData.get(String(id)),
-                    queryClass: sourceIds.has(String(id)) ? 'sourceKinase': 'undefined'
-//                     queryClass: sourceIds.has(id) ? 'sourceKinase': 'undefined'
-                    }
-                });
-                }
-            );
-        
-
-        let edges = [];
-         paths.forEach((path)=>{
-            for(let i=0; i<path.nodes.length-1; ++i ){
-                let id = this.edgeIdFromNodeIds(path.nodes[i+1] , path.nodes[i]); 
-                edges.push({
-                    data:{
-                        id: id,
-                        //NOTE: tracing the path backwards so source comes second
-                        source: String(path.nodes[i+1]), 
-                        target: String(path.nodes[i]), 
-                        edgeType: this.props.labelsUsed.nameLookupEdge(path.edgeLabels[i]).toString(), 
-                        origin: this.state.integrationData.get(id),
-                    }
-                    
-                });
-            }
-        });
-        
-        
-        return [...nodes, ...edges];
-    }
-    
-    handleSubmitDensePath=(nodeId, fn)=>{
-
+ 
+    handleSubmit_siteEstimation=( pathIds, fn)=>{
+        console.log("siteE", pathIds)
+       // let pathIds = nodeId;
         let versionDef = this.props.versionCardsO.getVersionDefinition(this.state.selectedVersionIndex);
     
         versionDef = {...versionDef, 
             versions : [...versionDef.versions,
                 this.props.versionsData.nameLookup.get("Protein-Harboring-Sites"),
-                this.props.versionsData.nameLookup.get("Kinase-Substrate")
+                this.props.versionsData.nameLookup.get("Kinase-Substrate"),
+                this.props.versionsData.nameLookup.get("Co-Occurrence"),
         ]}
         let aLab = this.props.labelsUsed.getUsedLabelSum(versionDef.versions);
         
-        versionDef = {versions: versionDef.versions, vertexLabels: [...aLab.nodes], edgeLabels : [...aLab.edges]}
-        console.log("VD",versionDef)
-            //gets the nodes corresponding to the paths
-            let pathNodes = [...this.state.trees.entries()].map((tree)=>tree[1][this.state.siteData.get(nodeId).pathIndex[tree[0]]].nodes );
-
-            let command = {cmd:"dpth",
-                ...versionDef, 
-                pathNodes: pathNodes,
-                mechRatio : 10
-            };
-            
-
+        versionDef = {versions: versionDef.versions, vertexLabels: [...aLab.nodes], edgeLabels : [...aLab.edges]};
         
-            
-            Axios.post('http://'+this.props.backAddr, JSON.stringify(command)).then((response)=>{
-                console.log("densePathSearch response",response)
+        //let pathNodes = [...this.state.trees.entries()].map((tree)=>tree[1][this.state.siteData.get(nodeId).pathIndex[tree[0]]].nodes );
+        
+        let treesAr = [...this.state.trees.entries()].map(e => e[1]); //gets an array of each tree (1 or 2)
+        let paths = treesAr.map((tree,i) => tree[pathIds[i]]);//gets the path corresponding to each value in nodeIds
+        let pathNodes = paths.map(path=>path.nodes)
+        console.log("PN", pathNodes, this.props);
+      //  console.log("VD",versionDef);
+            //gets the nodes corresponding to the paths
+           // let pathNodes = [...this.state.trees.entries()].map((tree)=>tree[1][this.state.siteData.get(nodeId).pathIndex[tree[0]]].nodes );
+
+        let command = {
+            cmd:"sitee",
+            ...versionDef,
+             pathNodes: pathNodes.flat(),
+             sources: pathNodes.map(p=> p[p.length-1]),
+             sink: pathNodes[0][0],
+              mechRatio : 1000
+        };
+        
+        Axios.post('http://'+this.props.backAddr, JSON.stringify(command)).then((response)=>{
+      
+            console.log("hi site est", response.data)
+            let sourceIds = new Set(this.getPathSourceIds())
                 const updateDenseElements=()=>{
 
-                    let rootElements = this.pathIndexToElementList(this.state.siteData.get(nodeId).pathIndex)
+                   // let rootElements = this.pathIndexToElementList(pathIds[0]);
                     
                     let nodes = [];
                     let edges = [];
                     
-                    let paths = response.data.branches.flat();
+                    let paths = response.data.trees.flat();
+                    console.log("Paths ", paths);
                     
                         [...nodeIndexes].forEach((id) => {
+                            let nodeType = this.props.labelsUsed.nameLookupNode(this.props.nodeData.getEntry(id).labels).toString();
+                            let label =  this.props.nodeData.getEntry(id).name;
                             nodes.push({
                                 data: {
                                     id: String(id),
-                                    nodeType: this.props.labelsUsed.nameLookupNode(this.props.nodeData.getEntry(id).labels).toString(), 
-                                    label:  this.props.nodeData.getEntry(id).name, 
+                                    nodeType: nodeType, 
+                                    label:  nodeType == "Site" ? label.substr(label.search(':')+1, label.length) :label, 
                                     pLabel: this.props.nodeData.getEntry(id).pname === "" ? undefined : this.props.nodeData.getEntry(id).pname,
-                                  
+                                    origin: this.state.integrationData.get(String(id)),
+                                    queryClass: sourceIds.has(String(id)) ? 'sourceKinase': 
+                                        command.sink === id ? "sinkProtein":
+                                        'undefined'
                                     }
                                 });
                                 }
                             );
 
-                    
-//                         let edges = [];
                         paths.forEach((path)=>{
                             for(let i=0; i<path.nodes.length-1; ++i ){
                                 let id = this.edgeIdFromNodeIds(path.nodes[i+1] , path.nodes[i]); 
@@ -467,24 +439,28 @@ class PathSearchComponent extends React.Component{
                                         source: String(path.nodes[i+1]), 
                                         target: String(path.nodes[i]), 
                                         edgeType: this.props.labelsUsed.nameLookupEdge(path.edgeLabels[i]).toString(), 
+                                        origin: this.state.integrationData.get(String(id)),
                                     }
                                     
                                 });
                             }
                         });
+                       
                         
                         let elements = new Map([...nodes, ...edges].map(e=> [e.data.id, e]));
-                        rootElements.forEach(e=> elements.set(e.data.id,e));
+                       // rootElements.forEach(e=> elements.set(e.data.id,e));
                         
                         this.setState({displayDenseElements: [...elements.values()],
-                            densePath: nodeId
+                            densePath: pathIds[0]
                         }, fn)
                 }
-            let nodeIndexes = new Set(response.data.branches.flat().map(p => p.nodes).flat())
-//             let nodeIndexes = response.data.map(edge => [edge.i1, edge.i2]).flat()
-            this.props.handleNodeLookupIndex(nodeIndexes, updateDenseElements)
-        });
+                let nodeIndexes = new Set(response.data.trees.flat().map(p => p.nodes).flat())
+            
+                this.props.handleNodeLookupIndex(nodeIndexes, updateDenseElements);
 
+        });
+        
+        
     }
     
     
@@ -540,6 +516,7 @@ class PathSearchComponent extends React.Component{
                         ref={this.cy}
 //                         displayDenseElements={this.state.displayDenseElements}
                         handleSubmitDensePath={this.handleSubmitDensePath}
+                        handleSubmit_siteEstimation={this.handleSubmit_siteEstimation}
                         handleResetMainView={this.handleResetMainView}
                         
                         getElementsFromPath={this.getElementsFromPath}

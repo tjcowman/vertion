@@ -499,6 +499,90 @@ namespace Commands
            return ret;
     }
     
+    
+    
+    template<class GT>
+    json sitee(const VGraph<GT>& graph, ViewCache<GT>& viewCache, const json& args)
+    {
+        json ret;// = json::array();
+        ret ["trees"] = json::array();
+         
+        ViewKey<GT> key = viewKeyFromArgs<GT>(args);
+        if(!key.valid())
+        {
+           // for(const auto& e : sourceNames)
+             //   ret["trees"].push_back(json::array());
+            return ret;   
+        }
+        IntegratedViewer<GT> IV = viewCache.lookup(key);
+        RandomWalker RW(IV);
+        auto pathIndexs  = args["pathNodes"].get<std::vector<typename GT::Index>>();
+        std::vector<VertexS<GT>> source;
+        for(const auto & e : pathIndexs)
+            source.push_back(VertexS<GT>(e));
+        
+        //specifiy arguments
+        typename RandomWalker<GT>::Args_Walk args_walk{.15, 1e-6, GraphList<VertexS<GT>>()};
+        //auto weights = RW.walk(GraphList<VertexS<GT>>(source), args_walk);
+         
+        //use wieghts to bias the nee path computation 
+        
+        KinasePaths<GT> KP(IV);
+        KP.arg_weightFraction_ = 1;
+        
+
+        auto sourceI = args["sources"].get<std::vector<typename GT::Index>>();
+        auto sourceIV = std::vector<VertexI<GT>>();
+        for(const auto& e : sourceI)
+            sourceIV.push_back(VertexI<GT>(e));
+        auto sinkI = args["sink"].get<typename GT::Index>();
+        auto sinkIV = GraphList<VertexI<GT>>(VertexI<GT>(sinkI));
+       // std::cout<<"GRRR "<<sinkIV<<std::endl;
+        
+        
+      KP.computeSiteE(sourceIV, sinkIV, args["mechRatio"]/*,*/ /*viewCache.lookupProximities(key),*//* args["localProximity"]*/);
+        viewCache.finishLookup(key);
+   // std::cout<<"CMPTED"<<std::endl;    
+        
+        for(const auto& tree : KP.getPaths())
+        {
+            int pNum=0;
+            auto mainTree = json::array();
+            for(const auto& path : tree)
+            {
+                 //Make sure there was a path
+                if(path.visitOrder_.size()>0)
+                {
+                    mainTree[pNum]["nodeScore"] = path.nodeScore_;
+                    mainTree[pNum]["direction"] = path.nodeDirection_;
+                    mainTree[pNum]["nodes"] = std::vector<int>(); 
+                    mainTree[pNum]["edgeLabels"] = std::vector<long>();
+                    
+                    mainTree[pNum]["totalWeight"] = path.totalWeight_;
+                    
+                    for(const auto & e : path.visitOrder_)
+                        mainTree[pNum]["nodes"].push_back(e);
+                    
+                    for(const auto& e : path.edgeLabels_)
+                        mainTree[pNum]["edgeLabels"].push_back(e.getBits().to_ulong());
+                    
+                    ++pNum;
+                }
+            }
+            ret["trees"].push_back( mainTree);
+        }
+            
+
+        return ret;
+    }
+    
+    template<class GT>
+    json crossp(const VGraph<GT>& graph, ViewCache<GT>& viewCache, const json& args)
+    {
+         json ret = json::array();
+           return ret;
+    }
+    
     /*
      * Settings: 
      */

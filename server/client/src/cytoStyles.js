@@ -106,7 +106,8 @@
             selector: "node",
             style:{
                 'border-color' : 'black',
-                'border-width' : '2'
+                'border-width' : '2',
+                'background-color' : 'gray'
             }
         },
         
@@ -114,7 +115,8 @@
             selector: "edge",
             style:{
                 'width' : '3',
-
+                'line-color' : 'gray',
+                'target-arrow-color' : 'gray'
             }
         },
         
@@ -183,7 +185,7 @@
         },
         {
      
-            selector: "[direction]",
+            selector: "[queryClass = 'sinkProtein']",
             style: {
                 'border-color' : 'black',
                 'border-style' : 'double',

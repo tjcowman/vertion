@@ -16,7 +16,7 @@ var undoRedo = require('cytoscape-undo-redo');
 
 undoRedo( Cytoscape ); 
 
-const ggcol=(n)=>{
+/*const ggcol=(n)=>{
     let hues = [...Array(n)].map((e,i) => ((15 + 360/(n))*i)%360 );
     return  hues.map((h) => 'hsl('+h+',65%,65%)' )
 }
@@ -26,9 +26,9 @@ const ggColMap=(labelSet)=>{
     let cMap = new Map();
 //     console.log("HUES", hues);
     
-    [...labelSet].forEach( (e,i) =>  {/*console.log(e,i);*/ cMap.set( e, 'hsl('+hues[i]+',65%,65%)')}  );// hues.map((h) => 'hsl('+h+',65%,65%)' )
+    [...labelSet].forEach( (e,i) =>  {/ cMap.set( e, 'hsl('+hues[i]+',65%,65%)')}  );// hues.map((h) => 'hsl('+h+',65%,65%)' )
     return cMap;
-}
+}*/
 
 
 class CytoscapeLegend extends React.Component{
@@ -208,10 +208,10 @@ class CytoscapeCustom extends React.Component{
                 let nodeTypeSet = new Set();
                 this.cy.edges().forEach((n) => {edgeTypeSet.add(n._private.data.edgeType); /*console.log(n._private.data.edgeType);*/})
                 this.cy.nodes().forEach((n) => {nodeTypeSet.add(n._private.data.nodeType); /*console.log(n._private.data.nodeType);*/})
-                let colorMapEdges = ggColMap(edgeTypeSet);
-                let colorMapNodes = ggColMap(nodeTypeSet);
-                let colorMapBoth = ggColMap(new Set([...nodeTypeSet,...edgeTypeSet]));
-                this.setState({colorMapEdges : colorMapEdges, colorMapNodes: colorMapNodes, colorMapBoth: colorMapBoth}, this.colorElements);
+               // let colorMapEdges = ggColMap(edgeTypeSet);
+              //  let colorMapNodes = ggColMap(nodeTypeSet);
+                //let colorMapBoth = ggColMap(new Set([...nodeTypeSet,...edgeTypeSet]));
+               // this.setState({colorMapEdges : colorMapEdges, colorMapNodes: colorMapNodes, colorMapBoth: colorMapBoth}, this.colorElements);
                 
                 this.layout_fcose();
 //                 console.log("LO", this.props.elements, prevProps.elements)
@@ -552,7 +552,7 @@ class CytoscapeCustom extends React.Component{
                         
                         
                             <Button className=" contextQueryButton btn-secondary" 
-                        
+                                onClick={()=>{this.props.handleSubmit_siteEstimation( this.state.currentHighlight)}}
                             >Site Estimation</Button>
                             
                     
