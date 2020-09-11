@@ -391,10 +391,10 @@ class PathSearchComponent extends React.Component{
         let command = {
             cmd:"sitee",
             ...versionDef,
-             pathNodes: pathNodes.flat(),
-             sources: pathNodes.map(p=> p[p.length-1]),
-             sink: pathNodes[0][0],
-              mechRatio : 1000
+            pathNodes: pathNodes.flat(),
+            sources: pathNodes.map(p=> p[p.length-1]),
+            sink: pathNodes[0][0],
+            mechRatio : 1000
         };
         
         Axios.post('http://'+this.props.backAddr, JSON.stringify(command)).then((response)=>{
@@ -464,6 +464,53 @@ class PathSearchComponent extends React.Component{
     }
     
     
+     handleSubmit_crossPaths=( pathIds, fn)=>{
+        console.log("crossP", pathIds)
+       // let pathIds = nodeId;
+        let versionDef = this.props.versionCardsO.getVersionDefinition(this.state.selectedVersionIndex);
+    
+        versionDef = {...versionDef, 
+            versions : [...versionDef.versions,
+                this.props.versionsData.nameLookup.get("Protein-Harboring-Sites"),
+                this.props.versionsData.nameLookup.get("Kinase-Substrate"),
+                this.props.versionsData.nameLookup.get("Co-Occurrence"),
+        ]}
+        let aLab = this.props.labelsUsed.getUsedLabelSum(versionDef.versions);
+        
+        versionDef = {versions: versionDef.versions, vertexLabels: [...aLab.nodes], edgeLabels : [...aLab.edges]};
+        
+        //let pathNodes = [...this.state.trees.entries()].map((tree)=>tree[1][this.state.siteData.get(nodeId).pathIndex[tree[0]]].nodes );
+        
+        let treesAr = [...this.state.trees.entries()].map(e => e[1]); //gets an array of each tree (1 or 2)
+        let paths = treesAr.map((tree,i) => tree[pathIds[i]]);//gets the path corresponding to each value in nodeIds
+        let pathNodes = paths.map(path=>path.nodes)
+        let path1 = pathNodes[0];
+        let path2 = pathNodes[1];
+        console.log("PN", pathNodes, this.props);
+      //  console.log("VD",versionDef);
+            //gets the nodes corresponding to the paths
+           // let pathNodes = [...this.state.trees.entries()].map((tree)=>tree[1][this.state.siteData.get(nodeId).pathIndex[tree[0]]].nodes );
+
+        let command = {
+            cmd:"crossp",
+            ...versionDef,
+           // pathNodes: pathNodes.flat(),
+            path1 : pathNodes[0],
+            path2 : pathNodes[1],
+            sources: pathNodes.map(p=> p[p.length-1]),
+            sink: pathNodes[0][0],
+            mechRatio : 1000
+        };
+        
+        Axios.post('http://'+this.props.backAddr, JSON.stringify(command)).then((response)=>{
+      
+            console.log("hi cross p", response.data)
+            
+        
+        
+        })
+     }
+    
 
     handleResetMainView=()=>{
         console.log("Cy",this.cy)
@@ -517,9 +564,11 @@ class PathSearchComponent extends React.Component{
 //                         displayDenseElements={this.state.displayDenseElements}
                         handleSubmitDensePath={this.handleSubmitDensePath}
                         handleSubmit_siteEstimation={this.handleSubmit_siteEstimation}
+                        handleSubmit_crossPaths={this.handleSubmit_crossPaths}
                         handleResetMainView={this.handleResetMainView}
                         
                         getElementsFromPath={this.getElementsFromPath}
+                        subPath = {this.state.densePath} //mark if one of the non main trees is being displayed (TODO: don't just hijack the old densePath state)
                     />
                 </div>
                 

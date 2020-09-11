@@ -480,9 +480,7 @@ class CytoscapeCustom extends React.Component{
                     onClick={this.layout_fcose}
                 >Layout</Button>
                 
-                <Button className="btn-secondary" style={{display: 'inline-block'}}
-                    onClick={this.props.handleResetMainView}
-                >Back</Button>
+
                 
 
                 
@@ -546,7 +544,7 @@ class CytoscapeCustom extends React.Component{
                 
                    
                     
-                    {this.state.currentHighlight !== undefined ?
+                    {this.state.currentHighlight !== undefined && this.props.subPath == -1 ?
                         <Card className=" rounded-0" style={{marginTop:'5px'}}>
                             <Card.Body>
                         
@@ -558,7 +556,7 @@ class CytoscapeCustom extends React.Component{
                     
                         
                             <Button className=" contextQueryButton btn-secondary"
-
+                                  onClick={()=>{this.props.handleSubmit_crossPaths( this.state.currentHighlight)}}
                             >Cross Paths</Button>
                         
                             
@@ -567,6 +565,15 @@ class CytoscapeCustom extends React.Component{
                         </Card>
                     : ""}
                     
+                {this.props.subPath !== -1 ?
+                    <Card className=" rounded-0" style={{marginTop:'5px'}}>
+                        <Card.Body>
+                            <Button className=" contextQueryButton btn-secondary" 
+                                onClick={this.props.handleResetMainView}
+                            >Back</Button>
+                        </Card.Body>
+                    </Card>
+                : ""}
                    
            
                 {/*this.renderExport()*/}

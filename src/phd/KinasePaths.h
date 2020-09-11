@@ -21,7 +21,7 @@ class KinasePaths
         
         
         void compute(const std::vector<VertexI<GT>>& source, const GraphList<VertexS<GT>>& sinks, float mechRatio);
-        void computeSiteE(const std::vector<VertexI<GT>>& source, const GraphList<VertexS<GT>>& sinks, float mechRatio);
+        void computeSiteE(const std::vector<VertexI<GT>>& source, const GraphList<VertexS<GT>>& sinks,  const GraphList<VertexS<GT>>& reWeights, float mechRatio);
         
         void computeCrossPaths2(const  GraphList<VertexI<GT>>& source, const GraphList<VertexS<GT>>& sinks, float mechRatio/*,  const GraphList<VertexS<GT>>& globalProximity*/, bool localProximityOverride);
         void computeCrossPaths(const VertexS<GT>& source , const GraphList<VertexS<GT>>& sinks);
@@ -41,6 +41,8 @@ class KinasePaths
         
         
         typename GT::Value weightFunction(typename GT::Index row, typename GT::Index edge, typename GT::Value original, float mechRatio)const;
+       // typename GT::Value weightFunctionRWR(typename GT::Index row, typename GT::Index edge, typename GT::Value original,  float mechRatio)const;
+        
         void computeNodeScores( const GraphList<VertexS<GT>>& sinks);
         //calculates the shortest paths given the current settings, returns the shortest path lengths
         auto runSP(typename GT::Index sourceIndex, const typename IntegratedViewer<GT>::ArrayA& A, float mechRatio, const typename IntegratedViewer<GT>::ArrayIA& IA, const typename IntegratedViewer<GT>::ArrayJA& JA, const typename IntegratedViewer<GT>::ArrayL& L);
@@ -512,7 +514,7 @@ void KinasePaths<GT>::compute(const std::vector<VertexI<GT>>& source, const Grap
 
 //NOTE: the paths are returned using global indexes
 template<class GT>
-void KinasePaths<GT>::computeSiteE(const std::vector<VertexI<GT>>& source, const GraphList<VertexS<GT>>& sinks, float mechRatio)
+void KinasePaths<GT>::computeSiteE(const std::vector<VertexI<GT>>& source, const GraphList<VertexS<GT>>& sinks,  const GraphList<VertexS<GT>>& reWeights, float mechRatio)
 {
     computeNodeScores(sinks);
     
@@ -531,7 +533,7 @@ void KinasePaths<GT>::computeSiteE(const std::vector<VertexI<GT>>& source, const
         {
 //             std::cout<<-log(globalProximity[JA[edge]].value_)<< " : "<<Arw[edge]* -log(globalProximity[JA[edge]].value_)<<std::endl;
             //Arw[edge] = weightFunction( row, edge, Arw[edge]* -log((*proxUsed)[JA[edge]].value_) , mechRatio );  //Use the rwr score to weight, global so will be no 0s
-            Arw[edge] = weightFunction( row, edge, Arw[edge]/** (1/globalProximity[JA[edge]].value_)*/ , mechRatio );  //Use the rwr score to weight, global so will be no 0s
+            Arw[edge] = weightFunction( row, edge, Arw[edge]  * 1/(reWeights[JA[edge]].value_)/** (1/globalProximity[JA[edge]].value_)*/ , mechRatio );  //Use the rwr score to weight, global so will be no 0s
         }
     }
 

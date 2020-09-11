@@ -523,7 +523,7 @@ namespace Commands
         
         //specifiy arguments
         typename RandomWalker<GT>::Args_Walk args_walk{.15, 1e-6, GraphList<VertexS<GT>>()};
-        //auto weights = RW.walk(GraphList<VertexS<GT>>(source), args_walk);
+        auto weights = RW.walk(GraphList<VertexS<GT>>(source), args_walk);
          
         //use wieghts to bias the nee path computation 
         
@@ -540,7 +540,7 @@ namespace Commands
        // std::cout<<"GRRR "<<sinkIV<<std::endl;
         
         
-      KP.computeSiteE(sourceIV, sinkIV, args["mechRatio"]/*,*/ /*viewCache.lookupProximities(key),*//* args["localProximity"]*/);
+        KP.computeSiteE(sourceIV, sinkIV, weights, args["mechRatio"]/*,*/ /*viewCache.lookupProximities(key),*//* args["localProximity"]*/);
         viewCache.finishLookup(key);
    // std::cout<<"CMPTED"<<std::endl;    
         
@@ -579,8 +579,51 @@ namespace Commands
     template<class GT>
     json crossp(const VGraph<GT>& graph, ViewCache<GT>& viewCache, const json& args)
     {
-         json ret = json::array();
-           return ret;
+        json ret;
+           
+        
+        ViewKey<GT> key = viewKeyFromArgs<GT>(args);
+        
+       
+        if(!key.valid())
+        {
+            return json::array();
+        }
+        IntegratedViewer<GT> IV = viewCache.lookup(key);
+        
+        RandomWalker RW(IV);
+        auto pathIndexs  = args["pathNodes"].get<std::vector<typename GT::Index>>();
+        std::vector<VertexS<GT>> source;
+        for(const auto & e : pathIndexs)
+            source.push_back(VertexS<GT>(e));
+
+        typename RandomWalker<GT>::Args_Walk args_walk{.15, 1e-6, GraphList<VertexS<GT>>()};
+
+        //use wieghts to bias the nee path computation 
+        
+        
+        KinasePaths<GT> KP(IV);
+        KP.arg_weightFraction_ = 1;
+
+        auto sourceI = args["sources"].get<std::vector<typename GT::Index>>();
+        auto sourceIV = std::vector<VertexI<GT>>();
+        for(const auto& e : sourceI)
+            sourceIV.push_back(VertexI<GT>(e));
+        auto sinkI = args["sink"].get<typename GT::Index>();
+        auto sinkIV = GraphList<VertexI<GT>>(VertexI<GT>(sinkI));
+       // std::cout<<"GRRR "<<sinkIV<<std::endl;
+        
+        
+       // KP.computeSiteE(sourceIV, sinkIV, args["mechRatio"]/*,*/ /*viewCache.lookupProximities(key),*//* args["localProximity"]*/);
+        
+        
+        
+        viewCache.finishLookup(key);
+        
+        
+        
+        
+        return ret;
     }
     
     /*
