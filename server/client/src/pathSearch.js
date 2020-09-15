@@ -393,7 +393,7 @@ class PathSearchComponent extends React.Component{
             ...versionDef,
             pathNodes: pathNodes.flat(),
             sources: pathNodes.map(p=> p[p.length-1]),
-            sink: pathNodes[0][0],
+            sink: [pathNodes[0][0]],
             mechRatio : 1000
         };
         

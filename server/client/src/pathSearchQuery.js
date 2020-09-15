@@ -238,7 +238,7 @@ class PathQueryComponent extends React.Component{
         
         let command = {cmd:"pths",
              ...versionDef, 
-            lookupType: this.state.lookupType, //pname
+           // lookupType: this.state.lookupType, //pname
             weightFraction: Number(this.state.minWeight),
             kinase: this.parseKinase(),
             mechRatio: Number(this.state.mechRatio),

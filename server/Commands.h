@@ -28,6 +28,21 @@ ViewKey<GT> viewKeyFromArgs(const json& args)
     
 }
 
+/* 
+ * Gets a vertex list from an array of passed indexes 
+ */
+template<class GT> 
+GraphList<VertexS<GT>> getVertexList(const std::string& key, const json& j )
+{
+    GraphList<VertexS<GT>> L;
+    auto indexes = j[key].template get<std::vector<typename GT::Index>>();
+    
+    for(const auto& e : indexes)
+        L.push_back(VertexS<GT>(e));
+    
+    return L;
+}
+
 
 namespace Commands
 {
@@ -36,29 +51,19 @@ namespace Commands
     template<class GT>
     json lkpn(const VGraph<GT>& graph, const json& args)
     {
-//         std::cout<<args["names"]<<std::endl;
-
         std::vector<std::string> names = args["names"].get<std::vector<std::string>>();
 
-        //js["labels"] = graph.getVertexData().lookupLabels(i).getBits().to_ulong();
-
         json ret;
-//         std::vector<typename GT::Index> ids;
-//         std::vector< VertexLab> labs;
+
         for(const auto& e : names)
         {
             auto id = graph.lookupVertex(e);
             if(id != GT::invalidIndex)
-//                 ids.push_back(id);
                 ret.push_back({{"id",id},{"l", graph.getVertexData().lookupLabels(id).getBits().to_ulong()}});
             else
                   ret.push_back({{"id",-1}});
-//                 ids.push_back(-1);
 
         }
-
-
-//         ret["ids"] = ids;
         return ret;
     }
 
@@ -80,8 +85,7 @@ namespace Commands
                 
             });
         }
-//         std::cout<<"l2"<<std::endl;
-
+        
         return ret;
     }
 
@@ -104,10 +108,6 @@ namespace Commands
             jsArr.push_back(js);
         }
 
-        //Version tree
-//         auto versionTree = graph.getVersionChildLists();
-//         json jsArr2 = json(versionTree);
-
         //labels
         json labels;
         labels["vertex"]["names"] = graph.getVertexLabels();
@@ -117,11 +117,6 @@ namespace Commands
 
         labels["edge"] = graph.getEdgeLabels();
 
-//         for(const auto& e :  graph.getVertexLabels())
-//             std::cout<<e<<std::endl;
-
-//         std::cout<<labels["vertex"]<<std::endl;
-        //NodeData
         //Need form [{"id":0, "name":"...", "labels":[0,1,1] }]
         auto vertexData=json::array();
 
@@ -242,7 +237,6 @@ namespace Commands
     {
         json retVal;
 
-        
         ViewKey<GT> key = viewKeyFromArgs<GT>(args);
         if(!key.valid())
             retVal =   json{{"error", "invalid view"}};
@@ -256,16 +250,6 @@ namespace Commands
         }
         
         return retVal;
-//           //Need to make sure the integration has been generated
-//           IntegratedViewer<GT> IV = viewCache.lookup(key);
-//           json ret = viewCache.getViewSummary(key.key_);
-//           viewCache.finishLookup(key);
-//           return ret;
-//         }
-//         else
-//         {
-//         
-//         }
     }
 
     template<class GT>
@@ -324,27 +308,10 @@ namespace Commands
         }
     };
     
-    
-//     struct PhosphorylationFold{
-//         std::string name_;
-//         int pos_;
-//         float score_;
-//     };
-// 
-//     void from_json(const json& j, PhosphorylationFold& p)
-//     {
-//         j[0].get_to(p.name_);
-//         j[1].get_to(p.pos_);
-//         j[2].get_to(p.score_);
-//     }
-
-//     template<class GT>
-//     static std::vector<typename GT::Index> kinaseIndexesCache;
-//     
     template<class GT>
     GraphList<VertexS<GT>> parsePathSites(const BiMap<typename GT::Index, std::string>& idLookupMap, const json& siteArgs){
         
-//         Check the number of columns, if 3, assume middle is sitebp and last is score
+//       Check the number of columns, if 3, assume middle is sitebp and last is score
         try
         {
             bool nameOnly = siteArgs[0].size() ==1;
@@ -358,7 +325,7 @@ namespace Commands
                 {
                     auto graphIndex = idLookupMap.findr(e[0]);
                     
-                    if(graphIndex !=  idLookupMap.endr())  //GT::invalidIndex)
+                    if(graphIndex !=  idLookupMap.endr())
                         sinkList.push_back(VertexS<GT>(graphIndex->second, 1));
                 }
             }
@@ -368,7 +335,7 @@ namespace Commands
                 {
                     auto graphIndex = idLookupMap.findr(e[0]);
                     
-                    if(graphIndex !=  idLookupMap.endr())  //GT::invalidIndex)
+                    if(graphIndex !=  idLookupMap.endr())
                         sinkList.push_back(VertexS<GT>(graphIndex->second, e[1]));
                 }
             }
@@ -377,7 +344,7 @@ namespace Commands
                 for(const auto& e : siteArgs)
                 {
                     auto graphIndex = idLookupMap.findr(e[0]);
-                    if(graphIndex != idLookupMap.endr())//GT::invalidIndex)
+                    if(graphIndex != idLookupMap.endr())
                         sinkList.push_back(VertexS<GT>(graphIndex->second, e[2]) );
                 }
                 
@@ -412,9 +379,8 @@ namespace Commands
         
         IntegratedViewer<GT> IV = viewCache.lookup(key);
         
-
         KinasePaths KP(IV);
-        KP.arg_weightFraction_ = args["weightFraction"];
+        KP.arg_mechRatio_ = args["mechRatio"];
         
         
         if(args["sites"].size() == 0)
@@ -424,10 +390,7 @@ namespace Commands
             return ret;
         }
             
-        GraphList<VertexS<GT>> sinkList = args["lookupType"] == "pname" ? //Default to uniprot
-            parsePathSites<GT>(graph.alternateMapping_, args["sites"]) :
-            parsePathSites<GT>(graph.getVertexData().getBiMap(), args["sites"]);
-
+        GraphList<VertexS<GT>> sinkList = parsePathSites<GT>(graph.getVertexData().getBiMap(), args["sites"]);
             
         if(sinkList.size() == 0)
         {
@@ -436,27 +399,17 @@ namespace Commands
             return ret;
         }
         
-        std::vector<VertexI<GT>> kinaseList;
+        //std::vector<VertexI<GT>> kinaseList;
+       GraphList<VertexS<GT>> kinaseList;
         
-        if(args["lookupType"] == "uniprot")
-        {
-            for(const auto& e : sourceNames)
-                kinaseList.push_back(VertexI<GT>( graph.lookupVertex(e)));
 
-        }
-        else
-        {
-            for(const auto& e : sourceNames)
-            {
-                auto alternateMapping = graph.alternateMapping_.findr(e);
-                if(alternateMapping != graph.alternateMapping_.endr())
-                    kinaseList.push_back(VertexI<GT>(alternateMapping->second));
-            }    
-        }
-        
+        for(const auto& e : sourceNames)
+            kinaseList.push_back(VertexI<GT>( graph.lookupVertex(e)));
+
+
         sinkList.sort(Sort::indexInc);
         
-        KP.compute(kinaseList, sinkList, args["mechRatio"]/*,*/ /*viewCache.lookupProximities(key),*//* args["localProximity"]*/);
+        KP.compute(kinaseList, sinkList);
         viewCache.finishLookup(key);
    // std::cout<<"CMPTED"<<std::endl;    
         
@@ -504,17 +457,16 @@ namespace Commands
     template<class GT>
     json sitee(const VGraph<GT>& graph, ViewCache<GT>& viewCache, const json& args)
     {
-        json ret;// = json::array();
+        json ret;
         ret ["trees"] = json::array();
          
         ViewKey<GT> key = viewKeyFromArgs<GT>(args);
         if(!key.valid())
         {
-           // for(const auto& e : sourceNames)
-             //   ret["trees"].push_back(json::array());
             return ret;   
         }
         IntegratedViewer<GT> IV = viewCache.lookup(key);
+        
         RandomWalker RW(IV);
         auto pathIndexs  = args["pathNodes"].get<std::vector<typename GT::Index>>();
         std::vector<VertexS<GT>> source;
@@ -528,19 +480,13 @@ namespace Commands
         //use wieghts to bias the nee path computation 
         
         KinasePaths<GT> KP(IV);
-        KP.arg_weightFraction_ = 1;
-        
+        KP.arg_mechRatio_ = args["mechRatio"];
 
-        auto sourceI = args["sources"].get<std::vector<typename GT::Index>>();
-        auto sourceIV = std::vector<VertexI<GT>>();
-        for(const auto& e : sourceI)
-            sourceIV.push_back(VertexI<GT>(e));
-        auto sinkI = args["sink"].get<typename GT::Index>();
-        auto sinkIV = GraphList<VertexI<GT>>(VertexI<GT>(sinkI));
-       // std::cout<<"GRRR "<<sinkIV<<std::endl;
-        
-        
-        KP.computeSiteE(sourceIV, sinkIV, weights, args["mechRatio"]/*,*/ /*viewCache.lookupProximities(key),*//* args["localProximity"]*/);
+    
+        auto sources = getVertexList<GT>("sources", args);
+        auto sinks = getVertexList<GT>("sink", args);
+
+        KP.computeSiteE(sources, sinks, weights);
         viewCache.finishLookup(key);
    // std::cout<<"CMPTED"<<std::endl;    
         
@@ -604,6 +550,7 @@ namespace Commands
         
         KinasePaths<GT> KP(IV);
         KP.arg_weightFraction_ = 1;
+      
 
         auto sourceI = args["sources"].get<std::vector<typename GT::Index>>();
         auto sourceIV = std::vector<VertexI<GT>>();
@@ -644,17 +591,6 @@ namespace Commands
         KP.arg_weightFraction_ = 1;
         //Assume 2 paths 
         auto nodes = args["pathNodes"].get<std::vector<std::vector<typename GT::Index>>>();
-       /* 
-        GraphList<VertexS<GT>>  kinSet1;
-        GraphList<VertexS<GT>>  kinSet2;
-        
-        for(const auto& e : nodes[0])
-            if(IV.getLabels(IV.getViewIndex(e)) == 2)
-                kinSet1.push_back(VertexS<GT>(e,1));
-                
-        for(const auto& e : nodes[1])
-            if(IV.getLabels(IV.getViewIndex(e)) == 2)
-                kinSet2.push_back(VertexS<GT>(e,1));*/
         
           json ret = json();
             
@@ -764,87 +700,4 @@ namespace Commands
         return ret;
     }
     
-//      template<class GT>
-//     json dpth(const VGraph<GT>& graph, ViewCache<GT>& viewCache, const json& args)
-//     {
-//         ViewKey<GT> key = viewKeyFromArgs<GT>(args);
-//        
-//         if(!key.valid())
-//         {
-//             return json::array();
-//         }
-//         IntegratedViewer<GT> IV = viewCache.lookup(key);
-//         
-//         auto nodes = args["pathNodes"].get<std::vector<typename GT::Index>>();
-//         GraphList<VertexS<GT>> restartVector;
-//         for(const auto & e : nodes)
-//             restartVector.push_back(VertexS<GT>(IV.getViewIndex(e),1));
-//         
-//        
-//         
-//         
-//         computation code here
-//         RandomWalker<GT> RW(IV);
-// 
-//         typename RandomWalker<GT>::Args_Walk args_walk{.15, 1e-6, GraphList<VertexS<GT>>()};
-//         auto res = RW.walk(restartVector, args_walk);
-//         auto degrees = IV.getDegrees();
-//         
-//         Divide weights by the background?
-//         auto backgroundProx = viewCache.lookupProximities(key);
-//         for(typename GT::Index i=0; i< res.size(); ++i)
-//         {
-//             auto originalIndex =  IV.getOriginalIndex(res[i].index_);
-//             std::cout<<res[i]<<"\t";
-//             res[i].value_ = res[i].value_ / degrees[i].value_;// log(res[i].value_) / pow(degrees[i].value_,2);
-//             res[i].value_ = res[i].value_ / degrees[i].value_;// log(res[i].value_) / pow(degrees[i].value_,2);
-//             std::cout<<res[i]<<std::endl;
-//             res[i].value_ = res[i].value_ / backgroundProx[i].value_;
-//             res[i].index_ = originalIndex;
-//         }
-//             
-//         std::cout<<"RWR size "<<res.size()<<std::endl;
-//         res.sort(Sort::valueDec);
-//         res.resize(args.at("newNodes").get<int>()+restartVector.size());
-//         
-//         for(auto& e : restartVector)
-//             e.index_ = IV.getOriginalIndex(e.index_);
-//         
-//         res.push_back(restartVector);
-//         std::cout<<"RWRS size "<<res.size()<<std::endl;
-//         auto edges = IV.mapVertexes(res);
-//         std::cout<<"E size "<<edges.size()<<std::endl;
-//         for(auto& e :edges)
-//         {
-//             e.index1_ = (e.index1_);
-//             e.index2_ =  (e.index2_);
-//         }
-//         
-//         densePath.push_back(EdgeElement<GT>(viewer_->getOriginalIndex(e), currentIndex_G, 1, viewer_->getLabels(viewer_->getOriginalIndex(e), currentIndex_G)));
-//         
-//         
-//         viewCache.finishLookup(key);
-//         json ret = json::array();
-//         for(const auto& e : edges)
-//             ret.push_back(e);
-//         return ret;
-//     }
-//     
-    
-
-//     template<class GT>
-//     json dpth(const VGraph<GT>& graph, ViewCache<GT>& viewCache, const json& args)
-//     {
-//         json ret = json::array();;
-//         ViewKey<GT> key = viewKeyFromArgs<GT>(args);
-//         IntegratedViewer<GT> IV = viewCache.lookup(key);
-//         
-//         KinasePaths KP(IV);
-//         auto edges = KP.computeDense(args["nodes"].get<std::vector<typename GT::Index>>());
-//         
-//         for(const auto& e : edges)
-//             ret.push_back(e);
-//         
-//         return ret;
-//     }
 };

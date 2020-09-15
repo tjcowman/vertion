@@ -121,10 +121,18 @@
         },
         
         {
-            selector: "edge[edgeType = 'Harboring']",
+            selector: "edge[edgeType = 'Interaction']",
             style:{
                 'width' : '3',
                 'line-style':'dashed'
+
+            }
+        },
+        {
+            selector: "edge[edgeType = 'Harboring']",
+            style:{
+                
+                'line-style':'solid'
 
             }
         },
