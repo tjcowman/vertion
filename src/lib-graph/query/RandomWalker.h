@@ -46,7 +46,7 @@ std::pair<long, std::vector<typename GT::Calc> > LinearAlgebraSolver(
     typename GT::Calc totaldiff = 1.0;
     while(totaldiff > epsilon)
     {
-        std::cout<<"before new next ranks update "<<ranks.size()<<std::endl;
+       // std::cout<<"before new next ranks update "<<ranks.size()<<std::endl;
         std::vector<typename GT::Calc> ranksNext(nodes, 0.0 );
 
         for(typename GT::Index n=0; n<nodes; ++n)
@@ -70,15 +70,15 @@ std::pair<long, std::vector<typename GT::Calc> > LinearAlgebraSolver(
             }
         }
 
-std::cout<<"before ranksNext update "<<ranks.size()<<" : "<<ranksNext.size()<<" : "<<nodes<<std::endl;
+//std::cout<<"before ranksNext update "<<ranks.size()<<" : "<<ranksNext.size()<<" : "<<nodes<<std::endl;
         for(typename GT::Index i=0; i<nodes; ++i) 
         {
             ranksNext[i] = ((1.0-alpha)*ranksNext[i]) + (alpha*restartWeights[i]);
         }
-std::cout<<"before new normL1"<<std::endl;
+//std::cout<<"before new normL1"<<std::endl;
         
         totaldiff = computeNormL1<typename GT::Index,typename GT::Calc>(ranksNext.begin(), ranksNext.end(), ranks.begin());
-        std::cout<<"RWR iter : "<<iterationsToConvergence<<" : "<<totaldiff<<std::endl;
+        //std::cout<<"RWR iter : "<<iterationsToConvergence<<" : "<<totaldiff<<std::endl;
         ranks = ranksNext;
         ++iterationsToConvergence;
 //         return std::make_pair(iterationsToConvergence, ranks);
@@ -297,7 +297,7 @@ Walk<GT> RandomWalker<GT>::walk(typename  GT::Calc alpha, typename  GT::Calc eps
     else
         ranks = initialRanks.getValues();
     
-std::cout<<"starting solver"<<std::endl;
+//std::cout<<"starting solver"<<std::endl;
     std::pair<long,  std::vector<typename GT::Calc> > result =  solver(nodes, rowTotalWeight, IAU, JA, A, restartVector, ranks, alpha, epsilon);
     
     Walk<GT> retVal;

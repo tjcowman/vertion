@@ -28,32 +28,59 @@ void to_json(json& j, const EdgeElement<GT>& e)
 }
 
 template<class GT>
+void to_json(json& j, const Path<GT>& path)
+{
+    j["nodeScore"] = path.nodeScore_;
+    j["direction"] = path.nodeDirection_;
+    j["nodes"] = std::vector<int>(); 
+    j["edgeLabels"] = std::vector<long>();
+    
+    j["totalWeight"] = path.totalWeight_;
+    
+    for(const auto & ee : path.visitOrder_)
+        j["nodes"].push_back(ee);
+    
+    for(const auto& ee : path.edgeLabels_)
+       j["edgeLabels"].push_back(ee.getBits().to_ulong());
+
+}
+
+template<class GT>
+void to_json(json& j, const std::vector<Path<GT>> e)
+{
+    j = json::array();
+    for(const auto& path : e)
+        j.push_back(path);
+}
+
+template<class GT>
 void to_json(json& j, const std::vector<std::vector<Path<GT>>> e)
 {
     for(const auto& tree : e)
     {
-        int pNum=0;
+        //int pNum=0;
         auto treePaths = json::array();
         for(const auto& path : tree)
         {
-                //Make sure there was a path
-            if(path.visitOrder_.size()>0)
-            {
-                treePaths[pNum]["nodeScore"] = path.nodeScore_;
-                treePaths[pNum]["direction"] = path.nodeDirection_;
-                treePaths[pNum]["nodes"] = std::vector<int>(); 
-                treePaths[pNum]["edgeLabels"] = std::vector<long>();
-                
-                treePaths[pNum]["totalWeight"] = path.totalWeight_;
-                
-                for(const auto & e : path.visitOrder_)
-                   treePaths[pNum]["nodes"].push_back(e);
-                
-                for(const auto& e : path.edgeLabels_)
-                    treePaths[pNum]["edgeLabels"].push_back(e.getBits().to_ulong());
-                
-                ++pNum;
-            }
+          treePaths.push_back(json(path))  ;
+//                 //Make sure there was a path
+//             if(path.visitOrder_.size()>0)
+//             {
+//                 treePaths[pNum]["nodeScore"] = path.nodeScore_;
+//                 treePaths[pNum]["direction"] = path.nodeDirection_;
+//                 treePaths[pNum]["nodes"] = std::vector<int>(); 
+//                 treePaths[pNum]["edgeLabels"] = std::vector<long>();
+//                 
+//                 treePaths[pNum]["totalWeight"] = path.totalWeight_;
+//                 
+//                 for(const auto & ee : path.visitOrder_)
+//                    treePaths[pNum]["nodes"].push_back(ee);
+//                 
+//                 for(const auto& ee : path.edgeLabels_)
+//                     treePaths[pNum]["edgeLabels"].push_back(ee.getBits().to_ulong());
+//                 
+//                 ++pNum;
+//             }
         }
         j["trees"].push_back( treePaths);
     }

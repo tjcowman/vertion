@@ -448,7 +448,7 @@ namespace Commands
     template<class GT>
     json crossp(const VGraph<GT>& graph, ViewCache<GT>& viewCache, const json& args)
     {
-        json ret;
+       // json ret;
            
         
         ViewKey<GT> key = viewKeyFromArgs<GT>(args);
@@ -460,11 +460,17 @@ namespace Commands
         }
         IntegratedViewer<GT> IV = viewCache.lookup(key);
         
+        auto path1 = getVertexList<GT>("path1", args);
+        auto path2 = getVertexList<GT>("path2", args);
+        
         RandomWalker RW(IV);
-        auto pathIndexs  = args["pathNodes"].get<std::vector<typename GT::Index>>();
+        //auto pathIndexs  = args["pathNodes"].get<std::vector<typename GT::Index>>();
         std::vector<VertexS<GT>> source;
-        for(const auto & e : pathIndexs)
+        for(const auto & e : path1)
             source.push_back(VertexS<GT>(e));
+        for(const auto & e : path2)
+            source.push_back(VertexS<GT>(e));
+
 
         typename RandomWalker<GT>::Args_Walk args_walk{.15, 1e-6, GraphList<VertexS<GT>>()};
         auto weights = RW.walk(GraphList<VertexS<GT>>(source), args_walk);
@@ -481,13 +487,12 @@ namespace Commands
         KP.arg_weightFraction_ = 1;
       
 
-        auto path1 = getVertexList<GT>("path1", args);
-        auto path2 = getVertexList<GT>("path2", args);
+
        // std::cout<<"GRRR "<<sinkIV<<std::endl;
         
         
        // KP.computeSiteE(sourceIV, sinkIV, args["mechRatio"]/*,*/ /*viewCache.lookupProximities(key),*//* args["localProximity"]*/);
-        KP.computeCrossP(path1, path2, weights);
+        auto crossPaths = KP.computeCrossP(path1, path2, weights);
         
         
         viewCache.finishLookup(key);
@@ -495,7 +500,7 @@ namespace Commands
         
         
         
-        return ret;
+        return json(crossPaths);
     }
     
 

@@ -26,7 +26,7 @@ class KinasePaths
         
         void compute(NodeInput source, NodeInput sinks);
         void computeSiteE(NodeInput source, NodeInput sinks,   GraphList<VertexHP<GT>>& reWeights);
-         std::vector<Path<GT>> computeCrossP(NodeInput path1, NodeInput  path2,  NodeInput reWeights);
+        std::vector<Path<GT>> computeCrossP(NodeInput path1, NodeInput  path2,  NodeInput reWeights);
         
        // std::vector<Path<GT>> computeCrossPaths(const VertexS<GT>& source , const GraphList<VertexS<GT>>& sinks);
         
@@ -389,24 +389,52 @@ void KinasePaths<GT>::computeSiteE(NodeInput source, NodeInput sinks,  GraphList
 template<class GT>
 std::vector<Path<GT>> KinasePaths<GT>::computeCrossP(NodeInput path1, NodeInput  path2,  NodeInput reWeights)
 {
-//     auto Arw = viewer_->getA(); //makes copy of the weight array 
-//     weightFunction(Arw, reWeights);
+    auto Arw = viewer_->getA(); //makes copy of the weight array 
+    const auto & L = viewer_->getL();
+    weightFunction(Arw, reWeights);
 //     
 //     //get list of the kinase nodes for each path
-//     auto kp1 = path1.select([](const auto& e){return e.labels_.getBits() ==4;});
-//     auto kp2 = path2.select([](const auto& e){return e.labels_.getBits() ==4;});
+    auto kp1 = path1.select([ &](const auto& e){return viewer_->getLabels(viewer_->getViewIndex(e.index_)).getBits()[2];});
+    auto kp2 = path2.select([ &](const auto& e){return viewer_->getLabels(viewer_->getViewIndex(e.index_)).getBits()[2] ;});
 //     
-//     std::vector<Path<GT>> retPaths;
-//     
-//     for(const auto& k1 : kp1)
-//     {
-//         for(const auto& k2 : kp2)
-//         {
-//          
-//             
-//             
-//         }
-//     }
+    std::cout<<kp1.size()<<" ::: "<<kp2.size()<<std::endl;
+    
+    std::vector<Path<GT>> retPaths;
+    
+    for(const auto& k1 : kp1)
+    {
+        auto sourceIndex = viewer_->getViewIndex(k1.index_);
+       // paths_= std::vector<std::vector<Path<GT>>>();
+        for(const auto& k2 : kp2)
+        {
+            if(k1.index_ == k2.index_){continue;}
+         
+            
+            //for(int k=0; k<source.size(); ++k)
+            //{
+                auto sinkIndex = viewer_->getViewIndex(k2.index_); //should only be one sink
+
+                //Performs djikstras algorithm for the provided source and sink nodes
+                
+                auto spLengths = std::move(runSP(sourceIndex, Arw));
+                
+                auto paths = formatPaths(sourceIndex, spLengths, std::vector<typename GT::Index>{sinkIndex});
+                
+                
+                retPaths.insert(retPaths.end(), paths.begin(), paths.end());
+                
+//                 for(int i=0; i<paths_[k].size(); ++i)
+//                     if(!paths_[k][i].empty())
+//                         paths_[k][i].totalWeight_ = spLengths[ viewer_->getViewIndex(paths_[k][i].visitOrder_[0]) ]; 
+//                     
+                
+           // }
+            std::cout<<retPaths.size()<<std::endl;
+            
+            
+        }
+    }
+    return retPaths;
 
     
     
