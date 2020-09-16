@@ -40,10 +40,8 @@ class PathSearchComponent extends React.Component{
             siteData: new Map(),
             integrationData: new Map(),
             
-            
             nodeIds: new Set(),
             edgeIds: new Set(),
-            
             
             pathFocused: undefined,
             
@@ -127,7 +125,6 @@ class PathSearchComponent extends React.Component{
         
         let pathElements= [...this.state.trees.values()].map((tree,i) => tree[pathIndexes[i]]).filter(e=>typeof e !== 'undefined');
         let ids = [];
-        console.log("PE",pathElements)
         
         pathElements.forEach(path=>{
             path.nodes.forEach(node => {
@@ -289,10 +286,8 @@ class PathSearchComponent extends React.Component{
     getResponse=(responseTrees)=>{
         //Update the responseTrees with the current state IMPORTANT: doesnt change the state yet
        this.state.trees.forEach((k,v) => {
-//            console.log("E",k,v)
             if(!responseTrees.has(v) )
                 responseTrees.set(v, k);
-            
         })
      
 
@@ -321,10 +316,7 @@ class PathSearchComponent extends React.Component{
                 });
                 
             });
-            
-//             console.log(treeIndex,tree)
-            
-            
+   
         });
         
         //Gets the path index for each site node in all trees
@@ -345,7 +337,6 @@ class PathSearchComponent extends React.Component{
                 sourceIds: sourceIds,
                 kAvailable : kAvailable,
                 kDisplayed : kDisplayed,
-//                 pathLengthByCutoff : pathLengthByCutoff
             })}
         );
         this.handleResetMainView();

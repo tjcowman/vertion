@@ -26,22 +26,23 @@ class KinasePaths
         
         void compute(NodeInput source, NodeInput sinks);
         void computeSiteE(NodeInput source, NodeInput sinks,   GraphList<VertexHP<GT>>& reWeights);
-        void computeCrossP(const GraphList<VertexS<GT>>& path1, const GraphList<VertexS<GT>>&  path2,  const GraphList<VertexS<GT>>& reWeights);
+         std::vector<Path<GT>> computeCrossP(NodeInput path1, NodeInput  path2,  NodeInput reWeights);
         
-        void computeCrossPaths(const VertexS<GT>& source , const GraphList<VertexS<GT>>& sinks);
+       // std::vector<Path<GT>> computeCrossPaths(const VertexS<GT>& source , const GraphList<VertexS<GT>>& sinks);
         
         
-        void printPathEdgeLists(std::ostream& os)const;
+       // void printPathEdgeLists(std::ostream& os)const;
         
         const std::vector<std::vector<Path<GT>>>& getPaths()const;
 
+        
         float arg_mechRatio_;
         float arg_weightFraction_;
         
     private:
         
         
-        typename GT::Value weightFunction(typename GT::Index row, typename GT::Index edge, typename GT::Value original)const;
+        void weightFunction(std::vector<typename GT::Value>&, NodeInput reWeights = NodeInput{})const;
         
         void computeNodeScores( const GraphList<VertexS<GT>>& sinks);
         //calculates the shortest paths given the current settings, returns the shortest path lengths
@@ -263,90 +264,63 @@ auto KinasePaths<GT>::formatPaths(typename GT::Index sourceIndex,  const std::ve
 
 }
 
+
+
 template<class GT>
-void KinasePaths<GT>::computeCrossPaths(const VertexS<GT>& source , const GraphList<VertexS<GT>>& sinks)
+void KinasePaths<GT>::weightFunction(std::vector<typename GT::Value>& A, NodeInput reWeights)const 
 {
-    
-    computeNodeScores(sinks);
-    
-    auto Arw = viewer_->getA(); //makes copy of the weight array 
     const auto& IA = viewer_->getIA();
+    const auto & L = viewer_->getL();
     const auto& JA = viewer_->getJA();
-    const auto& L = viewer_->getL();
-
-//     for(typename GT::Index row=0; row<viewer_->size().first; ++row)
-//     {
-//         typename GT::Index lb = IA[row].s1();
-//         typename GT::Index rb = IA[row].s1() + IA[row].s2();
-//         
-//         for(typename GraphType::GD::Index edge=lb; edge<rb; ++edge)
-//         {
-// //             Arw[edge] = 
-//             
-//             if( (L[edge].getBits() == 4  && viewer_->getLabels(row).getBits() == 1) ||
-//                 (L[edge].getBits() ==1)
-//             ) 
-//                 Arw[edge] = 1;
-//             else
-//                 Arw[edge] = std::numeric_limits<typename GT::Value>::infinity();  
-//         }
-//     }
-//     
-  
-std::cout<<"reweighted"<<std::endl;    
-//     paths_= std::vector<std::vector<Path<GT>>>(source.size());
-       paths_= std::vector<std::vector<Path<GT>>>(1);
-//     for(int k=0; k<source.size(); ++k)
-//     {
-//         if(source[k].index_ !=  GT::invalidIndex)
-//         {
-            //Performs djikstras algorithm for the provided source and sink nodes
-            auto sourceIndex = viewer_->getViewIndex(source.index_);
-            auto spLengths = std::move(runSP(sourceIndex, Arw, 1, IA, JA, L));
-            
-            paths_[0] = formatPaths(sourceIndex, spLengths);
-            
-            for(int i=0; i<paths_[0].size(); ++i)
-                if(!paths_[0][i].empty())
-                    paths_[0][i].totalWeight_ = spLengths[ viewer_->getViewIndex(paths_[0][i].visitOrder_[0]) ]; 
-            
-            
-            
-//             scorePaths(paths_[0]);
-//         }
-//     }
-//     scorePaths(paths_[0]);
     
-    
-}
-
-template<class GT>
-typename GT::Value KinasePaths<GT>::weightFunction(typename GT::Index row, typename GT::Index edge, typename GT::Value original)const 
-{
-     const auto & L = viewer_->getL();
-
-    //Prioritize proten->site KSA
-    if(!(L[edge].getBits() & std::bitset< GT::LabelSize>(6)).any())
-        original = original * arg_mechRatio_;
-    else original=1 * original;
-    
-
-    auto it = nodeScoreLookup_.find(edge);
-    if(it != nodeScoreLookup_.end())
+    if(reWeights.size() == 0)
     {
-        original *= 1/std::abs((it->second.first));
+        for(typename GT::Index row=0; row<viewer_->size().first; ++row)
+        {
+            typename GT::Index lb = IA[row].s1();
+            typename GT::Index rb = IA[row].s1() + IA[row].s2();
+            
+            for(typename GraphType::GD::Index edge=lb; edge<rb; ++edge)
+            {
+                //Prioritize proten->site KSA
+                if(!(L[edge].getBits() & std::bitset< GT::LabelSize>(6)).any())
+                    A[edge] *=  arg_mechRatio_;
+
+
+                auto it = nodeScoreLookup_.find(edge);
+                if(it != nodeScoreLookup_.end())
+                {
+                    A[edge]  *= 1/std::abs((it->second.first));
+                }
+            }
+        }
     }
+    else
+    {
+        for(typename GT::Index row=0; row<viewer_->size().first; ++row)
+        {
+            typename GT::Index lb = IA[row].s1();
+            typename GT::Index rb = IA[row].s1() + IA[row].s2();
+            
+            for(typename GraphType::GD::Index edge=lb; edge<rb; ++edge)
+            {
+                //Prioritize proten->site KSA
+                if(!(L[edge].getBits() & std::bitset< GT::LabelSize>(6)).any())
+                    A[edge] *=  arg_mechRatio_;
 
+
+                auto it = nodeScoreLookup_.find(edge);
+                if(it != nodeScoreLookup_.end())
+                {
+                    A[edge]  *= 1/std::abs((it->second.first));
+                }
+                
+                A[edge] *= 1/-log(reWeights[JA[edge]].value_);
+            }
+        }
         
-    return original;    
+    }
 }
-
-template<class GT>
-static auto wf = []()
-{
-    
-    
-};
 
 template<class GT>
 void KinasePaths<GT>::compute(NodeInput source, NodeInput sinks)
@@ -354,23 +328,11 @@ void KinasePaths<GT>::compute(NodeInput source, NodeInput sinks)
     computeNodeScores(sinks);
     
     auto Arw = viewer_->getA(); //makes copy of the weight array to apply new edge weighting
-    const auto& IA = viewer_->getIA();
-
-    for(typename GT::Index row=0; row<viewer_->size().first; ++row)
-    {
-        typename GT::Index lb = IA[row].s1();
-        typename GT::Index rb = IA[row].s1() + IA[row].s2();
-        
-        for(typename GraphType::GD::Index edge=lb; edge<rb; ++edge)
-        {
-            Arw[edge] = weightFunction( row, edge, Arw[edge]); 
-        }
-    }
+    weightFunction(Arw);
 
     paths_= std::vector<std::vector<Path<GT>>>(source.size());
     for(int k=0; k<source.size(); ++k)
     {
-        std::cout<<"GG "<<k<<" "<<source[k].index_<<std::endl;
         if(source[k].index_ !=  GT::invalidIndex)
         {
             //Performs djikstras algorithm for the provided source and sink nodes
@@ -392,30 +354,16 @@ void KinasePaths<GT>::compute(NodeInput source, NodeInput sinks)
 //NOTE: the paths are returned using global indexes
 template<class GT>
 void KinasePaths<GT>::computeSiteE(NodeInput source, NodeInput sinks,  GraphList<VertexHP<GT>>& reWeights)
-{
-    //need to convert sreweights  to viewIndexes
-    for(auto& e : reWeights)
-        e.index_ = viewer_->getViewIndex(e.index_);
-    
-    reWeights.sort(Sort::indexInc);
-    
+{    
     computeNodeScores(sinks);
     
     auto Arw = viewer_->getA(); //makes copy of the weight array 
-    const auto& IA = viewer_->getIA();
-    const auto& JA = viewer_->getJA();
-
-    for(typename GT::Index row=0; row<viewer_->size().first; ++row)
-    {
-        typename GT::Index lb = IA[row].s1();
-        typename GT::Index rb = IA[row].s1() + IA[row].s2();
-        
-        for(typename GraphType::GD::Index edge=lb; edge<rb; ++edge)
-        {
-            Arw[edge] = weightFunction( row, edge,    1/-log(reWeights[JA[edge]].value_));
-        }
-    }
-
+    //for(const auto& e : Arw)
+      //  e *= 1/-log(reWeights[JA[edge]].value_;
+    
+    
+    weightFunction(Arw, reWeights);
+    
     paths_= std::vector<std::vector<Path<GT>>>(source.size());
     for(int k=0; k<source.size(); ++k)
     {
@@ -439,12 +387,34 @@ void KinasePaths<GT>::computeSiteE(NodeInput source, NodeInput sinks,  GraphList
 }
 
 template<class GT>
-void KinasePaths<GT>::computeCrossP(const GraphList<VertexS<GT>>& path1, const GraphList<VertexS<GT>>&  path2,  const GraphList<VertexS<GT>>& reWeights)
+std::vector<Path<GT>> KinasePaths<GT>::computeCrossP(NodeInput path1, NodeInput  path2,  NodeInput reWeights)
 {
+//     auto Arw = viewer_->getA(); //makes copy of the weight array 
+//     weightFunction(Arw, reWeights);
+//     
+//     //get list of the kinase nodes for each path
+//     auto kp1 = path1.select([](const auto& e){return e.labels_.getBits() ==4;});
+//     auto kp2 = path2.select([](const auto& e){return e.labels_.getBits() ==4;});
+//     
+//     std::vector<Path<GT>> retPaths;
+//     
+//     for(const auto& k1 : kp1)
+//     {
+//         for(const auto& k2 : kp2)
+//         {
+//          
+//             
+//             
+//         }
+//     }
+
+    
     
 }
 
 
+
+/*
 template<class GT>
 void KinasePaths<GT>::printPathEdgeLists(std::ostream& os)const
 {
@@ -466,7 +436,7 @@ void KinasePaths<GT>::printPathEdgeLists(std::ostream& os)const
     for(const auto& e : edges)
         os<<viewer_->graph_->getID(viewer_->getOriginalIndex(e.index1_))<<"\t"<<viewer_->graph_->getID(viewer_->getOriginalIndex(e.index2_))<<"\t"<<e.value_<<"\t"<<e.labels_.getBits().to_ulong()<<"\n";
 }
-
+*/
 
 template<class GT>
 const std::vector<std::vector<Path<GT>>>& KinasePaths<GT>::getPaths()const

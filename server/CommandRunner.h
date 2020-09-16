@@ -17,10 +17,6 @@ using json = nlohmann::json;
 template<class GT>
 void from_json(const json& j, VertexS<GT>& v)
 {
-//     std::cout<<"HI"<<std::endl;
-//     std::cout<<j<<std::endl;
-//     std::cout<<j["i"]<<" "<<j["v"]<<std::endl;
-    
     j["i"].get_to(v.index_);
     j["v"].get_to(v.value_);
 }
@@ -31,6 +27,37 @@ void to_json(json& j, const EdgeElement<GT>& e)
     j = json{{"i1", e.index1_}, {"i2", e.index2_}, {"w", e.value_}, {"l", e.labels_.getBits().to_ulong()}};
 }
 
+template<class GT>
+void to_json(json& j, const std::vector<std::vector<Path<GT>>> e)
+{
+    for(const auto& tree : e)
+    {
+        int pNum=0;
+        auto treePaths = json::array();
+        for(const auto& path : tree)
+        {
+                //Make sure there was a path
+            if(path.visitOrder_.size()>0)
+            {
+                treePaths[pNum]["nodeScore"] = path.nodeScore_;
+                treePaths[pNum]["direction"] = path.nodeDirection_;
+                treePaths[pNum]["nodes"] = std::vector<int>(); 
+                treePaths[pNum]["edgeLabels"] = std::vector<long>();
+                
+                treePaths[pNum]["totalWeight"] = path.totalWeight_;
+                
+                for(const auto & e : path.visitOrder_)
+                   treePaths[pNum]["nodes"].push_back(e);
+                
+                for(const auto& e : path.edgeLabels_)
+                    treePaths[pNum]["edgeLabels"].push_back(e.getBits().to_ulong());
+                
+                ++pNum;
+            }
+        }
+        j["trees"].push_back( treePaths);
+    }
+}
 
 
 template<class GT>

@@ -1,11 +1,5 @@
 import React from 'react';
 import {Button, Card, Tab, Tabs, Form} from 'react-bootstrap'
-
-// import Cytoscape from 'cytoscape';
-// import CytoscapeComponent from 'react-cytoscapejs';
-
-// import fcose from 'cytoscape-fcose';
-
 import { YAxis, XAxis, Line, ScatterChart, Scatter, LineChart,ReferenceLine} from 'recharts';
 import DefaultTooltipContent from 'recharts/lib/component/DefaultTooltipContent';
 
@@ -104,22 +98,14 @@ class PathQueryComponent extends React.Component{
     
     //NOTE: TODO: Incorporate the kinase and site text into this check (currently uses the parse functions
     componentDidUpdate(prevProps, prevState){
-//         console.log("FF", 
-//                     prevProps.versionCardPlainText, 
-//                     this.props.versionCardPlainText
-//                    );
-       
+
         if(
             prevState.minWeight !== this.state.minWeight ||
             prevState.mechRatio !== this.state.mechRatio ||
             prevState.versionIndex !== this.state.versionIndex ||
             prevState.lookupType !== this.state.lookupType ||
-//             prevProps.selectedVersionDefinition !== this.props.selectedVersionDefinition
             prevProps.versionCardPlainText[prevProps.selectedVersionIndex] !==this.props.versionCardPlainText[this.props.selectedVersionIndex]
-//             prevProps.versionCards.cards[prevState.versionIndex] !== this.props.versionCards.cards[this.state.versionIndex]
-//             prevProps.versionCards.card(prevState.versionIndex).plainText() !== this.props.versionCards.card(this.state.versionIndex).plainText()
         ){
-//             console.log("wut")
             //Note: need to reset the last kinases because they are no longer up to date
             this.setState({staleQuery : true, lastKinases: [] });
         }
@@ -213,23 +199,15 @@ class PathQueryComponent extends React.Component{
             if(A[i] !== this.state.lastKinases[i])
                 m.push(i);
             
-//         return this.kinaseArrayFormat().map((e,i) => e !== this.state.lastKinases[i] );
-            
-//             else
-//                 m.push(0);
         return m;
     }
     
     handleSubmit=()=>{
-//         console.log("THIS", this.props);
-        
         //Get the user specified version definition information and the other relevant for the query
         let versionDef = this.props.versionCards.getVersionDefinition(this.props.selectedVersionIndex);
         versionDef = {...versionDef, 
             versions : [...versionDef.versions,
                 this.props.versionsData.nameLookup.get("Kinase-Substrate-NS")
-//                             this.props.versionsData.nameLookup.get("Protein-Harboring-Sites"),
-//                 this.props.versionsData.nameLookup.get("Kinase-Substrate")
         ]}
         
         let aLab = this.props.labelsUsed.getUsedLabelSum(versionDef.versions);
@@ -238,7 +216,6 @@ class PathQueryComponent extends React.Component{
         
         let command = {cmd:"pths",
              ...versionDef, 
-           // lookupType: this.state.lookupType, //pname
             weightFraction: Number(this.state.minWeight),
             kinase: this.parseKinase(),
             mechRatio: Number(this.state.mechRatio),
@@ -248,7 +225,6 @@ class PathQueryComponent extends React.Component{
         };
         
         let mask=this.computeKinaseMask();
-//         console.log(mask)
         //Determine whether to query kinase or not 
         //TODO: This is confusing, need special case to reQuery both kinases if any of the other parmaeters hve changed
         if(command.kinase.length> 0 || this.state.staleQuery)
@@ -260,15 +236,6 @@ class PathQueryComponent extends React.Component{
                 
                 
                 this.setState({lastKinases : this.kinaseArrayFormat()});
-            
-            
-
-//                 let distFn = []
-//                 response.data.trees.forEach(tree=> 
-//                 
-//                 )
-                
-                
                 
                 let responseeTrees = new Map(response.data.trees.map((tree,i) => ([mask[i], tree])));
                 this.props.getResponse(responseeTrees);
