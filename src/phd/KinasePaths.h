@@ -397,9 +397,26 @@ std::vector<Path<GT>> KinasePaths<GT>::computeCrossP(NodeInput path1, NodeInput 
     auto kp1 = path1.select([ &](const auto& e){return viewer_->getLabels(viewer_->getViewIndex(e.index_)).getBits()[2];});
     auto kp2 = path2.select([ &](const auto& e){return viewer_->getLabels(viewer_->getViewIndex(e.index_)).getBits()[2] ;});
 //     
-    std::cout<<kp1.size()<<" ::: "<<kp2.size()<<std::endl;
+   // std::cout<<kp1.size()<<" ::: "<<kp2.size()<<std::endl;
     
     std::vector<Path<GT>> retPaths;
+    
+    //add the original paths to the output
+    
+    auto sourceIndex = viewer_->getViewIndex(kp1.getElements().back().index_ );
+    auto sinkIndex = viewer_->getViewIndex(kp1[0].index_);
+    auto spLengths = std::move(runSP(sourceIndex, Arw));
+        
+    auto paths = formatPaths(sourceIndex, spLengths, std::vector<typename GT::Index>{sinkIndex});
+    
+    retPaths.insert(retPaths.end(), paths.begin(), paths.end());
+    
+    sourceIndex = viewer_->getViewIndex(kp2.getElements().back().index_ );
+    sinkIndex = viewer_->getViewIndex(kp2[0].index_);
+    spLengths = std::move(runSP(sourceIndex, Arw));
+        
+    paths = formatPaths(sourceIndex, spLengths, std::vector<typename GT::Index>{sinkIndex});
+    retPaths.insert(retPaths.end(), paths.begin(), paths.end());
     
     for(const auto& k1 : kp1)
     {
@@ -409,28 +426,16 @@ std::vector<Path<GT>> KinasePaths<GT>::computeCrossP(NodeInput path1, NodeInput 
         {
             if(k1.index_ == k2.index_){continue;}
          
-            
-            //for(int k=0; k<source.size(); ++k)
-            //{
-                auto sinkIndex = viewer_->getViewIndex(k2.index_); //should only be one sink
+            auto sinkIndex = viewer_->getViewIndex(k2.index_); //should only be one sink
 
-                //Performs djikstras algorithm for the provided source and sink nodes
-                
-                auto spLengths = std::move(runSP(sourceIndex, Arw));
-                
-                auto paths = formatPaths(sourceIndex, spLengths, std::vector<typename GT::Index>{sinkIndex});
-                
-                
-                retPaths.insert(retPaths.end(), paths.begin(), paths.end());
-                
-//                 for(int i=0; i<paths_[k].size(); ++i)
-//                     if(!paths_[k][i].empty())
-//                         paths_[k][i].totalWeight_ = spLengths[ viewer_->getViewIndex(paths_[k][i].visitOrder_[0]) ]; 
-//                     
-                
-           // }
-            std::cout<<retPaths.size()<<std::endl;
+            //Performs djikstras algorithm for the provided source and sink nodes
+            auto spLengths = std::move(runSP(sourceIndex, Arw));
             
+            auto paths = formatPaths(sourceIndex, spLengths, std::vector<typename GT::Index>{sinkIndex});
+            
+            
+            retPaths.insert(retPaths.end(), paths.begin(), paths.end());
+
             
         }
     }

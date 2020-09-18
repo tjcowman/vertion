@@ -46,27 +46,15 @@ class Settings extends React.Component{
                     <Card >
                         <Card.Header>Settings</Card.Header>
                         <Card.Body>
-                            PPI Weight Modifier
+                            PPI Weight Penalty
                             <input autoComplete="off"  className="form-control" type="number" value={this.props.mechRatio} name="mechRatio" onChange={(event)=>this.props.handleChangeRange(event,0,10000)}></input>
+                            Co-Occurrence Weight Penalty
+                            <input autoComplete="off"  className="form-control" type="number" value={this.props.coocRatio} name="coocRatio" onChange={(event)=>this.props.handleChangeRange(event,0,10000)}></input>
                             Top Log Fold Cutoff Fraction
                             <input autoComplete="off" className="form-control" type="number" step=".1" value={this.props.minWeight} name="minWeight" onChange={(event)=>this.props.handleChangeRange(event,0,1)}></input>
 
                         </Card.Body>
                     </Card>
-                
-                    {/*<Card style={{marginTop: '10px'}}>
-                        <Card.Header>Node Lookup</Card.Header>
-                        <Card.Body>
-                            
-                                
-                            <Form.Check value="uniprot" name="idType" checked={this.props.lookupType === 'uniprot'} onChange={this.props.handleLookupType} label="Uniprot Id" /> 
-                            
-                            <Form.Check value="pname" name="idType" checked={this.props.lookupType === 'pname'} onChange={this.props.handleLookupType} label="Protein Name"/>
-                        
-                    
-                        </Card.Body>
-                    </Card>*/}
-                
                 
                 </div>
             </>
@@ -81,9 +69,7 @@ class PathQueryComponent extends React.Component{
         
         this.state={
             staleQuery : true,
-            
-//             versionIndex: "T",
-            
+
             lastKinases: [],
             kinaseText1: "P00533",
             kinaseText2: "P15056",
@@ -92,6 +78,7 @@ class PathQueryComponent extends React.Component{
             siteText: "Q15459	359	-1.3219\nQ15459	451	0.5352\nP28482	185	4.4463\nP28482	187	4.4195\nQ8N3F8	273	-0.3219",
             minWeight: 1, //.10,
             mechRatio: 10,
+            coocRatio : 10,
             localProximity: false,
         }
     }
@@ -122,31 +109,21 @@ class PathQueryComponent extends React.Component{
     }
     
     parseSites=()=>{
+        let input = this.state.siteText.split("\n").map((r) => (r.match(/\S+/g)) ).filter(Boolean);
+        if(input[0] === null)
+            return [];
         
-//         try{
-            let input = this.state.siteText.split("\n").map((r) => (r.match(/\S+/g)) ).filter(Boolean);
-//             console.log("INPUT", input)
-            if(input[0] === null)
-                return [];
-            
-            if(input[0].length === 1){
-            
-            }else if(input[0].length ===2){
-                input = input.filter(r => r.length ==2).map(r => [r[0], Number(r[1])]);
-            }else{
-                input = input.filter(r => r.length ==3).map(r => [r[0], Number(r[1]), Number(r[2])]);
-            }
-            
-    //         input = input[0].length === 2 ? input.map(r => [r[0], Number(r[1])]) :
-    //             input.map(r => [r[0], Number(r[1]), Number(r[2])])
-            if(input[0].length > 1)
-                input = input.filter(r => {return r[r.length-1] !== 0});
+        if(input[0].length === 1){
         
-            return input
-//         }catch(e){ //Bad input format
-//             return [];
-//         }
-//         return this.state.siteText.split("\n").map((r) => (r.split("\t")) ).map((e) => [e[0], Number(e[1]), Number(e[2])]).filter(e => {return e[2] !== 0});
+        }else if(input[0].length ===2){
+            input = input.filter(r => r.length ==2).map(r => [r[0], Number(r[1])]);
+        }else{
+            input = input.filter(r => r.length ==3).map(r => [r[0], Number(r[1]), Number(r[2])]);
+        }
+        if(input[0].length > 1)
+            input = input.filter(r => {return r[r.length-1] !== 0});
+    
+        return input
     }
     
     toggleLocalProximity=()=>{
@@ -219,6 +196,7 @@ class PathQueryComponent extends React.Component{
             weightFraction: Number(this.state.minWeight),
             kinase: this.parseKinase(),
             mechRatio: Number(this.state.mechRatio),
+            coocRatio: Number(this.state.coocRatio),
             sites: this.parseSites(),
             localProximity: this.state.localProximity,
             
@@ -270,6 +248,7 @@ class PathQueryComponent extends React.Component{
                     kinaseText1={this.state.kinaseText1}
                     kinaseText2={this.state.kinaseText2}
                     mechRatio={this.state.mechRatio}
+                    coocRatio={this.state.coocRatio}
                     lookupType={this.state.lookupType}
                     handleLookupType={this.handleLookupType}
                 />} 
@@ -370,7 +349,6 @@ class ResultDisplay extends React.Component{
      }
      
      render(){
-//          console.log("RESDISP",this)
         return(
             <>
          

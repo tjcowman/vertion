@@ -385,7 +385,8 @@ class PathSearchComponent extends React.Component{
             pathNodes: pathNodes.flat(),
             sources: pathNodes.map(p=> p[p.length-1]),
             sink: [pathNodes[0][0]],
-            mechRatio : 1000
+            mechRatio : Number(this.props.mechratio),
+            coocRatio: Number(this.props.coocRatio),
         };
         
         Axios.post('http://'+this.props.backAddr, JSON.stringify(command)).then((response)=>{
@@ -487,7 +488,8 @@ class PathSearchComponent extends React.Component{
             path2 : pathNodes[1],
             sources: pathNodes.map(p=> p[p.length-1]),
             sink: pathNodes[0][0],
-            mechRatio : 1000
+            mechRatio : Number(this.props.mechratio),
+            coocRatio: Number(this.props.coocRatio),
         };
         
         Axios.post('http://'+this.props.backAddr, JSON.stringify(command)).then((response)=>{
@@ -584,6 +586,7 @@ class PathSearchComponent extends React.Component{
                     versionsData={this.props.versionsData}
                     getResponse={this.getResponse}
                     labelsUsed={this.props.labelsUsed}
+
                     
                     selectedVersionIndex ={this.state.selectedVersionIndex}
                     handleSelectVersion={this.handleSelectVersion}

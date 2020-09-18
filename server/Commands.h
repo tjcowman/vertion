@@ -485,7 +485,7 @@ namespace Commands
         
         KinasePaths<GT> KP(IV);
         KP.arg_weightFraction_ = 1;
-      
+        KP.arg_mechRatio_ = args["mechRatio"];
 
 
        // std::cout<<"GRRR "<<sinkIV<<std::endl;
