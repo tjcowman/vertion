@@ -1,4 +1,3 @@
-import { StrictMode} from 'react';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 
@@ -9,20 +8,20 @@ import ReactDOM from 'react-dom';
 
 import Axios from 'axios';
 
-import {InfoPanel} from  './infoPanel.js';
-import {LogPanel} from './logPanel.js';
+//import {InfoPanel} from  './infoPanel.js';
+//import {LogPanel} from './logPanel.js';
 
 import SelectVersionsComponent from './selectVersionsComponent.js';
-import SelectNodesComponent from './selectNodesComponent.js';
-import {SelectLabelsComponent} from './selectLabelsComponent.js'
+//import SelectNodesComponent from './selectNodesComponent.js';
+//import {SelectLabelsComponent} from './selectLabelsComponent.js'
 
-import {QueryComponentRWR} from './queryComponentRWR.js';
-import QueryComponentMotif from './queryComponentMotif.js';
+//import {QueryComponentRWR} from './queryComponentRWR.js';
+//import QueryComponentMotif from './queryComponentMotif.js';
 
 import {PathSearchComponent} from './pathSearch.js'
 
-import {LabelSet, LabelsUsed, NodeData} from './graphStructs.js';
-import {VersionCards, VersionCard} from './versionCards.js';
+import {LabelsUsed, NodeData} from './graphStructs.js';
+import {VersionCards} from './versionCards.js';
 
 import * as setLib from './setLib.js'
 
@@ -34,27 +33,27 @@ import './sideBarMenu.css';
 
 // class LogStruct{
 //     //{type, text, count(calculated)}
-// 
+//
 //     constructor(){
 //       this.messages = [];
 //     }
-// 
+//
 //     mostRecent(){
 //       return this.messages[this.messages.length-1];
 //     }
-// 
+//
 //     log(mtype, message){
 // //console.log("m1", this.mostRecent(), "m2",message)
 //         if( !(this.mostRecent() === undefined) && this.mostRecent().text === message){
 //           this.mostRecent().count +=1;
-// 
+//
 //         }
 //         else
 //             this.messages.push({type :  mtype, text: message, count: 1});
-// 
+//
 //     }
 // }
-// 
+//
 
 
 
@@ -80,11 +79,11 @@ class VersionsData{
     }
   }
 
-  //!!!Filters out the empty tagged versions when obtaining an array of all tags w/ their versions 
+  //!!!Filters out the empty tagged versions when obtaining an array of all tags w/ their versions
   //Now filters out all but the PPI tagged for display as the others are used implicitly by the queries
   getDisplayedTags(){
    // return [...this.tags].filter(e => e[0] !== "Empty");
-       return [...this.tags].filter(e => e[0] == "PPI");
+       return [...this.tags].filter(e => e[0] === "PPI");
   }
 
 
@@ -95,9 +94,9 @@ class App extends React.Component {
 
         super(props);
         this.state={
-            
+
             navCollapsed: false,
-            
+
 //             logStruct : new LogStruct(),
 
             serverProps : {},
@@ -113,7 +112,7 @@ class App extends React.Component {
 
             versionCardsO: new VersionCards(),
             versionCardPlainText : [""],
-            
+
             versionCardHandlers : {
                 add : this.handleAddVersionCard,
                 remove : this.handleRemoveVersionCard,
@@ -124,7 +123,7 @@ class App extends React.Component {
 
         var date = new Date();
 //         try{
-        
+
         Axios.get('http://'+this.state.backAddr+'/ls', date.getTime()).then((response)=>{
             console.log("lsResponse", response)
 
@@ -144,21 +143,21 @@ class App extends React.Component {
          }).catch(error => {})
 //         }
 //         catch{
-//             
+//
 //         }
 
     }
-    
-    //Used to update the name of a versionCard 
+
+    //Used to update the name of a versionCard
     handleChangeVersionCardName=(cardI, newName)=>{
 //         console.log("ET", event.target, event.target[0], event.target.dataset.cardi)
-        
+
 //         event.preventDefault();
         let versionCardsO = this.state.versionCardsO;
 // //         console.log(versionCardsO.cards[event.id], event.target.id)
 //         versionCardsO.cards[event.target[0].cardi].name = event.target[0].value;
 //         console.log(event.target)
-        
+
         versionCardsO.cards[cardI].name = newName;
         this.setState({versionCardsO : versionCardsO});
     }
@@ -216,11 +215,11 @@ class App extends React.Component {
         let versionCardPlainText = this.state.versionCardPlainText;
         versionCardPlainText.push("");
         this.setState(prevState=>({
-            
+
             versionCardsO: prevState.versionCardsO.handleAddVersionCard().handleClickVersionCard(this.state.versionCardsO.cards.length-1),
             versionCardPlainText : versionCardPlainText
-            
-            
+
+
         }))
         console.log("PT", this.state.versionCardPlainText)
     }
@@ -228,7 +227,7 @@ class App extends React.Component {
     handleRemoveVersionCard=()=>{
         if(this.state.versionCardsO.cards.length <= 1)
             return;
-        
+
         this.setState(prevState=>({
             versionCardsO: prevState.versionCardsO.handleRemoveVersionCard(),
              versionCardPlainText : prevState.versionCardPlainText.slice(0, Math.max(1, prevState.versionCardPlainText.length-1))
@@ -268,13 +267,13 @@ class App extends React.Component {
             versionCardsO.cards[cardId].displayLabels = l;
         }
 
-        
-        
+
+
         this.setState(prevState=>({
             versionCardsO: versionCardsO,
             versionCardPlainText: [...prevState.versionCardPlainText].map((e,i)=> i === cardId ? prevState.versionCardsO.card(cardId).plainText(): e)
         })/*, console.log(this.state.versionCardPlainText)*/);
-        
+
 //         this.setState(prevState=>({versionCardsO: prevState.versionCardsO.toggle(cardId, name,elementId)}));
 
     }
@@ -333,7 +332,7 @@ class App extends React.Component {
 
     renderAll(){
         return(
-            
+
             <>
             {console.log(this.state)}
 
@@ -342,7 +341,7 @@ class App extends React.Component {
                 <Tab.Container  id="menu" defaultActiveKey="versions" >
 
                     <div className={this.state.navCollapsed ? " border-right menuContainerClosed bg-light":" border-right menuContainerOpen bg-light" } >
-                   
+
                         <div className=" text-dark sideElementHeading border-bottom">GraphView</div>
 
                             <Nav.Link eventKey="versions" className=" sideElement">Tissues</Nav.Link>
@@ -407,7 +406,7 @@ class App extends React.Component {
 
                                     handleNodeLookupIndex={this.handleNodeLookupIndex}
                                     handleNodeLookup={this.handleNodeLookup}
-                                    
+
                                     nodeData = {this.state.nodeData}
 
 
@@ -417,7 +416,7 @@ class App extends React.Component {
                                     labelsUsed = {this.state.labelsUsed}
                                 />
                             </Tab.Pane>*/}
-                            
+
                             <Tab.Pane eventKey="path_search" className="pageContentArgsRight">
                                 <PathSearchComponent
                                     backAddr={this.state.backAddr}
@@ -435,9 +434,9 @@ class App extends React.Component {
                                     handleLog={this.handleLog}
                                     labelsUsed = {this.state.labelsUsed}
                                 />
-                            
+
                             </Tab.Pane>
-                            
+
                         </Tab.Content>
 
 
@@ -456,13 +455,13 @@ class App extends React.Component {
     render(){
         return(
            // {/*<StrictMode>*/}
-            
+
                 <div className="windowAll">
-                
+
                     <div className= "fixed-top border-bottom titleBar bg-dark"></div>
                     <div>{this.renderAll()}</div>
                   {/*  <div className="argsPlaceholder"></div>*/}
-                    
+
                 </div>
 
             //{/*</StrictMode>*/}

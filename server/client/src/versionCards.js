@@ -97,7 +97,7 @@ class VersionCards{
 //             console.log('YA')
             return this.cards[cardId];
         }else{
-            return new VersionCard;
+            return new VersionCard("");
         }
     }
 

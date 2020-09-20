@@ -1,6 +1,6 @@
-import React, {useState, useCallback} from 'react';
+import React, {useState} from 'react';
 
-import {Card, ListGroup, ListGroupItem, Button} from 'react-bootstrap'
+import {Card, ListGroup, ListGroupItem} from 'react-bootstrap'
 
 import './selectedElementDeck.css'
 

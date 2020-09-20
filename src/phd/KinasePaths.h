@@ -37,6 +37,7 @@ class KinasePaths
 
         
         float arg_mechRatio_;
+        float arg_coocRatio_;
         float arg_weightFraction_;
         
     private:
@@ -283,9 +284,11 @@ void KinasePaths<GT>::weightFunction(std::vector<typename GT::Value>& A, NodeInp
             for(typename GraphType::GD::Index edge=lb; edge<rb; ++edge)
             {
                 //Prioritize proten->site KSA
-                if(!(L[edge].getBits() & std::bitset< GT::LabelSize>(6)).any())
+                if((L[edge][0]))
                     A[edge] *=  arg_mechRatio_;
-
+                //weight the co-occurence edges
+                else if((L[edge][3]))
+                    A[edge] *=  arg_coocRatio_;
 
                 auto it = nodeScoreLookup_.find(edge);
                 if(it != nodeScoreLookup_.end())
@@ -305,8 +308,10 @@ void KinasePaths<GT>::weightFunction(std::vector<typename GT::Value>& A, NodeInp
             for(typename GraphType::GD::Index edge=lb; edge<rb; ++edge)
             {
                 //Prioritize proten->site KSA
-                if(!(L[edge].getBits() & std::bitset< GT::LabelSize>(6)).any())
+                if((L[edge][0]))
                     A[edge] *=  arg_mechRatio_;
+                else if((L[edge][3]))
+                    A[edge] *=  arg_coocRatio_;
 
 
                 auto it = nodeScoreLookup_.find(edge);

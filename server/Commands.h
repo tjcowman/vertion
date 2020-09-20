@@ -433,6 +433,7 @@ namespace Commands
         //use weights to bias the new path computation 
         KinasePaths<GT> KP(IV);
         KP.arg_mechRatio_ = args["mechRatio"];
+        KP.arg_coocRatio_ = args["coocRatio"];
 
     
         auto sources = getVertexList<GT>("sources", args);
@@ -486,6 +487,7 @@ namespace Commands
         KinasePaths<GT> KP(IV);
         KP.arg_weightFraction_ = 1;
         KP.arg_mechRatio_ = args["mechRatio"];
+        KP.arg_coocRatio_ = args["coocRatio"];
 
 
        // std::cout<<"GRRR "<<sinkIV<<std::endl;
