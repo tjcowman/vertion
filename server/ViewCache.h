@@ -46,12 +46,42 @@ struct TrackerEntry
     }
 };
 
+//View kwys without label filtering
+template<class GT>
+struct ViewKeyNL{
+    ViewKeyNL(const std::vector<typename GT::VersionIndex>& versions)
+    {
+        versions_ = versions;
+        key_ = generate_key(versions);
+    }
+    
+    ViewKeyNL()
+    {
+        versions_ = std::vector<typename GT::VersionIndex>();
+        key_= "";
+    }
+
+    std::string generate_key(const std::vector<typename GT::VersionIndex>& versions)
+    {
+        std::string s;
+        auto tmp = versions_;
+        std::sort(tmp.begin(),tmp.end());
+        for(const auto& e : tmp)
+            s.append(std::to_string(e));
+        return s;
+    }
+
+    bool valid() //Needs to actually integrate at least 1 version 
+    {
+      return versions_.size() >0 &&  key_ != "";
+    }
+
+    std::string key_;
+    std::vector<typename GT::VersionIndex> versions_;
+};
 
 template<class GT>
 struct ViewKey{
-
-
-
     ViewKey(const std::vector<typename GT::VersionIndex>& versions, const VertexLabel<GT>& nodeLabels, const EdgeLabel<GT>& edgeLabels)
     {
         versions_ = versions;
@@ -188,9 +218,10 @@ class ViewCache
         json getViewSummary(const std::string& key);
 
         IntegratedViewer<GT>& lookup(const ViewKey<GT>& key);
+        IntegratedViewer<GT>& lookup(const ViewKeyNL<GT>& key);
         const GraphList<VertexS<GT>>& lookupProximities(const ViewKey<GT>& key);
         void finishLookup(const ViewKey<GT>& key);
-
+        void finishLookup(const ViewKeyNL<GT>& key);
 
         static std::string generate_key(const std::vector<typename GT::VersionIndex>& versions, const VertexLabel<GT>& nodeLabels, const EdgeLabel<GT>& edgeLabels);
         int activeCount;
@@ -387,9 +418,94 @@ IntegratedViewer<GT>& ViewCache<GT>::lookup(const ViewKey<GT>& key)
 
 
 template<class GT>
+IntegratedViewer<GT>& ViewCache<GT>::lookup(const ViewKeyNL<GT>& key)
+{
+     //The summary existence also needs to be checked in the lock, but need to be able to compute it in the non blocking portion
+    bool summaryExists = false;
+
+    lock.lock();
+
+    if (viewSummaries_.count(key.key_) != 0)
+        summaryExists = true;
+
+    auto v = viewMap_.find(key.key_);
+
+    if(v != viewMap_.end())
+    {
+        ++v->second.numActive_;
+        v->second.lastUsed_ = time(NULL);
+
+        lock.unlock();
+        return viewData_[v->second.entryIndex_];
+    }
+    else
+    {
+         lock.unlock();
+    }
+
+    //Generate VersionIndex (Doesn't block other threads)
+    IntegratedViewer<GT> newView(*graph_);
+    newView.buildView(key.versions_);
+
+    //If summary stats don't exist, compute them as well
+    ViewSummary<GT> newSummary;
+    if(!summaryExists)
+    {
+       newSummary.compute(newView);
+    }
+    
+    //lookup again
+    lock.lock();
+    v = viewMap_.find(key.key_);
+
+    if(v != viewMap_.end()) //another thread already added the view
+    {
+        ++v->second.numActive_;
+        v->second.lastUsed_ = time(NULL);
+
+        lock.unlock();
+        return viewData_[v->second.entryIndex_];
+    }
+    else //insert the newly generated view in an available slot
+    {
+        auto lastE = (--emptySlots_.end());
+        int viewIndex = (*lastE);
+
+        emptySlots_.erase(lastE);
+
+        //Note: only uses hint to use the non pair return signature
+        v = viewMap_.insert(viewMap_.begin(),std::make_pair(key.key_, TrackerEntry{key.key_, viewIndex ,1, time(NULL) }));
+        viewData_[viewIndex] = std::move(newView);
+    }
+
+
+    if (viewSummaries_.count(key.key_) == 0)
+        viewSummaries_.insert(std::make_pair(key.key_, std::move(newSummary)));
+
+    
+    lock.unlock();
+    return viewData_[v->second.entryIndex_];
+}
+
+template<class GT>
 void ViewCache<GT>::finishLookup(const ViewKey<GT>& key)
 {
     lock.lock();
+
+    //NOTE: map.at does not decrment the value, not sure why
+    auto v = viewMap_.find(key.key_);
+
+//     std::cout<<v->second.numActive_<<std::endl;
+    v->second.numActive_ -=1;
+//     std::cout<<v->second.numActive_<<std::endl;
+
+    lock.unlock();
+}
+
+template<class GT>
+void ViewCache<GT>::finishLookup(const ViewKeyNL<GT>& key)
+{
+        lock.lock();
 
     //NOTE: map.at does not decrment the value, not sure why
     auto v = viewMap_.find(key.key_);

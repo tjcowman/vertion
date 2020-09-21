@@ -408,16 +408,16 @@ std::vector<Path<GT>> KinasePaths<GT>::computeCrossP(NodeInput path1, NodeInput 
     
     //add the original paths to the output
     
-    auto sourceIndex = viewer_->getViewIndex(kp1.getElements().back().index_ );
-    auto sinkIndex = viewer_->getViewIndex(kp1[0].index_);
+    auto sourceIndex = viewer_->getViewIndex(path1.getElements().back().index_ );
+    auto sinkIndex = viewer_->getViewIndex(path1[0].index_);
     auto spLengths = std::move(runSP(sourceIndex, Arw));
         
     auto paths = formatPaths(sourceIndex, spLengths, std::vector<typename GT::Index>{sinkIndex});
     
     retPaths.insert(retPaths.end(), paths.begin(), paths.end());
     
-    sourceIndex = viewer_->getViewIndex(kp2.getElements().back().index_ );
-    sinkIndex = viewer_->getViewIndex(kp2[0].index_);
+    sourceIndex = viewer_->getViewIndex(path2.getElements().back().index_ );
+    sinkIndex = viewer_->getViewIndex(path2[0].index_);
     spLengths = std::move(runSP(sourceIndex, Arw));
         
     paths = formatPaths(sourceIndex, spLengths, std::vector<typename GT::Index>{sinkIndex});

@@ -25,6 +25,36 @@ ViewKey<GT> viewKeyFromArgs(const json& args)
 }
 
 template<class GT>
+ViewKeyNL<GT> viewKeyNLFromArgs(const json& args)
+{
+    try
+    {
+        std::vector<typename GT::VersionIndex> versions = args.at("versions").get<std::vector<typename GT::VersionIndex>>();
+        
+        return(ViewKeyNL<GT>(versions));
+    }
+    catch (json::exception& e)
+    {
+        return ViewKeyNL<GT>();
+    }
+}
+
+template<class GT>
+ViewKeyNL<GT> viewKeyNLFPropromArgs(const json& args)
+{
+    try
+    {
+        std::vector<typename GT::VersionIndex> versions = args.at("versionsProp").get<std::vector<typename GT::VersionIndex>>();
+        
+        return(ViewKeyNL<GT>(versions));
+    }
+    catch (json::exception& e)
+    {
+        return ViewKeyNL<GT>();
+    }
+}
+
+template<class GT>
 bool CheckArgs(const json& j, const std::vector<std::string>& args)
 {
    // try
@@ -360,8 +390,8 @@ namespace Commands
         
         auto sourceNames = (args["kinase"].get<std::vector<std::string>>());
        
-        ViewKey<GT> key = viewKeyFromArgs<GT>(args);
-       
+        //ViewKey<GT> key = viewKeyFromArgs<GT>(args);
+        ViewKeyNL<GT> key = viewKeyNLFromArgs<GT>(args);
         
         if(!key.valid())
         {
@@ -411,23 +441,33 @@ namespace Commands
     template<class GT>
     json sitee(const VGraph<GT>& graph, ViewCache<GT>& viewCache, const json& args)
     {
-        ViewKey<GT> key = viewKeyFromArgs<GT>(args);
+  
+        
+        ViewKeyNL<GT> keyProp = viewKeyNLFPropromArgs<GT>(args);
+        if(!keyProp.valid())
+            return json{"trees", json::array()};
+        IntegratedViewer<GT> IVP = viewCache.lookup(keyProp);
+        
+            RandomWalker RW(IVP);
+            auto source = getVertexList<GT>("pathNodes", args); //global;
+            for(auto& e : source)
+                e.index_ = IVP.getViewIndex(e.index_);
+            
+            //specifiy arguments
+            typename RandomWalker<GT>::Args_Walk args_walk{.15, 1e-6, GraphList<VertexS<GT>>()};
+            auto weights = RW.walk(GraphList<VertexS<GT>>(source), args_walk); //Needs View returns view
+                //need to convert reweights  to viewIndexes
+            for(auto& e : weights)
+                e.index_ = IVP.getOriginalIndex(e.index_);
+            
+        viewCache.finishLookup(keyProp);
+         
+        
+        
+        ViewKeyNL<GT> key = viewKeyNLFromArgs<GT>(args);
         if(!key.valid())
             return json{"trees", json::array()};
         IntegratedViewer<GT> IV = viewCache.lookup(key);
-        
-        
-        RandomWalker RW(IV);
-        auto source = getVertexList<GT>("pathNodes", args);
-        
-        //specifiy arguments
-        typename RandomWalker<GT>::Args_Walk args_walk{.15, 1e-6, GraphList<VertexS<GT>>()};
-        auto weights = RW.walk(GraphList<VertexS<GT>>(source), args_walk);
-            //need to convert reweights  to viewIndexes
-        for(auto& e : weights)
-            e.index_ = IV.getViewIndex(e.index_);
-    
-         
         
         
         //use weights to bias the new path computation 
@@ -439,6 +479,11 @@ namespace Commands
         auto sources = getVertexList<GT>("sources", args);
         auto sinks = getVertexList<GT>("sink", args);
 
+        //convert weight global indexes into the view indexes
+        for(auto& e : weights)
+            e.index_ = IV.getViewIndex(e.index_);
+        weights.sort(Sort::indexInc);
+        
         KP.computeSiteE(sources, sinks, weights);
         viewCache.finishLookup(key);
             
@@ -449,37 +494,54 @@ namespace Commands
     template<class GT>
     json crossp(const VGraph<GT>& graph, ViewCache<GT>& viewCache, const json& args)
     {
-       // json ret;
-           
         
-        ViewKey<GT> key = viewKeyFromArgs<GT>(args);
+        ViewKeyNL<GT> keyProp = viewKeyNLFPropromArgs<GT>(args);
+        if(!keyProp.valid())
+        {
+            return json::array();
+        }
         
-       
+        auto path1 = getVertexList<GT>("path1", args);
+        auto path2 = getVertexList<GT>("path2", args);
+        
+     
+        std::vector<VertexS<GT>> source;
+        for(const auto & e : path1)
+            source.push_back(VertexS<GT>(e));
+        for(const auto & e : path2)
+            source.push_back(VertexS<GT>(e));
+        
+        IntegratedViewer<GT> IVP = viewCache.lookup(keyProp);
+            RandomWalker RW(IVP);
+
+            for(auto& e : source)
+                e.index_ = IVP.getViewIndex(e.index_);
+            
+            //specifiy arguments
+            typename RandomWalker<GT>::Args_Walk args_walk{.15, 1e-6, GraphList<VertexS<GT>>()};
+            auto weights = RW.walk(GraphList<VertexS<GT>>(source), args_walk); //Needs View returns view
+            
+            for(auto& e : weights)
+                e.index_ = IVP.getOriginalIndex(e.index_);
+            
+        viewCache.finishLookup(keyProp);
+        
+        
+        
+        ViewKeyNL<GT> key = viewKeyNLFromArgs<GT>(args);
+        
         if(!key.valid())
         {
             return json::array();
         }
         IntegratedViewer<GT> IV = viewCache.lookup(key);
         
-        auto path1 = getVertexList<GT>("path1", args);
-        auto path2 = getVertexList<GT>("path2", args);
-        
-        RandomWalker RW(IV);
-        //auto pathIndexs  = args["pathNodes"].get<std::vector<typename GT::Index>>();
-        std::vector<VertexS<GT>> source;
-        for(const auto & e : path1)
-            source.push_back(VertexS<GT>(e));
-        for(const auto & e : path2)
-            source.push_back(VertexS<GT>(e));
 
-
-        typename RandomWalker<GT>::Args_Walk args_walk{.15, 1e-6, GraphList<VertexS<GT>>()};
-        auto weights = RW.walk(GraphList<VertexS<GT>>(source), args_walk);
-            //need to convert reweights  to viewIndexes
         for(auto& e : weights)
             e.index_ = IV.getViewIndex(e.index_);
-    
         weights.sort(Sort::indexInc);
+
+
         
         //use wieghts to bias the nee path computation 
         

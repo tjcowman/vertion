@@ -54,6 +54,9 @@ class IntegratedViewer
         typename GT::Index getViewIndex(typename GT::Index originalIndex)const;
         std::vector<typename GT::Index> convertToViewIndexes(const std::vector<typename GT::Index> fullIndexes)const;
 
+        //Build a view with all nodes and edges in the versions (don't filter by labels)
+        void buildView(std::vector<typename GT::VersionIndex> versions);
+        
         void buildView(std::vector<typename GT::VersionIndex> versions, VertexLabel<GT> nodeLabels, EdgeLabel<GT> edgeLabels);
 
         void buildViewWIntersect(std::vector<std::vector<typename GT::VersionIndex> > versions, VertexLabel<GT> nodeLabels, EdgeLabel<GT> edgeLabels);
@@ -386,6 +389,92 @@ auto setUnionReducedNodeFilter(VertexLabel<GT>, ZippedRowIT<GT> first1, ZippedRo
         }
         ++result;
     }
+}
+
+template<class GT>
+void IntegratedViewer<GT>::buildView(std::vector<typename GT::VersionIndex> versions)
+{
+    clear();
+
+    std::vector<ViewRow<GT>> rows;
+
+    for(typename GT::Index i=0; i<graph_->size(0).nodes_; ++i)
+        rows.push_back(std::make_pair(i, graph_->getRowDataZipped(i, versions[0])));
+
+    //Integrate the rows between versions
+    for(typename GT::Index i=0; i<graph_->size(0).nodes_; ++i)
+    {
+        for(size_t v=1; v<versions.size(); ++v)
+        {
+            auto next = graph_->getRowDataZipped(i, versions[v]);
+            ZippedRow<GT> tmp;
+            setUnionReduced<GT>(rows[i].second.begin(), rows[i].second.end(), next.begin(), next.end(), std::back_inserter(tmp));
+            rows[i].second=tmp;
+        }
+    }
+    
+    
+    std::vector<ViewRow<GT>> rows2;
+    for(auto& row : rows)
+    {
+        auto srcLab = graph_->getVertexData().lookupLabels(row.first).getBits();
+        
+        auto tgtLab = VertexLabel<GT>(); //graph_->getVertexData().lookupLabels(row.second[0]).getBits();
+        for(const auto& e : row.second)
+            tgtLab = tgtLab.getBits() | graph_->getVertexData().lookupLabels(std::get<0>(e)).getBits();
+        
+        
+        if( (((srcLab | tgtLab.getBits())).any()) )
+        {
+            rows2.push_back(row);
+        }
+    }
+    rows= rows2;
+
+
+    //Convert to view Indexes
+    //Row is an index and a zipped row
+    std::set<typename GT::Index> nodesUsed;
+    
+    
+    for(const auto& row : rows)
+    {
+        nodesUsed.insert(row.first);
+        for(const auto& e : row.second)
+        {
+            nodesUsed.insert(std::get<0>(e));
+
+            JA_.push_back(std::get<0>(e));
+            A_.push_back(std::get<1>(e));
+            L_.push_back(std::get<2>(e));
+        }
+
+        //Row indices computed based on the length of the current nodes edge segment as standard
+        IA_.push_back( AugIA<GT>(JA_.size()-row.second.size(), row.second.size() ));
+    }
+    
+    //Determine the node old->new index mapping
+    viewIndexes_ = std::vector<typename GT::Index>(nodesUsed.size());
+    originalIndexes_ = std::vector<typename GT::Index>(graph_->size(0).nodes_, GT::invalidIndex);
+
+    //Set is ordered, counter is used to get the "index"
+    typename GT::Index counter=0;
+    for(const auto& e : nodesUsed)
+    {
+        viewIndexes_[counter] = e;
+        originalIndexes_[e] = counter;
+        ++counter;
+    }
+    
+    for(auto& e : JA_)
+        e = getViewIndex(e);
+    
+    
+    //Acount for undirected where edges are actually /2
+    if(graph_->getContext() == Context::undirected)
+        size_ = std::make_pair(nodesUsed.size(), A_.size()/2);
+    else
+        size_ = std::make_pair(nodesUsed.size(), A_.size());
 }
 
 template<class GT>

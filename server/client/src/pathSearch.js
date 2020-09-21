@@ -170,11 +170,12 @@ class PathSearchComponent extends React.Component{
          versions : [...versionDef.versions,
              this.props.versionsData.nameLookup.get("Protein-Harboring-Sites"),
              this.props.versionsData.nameLookup.get("Kinase-Substrate"),
-             this.props.versionsData.nameLookup.get("Co-Occurrence"),
+        //     this.props.versionsData.nameLookup.get("Co-Occurrence"),
      ]}
      let aLab = this.props.labelsUsed.getUsedLabelSum(versionDef.versions);
 
-     versionDef = {versions: versionDef.versions, vertexLabels: [...aLab.nodes], edgeLabels : [...aLab.edges]};
+     //versionDef = {versions: versionDef.versions, vertexLabels: [...aLab.nodes], edgeLabels : [...aLab.edges]};
+     versionDef = {versions: versionDef.versions};
      return versionDef;
    }
 
@@ -188,9 +189,9 @@ class PathSearchComponent extends React.Component{
              this.props.versionsData.nameLookup.get("Kinase-Substrate"),
              this.props.versionsData.nameLookup.get("Co-Occurrence"),
      ]}
-     let aLab = this.props.labelsUsed.getUsedLabelSum(versionDef.versions);
 
-     versionDef = {versionsProp: versionDef.versions, vertexLabels: [...aLab.nodes], edgeLabels : [...aLab.edges]};
+
+     versionDef = {versionsProp: versionDef.versions};
      return versionDef;
    }
 
@@ -560,11 +561,11 @@ class PathSearchComponent extends React.Component{
 
         let aLab = this.props.labelsUsed.getUsedLabelSum(versionDef.versions);
 
-        versionDef = {versions: versionDef.versions, vertexLabels: [...aLab.nodes], edgeLabels : [...aLab.edges]}
+        versionDef = {versions: versionDef.versions}
 
         let command = {cmd:"pths",
              ...versionDef,
-            weightFraction: Number(this.state.weightFraction),
+            weightFraction: Number(this.state.minWeight),
             kinase: this.parseKinase(),
             mechRatio: Number(this.state.mechRatio),
             coocRatio: Number(this.state.coocRatio),
@@ -602,6 +603,7 @@ class PathSearchComponent extends React.Component{
         let command = {
             cmd:"sitee",
             ...versionDef,
+            ...versionDefProp,
             pathNodes: pathNodes.flat(),
             sources: pathNodes.map(p=> p[p.length-1]),
             sink: [pathNodes[0][0]],
@@ -610,6 +612,8 @@ class PathSearchComponent extends React.Component{
         };
 
         Axios.post('http://'+this.props.backAddr, JSON.stringify(command)).then((response)=>{
+
+          console.log("CCC", response)
           this.pathsToElements(response.data.trees.flat());
 
           this.setState({densePath: pathIds[0]});
@@ -620,7 +624,7 @@ class PathSearchComponent extends React.Component{
 
      handleSubmit_crossPaths=( pathIds, fn)=>{
         let versionDef = this.queryVersionDense();
-
+        let versionDefProp = this.queryVersionPropagation();
 
         let treesAr = [...this.state.trees.entries()].map(e => e[1]); //gets an array of each tree (1 or 2)
         let paths = treesAr.map((tree,i) => tree[pathIds[i]]);//gets the path corresponding to each value in nodeIds
@@ -631,6 +635,7 @@ class PathSearchComponent extends React.Component{
         let command = {
             cmd:"crossp",
             ...versionDef,
+            ...versionDefProp,
            // pathNodes: pathNodes.flat(),
             path1 : pathNodes[0],
             path2 : pathNodes[1],
