@@ -4,7 +4,7 @@
 #include "ViewCache.h"
 #include "query/RandomWalker.h"
 #include "query/IntegratedViewer.h"
-#include "motifs/Triangles.h"
+//#include "motifs/Triangles.h"
 #include "KinasePaths.h"
 
 #include "Commands.h"
@@ -126,6 +126,8 @@ json CommandRunner<GT>::run(const json& command)const
             return Commands::lkpi<GT>(*graph_, command);
         else if(command["cmd"] == "rwr2")
             return Commands::rwr2<GT>(*graph_, *viewCache_,command);
+        else if(command["cmd"] == "cmtf")
+            return Commands::cmtf<GT>(*graph_, *viewCache_,command);
 //         else if(command["cmd"] == "lsv")
 //             return Commands::lsv<GT>(*graph_, *viewCache_, command);
 //         else if(command["cmd"] == "mft")

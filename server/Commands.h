@@ -1,6 +1,7 @@
 #pragma once
 #include "vertion.h"
 #include "ViewCache.h"
+#include "TriCounter.h"
 
 #include <nlohmann/json.hpp>
 
@@ -318,6 +319,39 @@ namespace Commands
         return ret;
     }
     
+    //count motifs
+    template<class GT>
+    json cmtf(const VGraph<GT>& graph, ViewCache<GT>& viewCache, const json& args)
+    {
+        json ret;
+        
+        ViewKeyNL<GT> key=  ViewKeyNL<GT>(std::vector<int>{
+            1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,
+            20,21,23
+        });
+        IntegratedViewer<GT> IV = viewCache.lookup(key);
+        
+        Triangles T(IV);
+        T.enumerate();
+        
+        //std::map< std::array<EdgeLabel<GT>, 3>, typename GT::Index> counts;
+        auto counts = T.countMotifs();
+        
+        
+        ret["motifs"] = {};
+        for(const auto& e : counts)
+        {
+            std::vector<u_long> pattern;
+            for(auto ee : e.first)
+                pattern.push_back(ee.getBits().to_ulong());
+            ret["motifs"] += {{"pattern", pattern }, {"count",e.second}};
+        }
+      
+        viewCache.finishLookup(key);
+        return ret;
+        
+    }
+    
     
     struct Phos{
         std::string name;
@@ -404,7 +438,7 @@ namespace Commands
         
         KinasePaths KP(IV);
         KP.arg_mechRatio_ = args["mechRatio"];
-        
+        KP.arg_weightFraction_ = args["weightFraction"];
         
         if(args["sites"].size() == 0)
         {

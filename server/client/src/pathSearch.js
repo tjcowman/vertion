@@ -45,8 +45,8 @@ class Settings extends React.Component{
                         <Card.Body>
                             PPI Weight Penalty
                             <input autoComplete="off"  className="form-control" type="number" value={this.props.mechRatio} name="mechRatio" onChange={(event)=>this.props.handleChangeRange(event,0,10000)}></input>
-                            Co-Occurrence Weight Penalty
-                            <input autoComplete="off"  className="form-control" type="number" value={this.props.coocRatio} name="coocRatio" onChange={(event)=>this.props.handleChangeRange(event,0,10000)}></input>
+                            {/*Co-Occurrence Weight Penalty
+                            <input autoComplete="off"  className="form-control" type="number" value={this.props.coocRatio} name="coocRatio" onChange={(event)=>this.props.handleChangeRange(event,0,10000)}></input>*/}
                             Top Log Fold Cutoff Fraction
                             <input autoComplete="off" className="form-control" type="number" step=".1" value={this.props.minWeight} name="minWeight" onChange={(event)=>this.props.handleChangeRange(event,0,1)}></input>
 
