@@ -8,15 +8,8 @@ import ReactDOM from 'react-dom';
 
 import Axios from 'axios';
 
-//import {InfoPanel} from  './infoPanel.js';
-//import {LogPanel} from './logPanel.js';
-
 import SelectVersionsComponent from './selectVersionsComponent.js';
-//import SelectNodesComponent from './selectNodesComponent.js';
-//import {SelectLabelsComponent} from './selectLabelsComponent.js'
 
-//import {QueryComponentRWR} from './queryComponentRWR.js';
-//import QueryComponentMotif from './queryComponentMotif.js';
 
 import {PathSearchComponent} from './pathSearch.js'
 
@@ -73,7 +66,6 @@ class App extends React.Component {
 
             navCollapsed: false,
 
-//             logStruct : new LogStruct(),
 
             serverProps : {},
 
@@ -83,7 +75,7 @@ class App extends React.Component {
             labelsUsed: new LabelsUsed(),
 
 
-            backAddr  : "localhost:9060", //"129.22.31.155:28340", //"192.168.1.70:9060", //"localhost:9060",
+            backAddr  : "129.22.31.155:28340",
 
 
             versionCardsO: new VersionCards(),
