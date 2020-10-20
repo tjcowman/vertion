@@ -138,7 +138,7 @@ void handlerDispatchSL(int sockfd, std::set<int>* threadSlots, int threadId, con
     //Get resouce requested
     //std
     //Special cases ex:cacheable ls
-    if(uri=="/ls")
+  /*  if(uri=="/ls")
     {
 
         //Check the Etag and match
@@ -155,9 +155,9 @@ void handlerDispatchSL(int sockfd, std::set<int>* threadSlots, int threadId, con
             res.send(sockfd, "");
         }
         else
-        {
+        {*/
             handleInit_ls(sockfd, CR);
-        }
+        //}
         
 
         

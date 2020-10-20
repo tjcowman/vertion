@@ -31,30 +31,6 @@ import './sideBarMenu.css';
 
 //TODO BUG: A lot of state is being mutated directly due to a misunderstanding, need to fix EX: switch to functional setState like currently used in the add and remove versionCard Handlers
 
-// class LogStruct{
-//     //{type, text, count(calculated)}
-//
-//     constructor(){
-//       this.messages = [];
-//     }
-//
-//     mostRecent(){
-//       return this.messages[this.messages.length-1];
-//     }
-//
-//     log(mtype, message){
-// //console.log("m1", this.mostRecent(), "m2",message)
-//         if( !(this.mostRecent() === undefined) && this.mostRecent().text === message){
-//           this.mostRecent().count +=1;
-//
-//         }
-//         else
-//             this.messages.push({type :  mtype, text: message, count: 1});
-//
-//     }
-// }
-//
-
 
 
 class VersionsData{
@@ -123,8 +99,9 @@ class App extends React.Component {
 
         var date = new Date();
 //         try{
+        let qs = JSON.stringify({cmd:"ls"})
 
-        Axios.get('http://'+this.state.backAddr+'/ls', date.getTime()).then((response)=>{
+        Axios.post('http://'+this.state.backAddr+'/ls', qs).then((response)=>{
             console.log("lsResponse", response)
 
             //Not used currently, for various future settings?
@@ -360,19 +337,7 @@ class App extends React.Component {
 
                     <div className= "displayPanel"  style={{left: this.state.navCollapsed ? 20 : 200, width: this.state.navCollapsed ? 'calc(100% - 20px)' : 'calc(100% - 200px)'}}>
                         <Tab.Content>
-                            {/*<Tab.Pane eventKey="summary">
-                                <InfoPanel
-                                    backAddr={this.state.backAddr}
-
-                                    handleClickVersionCard = {this.handleClickVersionCard}
-                                    handleUpdateStats= {this.handleUpdateStats}
-                                    handleUpdateCardSummary={this.handleUpdateCardSummary}
-
-                                    versionCardsO={this.state.versionCardsO}
-                                    labelsUsed = {this.state.labelsUsed}
-                            />
-                            </Tab.Pane>*/}
-
+          
                             <Tab.Pane eventKey="versions">
                                 <SelectVersionsComponent
                                     handleCheckToggle={this.handleCheckToggle}
@@ -385,37 +350,6 @@ class App extends React.Component {
                                     versionsData= {this.state.versionsData}
                                 />
                             </Tab.Pane>
-
-                            {/*<Tab.Pane eventKey="labels">
-                                <SelectLabelsComponent
-                                    handleCheckToggle={this.handleCheckToggle}
-                                    handleToggle={this.handleToggle}
-
-                                    versionCardsO={this.state.versionCardsO}
-                                    versionCardHandlers={this.state.versionCardHandlers}
-                                    handleChangeVersionCardName={this.handleChangeVersionCardName}
-
-                                    labelsUsed = {this.state.labelsUsed}
-                                />
-                            </Tab.Pane>*/}
-
-                            {/*<Tab.Pane eventKey="query_rwr" className="pageContentArgsRight">
-                                <QueryComponentRWR
-                                    backAddr={this.state.backAddr}
-                                    selectedVersions={this.state.versions_s}
-
-                                    handleNodeLookupIndex={this.handleNodeLookupIndex}
-                                    handleNodeLookup={this.handleNodeLookup}
-
-                                    nodeData = {this.state.nodeData}
-
-
-                                    versionCardsO={this.state.versionCardsO}
-
-                                    handleLog={this.handleLog}
-                                    labelsUsed = {this.state.labelsUsed}
-                                />
-                            </Tab.Pane>*/}
 
                             <Tab.Pane eventKey="path_search" className="pageContentArgsRight">
                                 <PathSearchComponent
