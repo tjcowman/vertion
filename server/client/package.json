@@ -1,5 +1,6 @@
 {
-  "name": "vertion",
+  "homepage": "http://compbio.case.edu/omics/software/perkine/app",
+  "name": "perkine",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
@@ -9,9 +10,13 @@
     "react": "^16.13.1",
     "react-bootstrap": "^1.0.1",
     "react-dom": "^16.13.1",
-    "react-scripts": "3.4.0",
+    "react-scripts": "^3.4.3",
     "recharts": "^1.8.5",
-    "typescript": "^3.9.5"
+    "typescript": "^3.9.5",
+    "cytoscape": "^3.16.2",
+    "cytoscape-fcose": "^1.2.3",
+    "react-select": "^3.1.0",
+    "axios": "^0.20.0"
   },
   "scripts": {
     "start": "react-scripts start",
